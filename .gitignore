@@ -3,8 +3,9 @@ core_configuration.yml
 employee.json
 tickets.json
 goobydesk.log
-# My Data Folder - To be used for perma-configs in the future.
-my_data/
+# My Data Folder - Directory tracked, contents ignored
+my_data/*
+!my_data/.gitkeep
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -1,0 +1,13 @@
+[Unit]
+Description=Gunicorn Instance serving GoobyDesk
+After=network.target
+
+[Service]
+User=$USER
+Group=www-data
+WorkingDirectory=/var/www/GoobyDesk
+Environment="PATH=/var/www/GoobyDesk/venv/bin"
+ExecStart=/var/www/GoobyDesk/venv/bin/gunicorn -w 3 -b 127.0.0.1:8000 app:app
+
+[Install]
+WantedBy=multi-user.target
