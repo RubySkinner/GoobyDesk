@@ -5,29 +5,46 @@
 
 set -e  # Exit on error
 
+# Configuration - modify these if needed
+SERVICE_USER="caddy"
+SERVICE_GROUP="caddy"
+INSTALL_DIR="/var/www/GoobyDesk"
+LOG_FILE="/var/log/goobydesk.log"
+
 # Color codes for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+
 echo -e "${GREEN}=============================================${NC}"
 echo -e "${GREEN}===== GoobyDesk First-Time Setup Script =====${NC}"
 echo -e "${GREEN}=============================================${NC}"
 
 echo "Timestamp: ${TIMESTAMP}"
+echo "Service User: ${SERVICE_USER}"
+echo "Install Directory: ${INSTALL_DIR}"
 echo ""
 
-# Check if running as root or with sudo
-if [ "$EUID" -ne 0 ]; then 
-    echo -e "${RED}Error: This script must be run with sudo${NC}"
+# Check if running as root
+if [ "$EUID" -ne 0 ]; then
+    echo -e "${RED}Error: This script must be run as root (use sudo)${NC}"
+    exit 1
+fi
+
+# Check if service user exists
+if ! id "${SERVICE_USER}" &>/dev/null; then
+    echo -e "${RED}Error: Service user '${SERVICE_USER}' does not exist${NC}"
+    echo "Create the user first or modify SERVICE_USER variable in this script"
     exit 1
 fi
 
 # Check for required commands
-for cmd in git python3 pip sudo; do
+for cmd in git python3 pip; do
     if ! command -v $cmd &> /dev/null; then
-        echo "ERROR: Required command '$cmd' not found"
+        echo -e "${RED}ERROR: Required command '$cmd' not found${NC}"
         exit 1
     fi
 done
@@ -39,20 +56,16 @@ cd /var/www/ || { echo "ERROR: Failed to navigate to /var/www/"; exit 1; }
 # Clone repository
 echo "Cloning GoobyDesk repository..."
 if [ -d "GoobyDesk" ]; then
-    echo "WARNING: GoobyDesk directory already exists. Skipping clone."
+    echo -e "${YELLOW}WARNING: GoobyDesk directory already exists. Skipping clone.${NC}"
 else
     git clone https://github.com/GoobyFRS/GoobyDesk.git || { echo "ERROR: Failed to clone repository"; exit 1; }
 fi
 
 cd GoobyDesk || { echo "ERROR: Failed to navigate to GoobyDesk directory"; exit 1; }
 
-# Set ownership
-echo "Setting directory ownership to caddy..."
-sudo chown -R caddy /var/www/GoobyDesk || { echo "ERROR: Failed to set ownership"; exit 1; }
-
 # Create data directory
 echo "Creating my_data directory..."
-sudo mkdir -p /var/www/GoobyDesk/my_data || { echo "ERROR: Failed to create my_data directory"; exit 1; }
+mkdir -p "${INSTALL_DIR}/my_data" || { echo "ERROR: Failed to create my_data directory"; exit 1; }
 
 # Copy configuration files
 echo "Copying configuration files..."
@@ -63,8 +76,8 @@ cp template_configuration.yml my_data/core_configuration.yml || { echo "ERROR: F
 
 # Create log file
 echo "Creating log file..."
-sudo touch /var/log/goobydesk.log || { echo "ERROR: Failed to create log file"; exit 1; }
-sudo chown caddy /var/log/goobydesk.log || { echo "ERROR: Failed to set log file ownership"; exit 1; }
+touch "${LOG_FILE}" || { echo "ERROR: Failed to create log file"; exit 1; }
+chown "${SERVICE_USER}:${SERVICE_GROUP}" "${LOG_FILE}" || { echo "ERROR: Failed to set log file ownership"; exit 1; }
 
 # Create Python virtual environment
 echo "Creating Python virtual environment..."
@@ -76,19 +89,23 @@ source venv/bin/activate || { echo "ERROR: Failed to activate virtual environmen
 pip install -r requirements.txt || { echo "ERROR: Failed to install requirements"; deactivate; exit 1; }
 deactivate
 
+# Set ownership for entire installation directory (including venv)
+echo "Setting directory ownership to ${SERVICE_USER}:${SERVICE_GROUP}..."
+chown -R "${SERVICE_USER}:${SERVICE_GROUP}" "${INSTALL_DIR}" || { echo "ERROR: Failed to set ownership"; exit 1; }
+
 # Create systemd service
 echo "Creating systemd service..."
-sudo tee /etc/systemd/system/goobydesk.service > /dev/null <<EOF
+tee /etc/systemd/system/goobydesk.service > /dev/null <<EOF
 [Unit]
 Description=Gunicorn Instance serving GoobyDesk
 After=network.target
 
 [Service]
-User=$USER
-Group=www-data
-WorkingDirectory=/var/www/GoobyDesk
-Environment="PATH=/var/www/GoobyDesk/venv/bin"
-ExecStart=/var/www/GoobyDesk/venv/bin/gunicorn -w 3 -b 127.0.0.1:8000 app:app
+User=${SERVICE_USER}
+Group=${SERVICE_GROUP}
+WorkingDirectory=${INSTALL_DIR}
+Environment="PATH=${INSTALL_DIR}/venv/bin"
+ExecStart=${INSTALL_DIR}/venv/bin/gunicorn -w 3 -b 127.0.0.1:8000 app:app
 
 [Install]
 WantedBy=multi-user.target
@@ -101,8 +118,8 @@ fi
 
 # Reload systemd and enable service
 echo "Enabling GoobyDesk service..."
-sudo systemctl daemon-reload || { echo "ERROR: Failed to reload systemd daemon"; exit 1; }
-sudo systemctl enable goobydesk.service || { echo "ERROR: Failed to enable service"; exit 1; }
+systemctl daemon-reload || { echo "ERROR: Failed to reload systemd daemon"; exit 1; }
+systemctl enable goobydesk.service || { echo "ERROR: Failed to enable service"; exit 1; }
 
 echo
 echo -e "${GREEN}=============================================${NC}"
@@ -112,11 +129,11 @@ echo ""
 echo "GoobyDesk will be accessible on http://127.0.0.1:8000"
 echo ""
 echo "Next steps:"
-echo "1. Review and edit configuration files in /var/www/GoobyDesk/my_data/"
-echo "2. Edit .env file if needed. I like to use nano."
-echo "3. Start the service: sudo systemctl start goobydesk.service"
-echo "4. Check status: sudo systemctl status goobydesk.service"
-echo "5. View logs: sudo journalctl -u goobydesk.service -f"
-echo "6. View logs: tail -n 25 /var/log/goobyDesk.log"
+echo "1. Review and edit configuration files in ${INSTALL_DIR}/my_data/"
+echo "2. Edit .env file with your settings (nano ${INSTALL_DIR}/.env)"
+echo "3. Start the service: systemctl start goobydesk.service"
+echo "4. Check status: systemctl status goobydesk.service"
+echo "5. View service logs: journalctl -u goobydesk.service -f"
+echo "6. View app logs: tail -n 25 ${LOG_FILE}"
 echo ""
 echo -e "${GREEN}=============================================${NC}"

@@ -1,0 +1,2 @@
+# This file ensures the my_data directory is tracked by git
+# while its contents (configuration files, tickets, etc.) remain ignored.
