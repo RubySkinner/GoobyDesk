@@ -1,8 +1,16 @@
 #!/usr/bin/env python3
-from flask import Blueprint, render_template, session, Response
-import io, csv, json, logging
+import csv
+import io
+import json
+import logging
 from functools import wraps
-from local_config_loader import load_core_config
+
+from flask import Blueprint
+from flask import Response
+from flask import render_template
+from flask import session
+
+from local_handlers.local_config_loader import load_core_config
 
 
 # CONFIG & LOGGING
@@ -14,7 +22,8 @@ TICKETS_FILE = core_yaml_config["tickets_file"]
 logging.basicConfig(
     filename=LOG_FILE,
     level=getattr(logging, LOG_LEVEL.upper(), logging.INFO),
-    format="%(asctime)s - %(levelname)s - %(message)s",)
+    format="%(asctime)s - %(levelname)s - %(module)s/%(funcName)s - %(message)s",
+)
 
 # BLUEPRINT
 changes_module_bp = Blueprint("changes", __name__, url_prefix="/changes")

@@ -1,14 +1,38 @@
 #!/usr/bin/env python3
-from flask import Flask, Response, render_template, request, redirect, url_for, session, jsonify, flash
-import json, threading, time, logging, requests, os
-import local_config_loader, local_email_handler, local_webhook_handler, local_authentication_handler
-from dotenv import load_dotenv
-from datetime import datetime, timedelta
+import json
+import logging
+import os
+import threading
+import time
+from datetime import datetime
+from datetime import timedelta
 from functools import wraps
+from typing import Any
+from typing import Callable
+from typing import TypeAlias
 
+import requests
+from dotenv import load_dotenv
+from flask import Flask
+from flask import Response
+from flask import flash
+from flask import jsonify
+from flask import redirect
+from flask import render_template
+from flask import request
+from flask import session
+from flask import url_for
+
+import local_handlers.local_config_loader as local_config_loader
+import local_handlers.local_email_handler as local_email_handler
+import local_handlers.local_webhook_handler as local_webhook_handler
+import local_handlers.local_authentication_handler as local_authentication_handler
 from blueprints.api_ingest import api_ingest_bp
 from blueprints.reports_module import reports_module_bp
 from blueprints.changes_module import changes_module_bp
+
+TicketDict: TypeAlias = dict[str, Any]
+EmployeeDict: TypeAlias = dict[str, Any]
 
 BUILDID=str("0.9.2-beta-d")
 
@@ -56,7 +80,7 @@ app.register_blueprint(changes_module_bp)
 
 # Security Headers for all responses.
 @app.after_request
-def set_security_headers(response):
+def set_security_headers(response: Response) -> Response:
     # Prevent clickjacking attacks
     response.headers['X-Frame-Options'] = 'DENY'
     # Prevent MIME type sniffing
@@ -79,16 +103,16 @@ def set_security_headers(response):
     # HTTP Strict Transport Security (forces HTTPS) set to 1 Day.
     if not app.debug:
         response.headers['Strict-Transport-Security'] = ('max-age=86400; includeSubDomains; preload')
-    
+
     # Permissions Policy (formerly Feature-Policy)
     response.headers['Permissions-Policy'] = ('geolocation=(), microphone=(), camera=()')
-    
+
     return response
 
 logging.basicConfig(
     filename=LOG_FILE,
     level=getattr(logging, LOG_LEVEL.upper(), logging.INFO),
-    format="%(asctime)s - %(levelname)s - %(message)s"
+    format="%(asctime)s - %(levelname)s - %(module)s/%(funcName)s - %(message)s"
 )
 """ Above is the default logging configuration.
 Debug - Detailed information
@@ -100,18 +124,10 @@ Critical - Serious application failures
 # INITIAL ERROR CODES
 if not CF_TURNSTILE_SITE_KEY or not CF_TURNSTILE_SECRET_KEY:
     logging.critical("CF_TURNSTILE_SITE_KEY and CF_TURNSTILE_SECRET_KEY must be configured in the .env file. It is required for CAPTCHA functionality.")
-    exit(1) 
-
-#email_thread_enabler_check = os.getenv("EMAIL_ENABLED")
-#if email_thread_enabler_check is None:
-#    logging.info("EMAIL_ENABLED is not defined. Defaulting to False.")
-#    EMAIL_ENABLED = False
-#else:
-#    EMAIL_ENABLED = email_thread_enabler_check.lower() == "true"
-#    logging.info(f"EMAIL_ENABLED is set to {EMAIL_ENABLED}.")
+    exit(1)
 
 # Read/Loads the ticket file into memory. This is the original load_tickets function that works on Windows and Unix.
-def load_tickets():
+def load_tickets() -> list[TicketDict]:
     try:
         with open(TICKETS_FILE, "r") as tkt_file:
             return json.load(tkt_file)
@@ -120,46 +136,44 @@ def load_tickets():
         exit(1)
 
 # Writes to the ticket file database. Eventually needs file locking for Linux.
-def save_tickets(tickets):
+def save_tickets(tickets: list[TicketDict]) -> None:
     with open(TICKETS_FILE, "w") as tkt_file_write_op:
         json.dump(tickets, tkt_file_write_op, indent=4)
         logging.debug("The Ticket JSON Database file was modified.")
 
 # Read/Loads the employee file into memory.
-def load_employees():
+def load_employees() -> list[EmployeeDict]:
     try:
         with open(EMPLOYEE_FILE, "r") as tech_file_read_op:
             return json.load(tech_file_read_op)
     except FileNotFoundError:
         logging.debug("Employee JSON Database file could not be located.")
         exit(1)
-        return {} # represents an empty dictionary
-    
+
 # Helper script for secure password hasing auto-migration.
-def save_employees(employees):
+def save_employees(employees: list[EmployeeDict]) -> None:
     with open(EMPLOYEE_FILE, "w") as emp_file_write_op:
         json.dump(employees, emp_file_write_op, indent=4)
     logging.debug("The Employee JSON Database file was modified.")
 
 # Generate a new ticket number.
-def generate_ticket_number():
+def generate_ticket_number() -> str:
     tickets = load_tickets() # Read/Load the tickets-db into memory.
     current_year = datetime.now().year  # Get the current year dynamically
     ticket_count = str(len(tickets) + 1).zfill(4)  # Zero-padded ticket count
     return f"TKT-{current_year}-{ticket_count}"  # Format: TKT-YYYY-XXXX
 
-def generate_change_request_number():
+def generate_change_request_number() -> str:
     tickets = load_tickets() # Read/Load the tickets-db into memory.
     current_year = datetime.now().year  # Get the current year dynamically
     ticket_count = str(len(tickets) + 1).zfill(4)  # Zero-padded ticket count
     return f"CHG-{current_year}-{ticket_count}"  # Format: CHG-YYYY-XXXX
 
 # Background email inbox monitoring process.
-def background_email_monitor():
+def background_email_monitor() -> None:
     while True:
         local_email_handler.fetch_email_replies()
         time.sleep(600)  # Wait for emails every 10 minutes.
-#threading.Thread(target=background_email_monitor, daemon=True).start()
 
 if EMAIL_ENABLED is True:
     logging.info("Starting background email monitoring thread...")
@@ -168,9 +182,9 @@ else:
     logging.info("EMAIL_ENABLED is set to false. Skipping...")
 
 # Decorator to force authentication checking. Easy to append to routes.
-def technician_required(func):
+def technician_required(func: Callable[..., Any]) -> Callable[..., Any]:
     @wraps(func)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> Response | tuple[str, int]:
         # Session-based auth check
         if not session.get("technician"):
             # Unauthorized access attempt
@@ -180,7 +194,7 @@ def technician_required(func):
     return wrapper
 
 @app.route("/", methods=["GET", "POST"])
-def home():
+def home() -> Response | tuple[str, int]:
     if request.method == "POST":
         try:
             # Cloudflare Turnstile CAPTCHA validation
@@ -274,7 +288,7 @@ def home():
     return render_template("index.html", sitekey=CF_TURNSTILE_SITE_KEY)
 
 @app.route("/login", methods=["GET", "POST"])
-def login():
+def login() -> Response | tuple[str, int]:
     if request.method == "POST":
         username = request.form.get("tech_username_box", "").strip()
         password = request.form.get("tech_password_box", "")
@@ -316,7 +330,7 @@ def login():
 # Route for rendering the core technician dashboard. Displays all Open and In-Progress tickets.
 @app.route("/dashboard")
 @technician_required
-def dashboard():
+def dashboard() -> Response | tuple[str, int]:
     tickets = load_tickets()
     # Filtering out tickets with the Closed Status on the main Dashboard.
     open_tickets = [ticket for ticket in tickets if ticket["ticket_status"].lower() != "closed"]
@@ -325,10 +339,10 @@ def dashboard():
 # Route for viewing a ticket in the Ticket Commander view.
 @app.route("/ticket/<ticket_number>")
 @technician_required
-def ticket_detail(ticket_number):
+def ticket_detail(ticket_number: str) -> Response | tuple[str, int]:
     tickets = load_tickets()
     ticket = next((t for t in tickets if t["ticket_number"] == ticket_number), None)
-    
+
     if ticket:
         return render_template("ticket-commander.html", ticket=ticket, loggedInTech=session["technician"])
 
@@ -337,12 +351,12 @@ def ticket_detail(ticket_number):
 # Route for updating a ticket. Called from Dashboard and Ticket Commander.
 @app.route("/ticket/<ticket_number>/update_status/<ticket_status>", methods=["POST"])
 @technician_required
-def update_ticket_status(ticket_number, ticket_status):
+def update_ticket_status(ticket_number: str, ticket_status: str) -> Response | tuple[str, int]:
     logging.info(f"{ticket_number} status has been changed to {ticket_status}.")
-    
+
     if not session.get("technician"):
         return render_template("403.html"), 403
-    
+
     valid_statuses = ["Open", "In-Progress", "Closed"]
     if ticket_status not in valid_statuses:
         return render_template("400.html"), 400
@@ -356,7 +370,7 @@ def update_ticket_status(ticket_number, ticket_status):
             ticket_subject = ticket.get("ticket_subject", "No Subject Provided")
             # Update ticket in memory
             ticket["ticket_status"] = ticket_status
-            
+
             if ticket_status == "Closed":
                 ticket["closed_by"] = loggedInTech
                 ticket["closure_date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -377,7 +391,7 @@ def update_ticket_status(ticket_number, ticket_status):
 # Route for appending a new note to a ticket.
 @app.route("/ticket/<ticket_number>/append_note", methods=["POST"])
 @technician_required
-def add_ticket_note(ticket_number):
+def add_ticket_note(ticket_number: str) -> Response | tuple[dict[str, str], int]:
     new_tkt_note = request.form.get("note_content")  # Ensure the key matches the JS request
 
     if not new_tkt_note:
@@ -404,29 +418,29 @@ def add_ticket_note(ticket_number):
 # Thanks to Claude Sonnet 4.5, API Ingest has moved to ./blueprints/api_ingest.py
 
 @app.route("/logout")
-def logout():
+def logout() -> Response:
     session.pop("technician", None)
     return redirect(url_for("login"))
 
 # BELOW THIS LINE IS RESERVED FOR FLASK ERROR ROUTES. PUT ALL CORE APP FUNCTIONS ABOVE THIS LINE!
 # Handle 400 errors.
 @app.errorhandler(400)
-def bad_request(e):
+def bad_request(e: Exception) -> tuple[str, int]:
     return render_template("400.html"), 400
 
 # Handle 403 errors.
 @app.errorhandler(403)
-def forbidden(e):
+def forbidden(e: Exception) -> tuple[str, int]:
     return render_template("403.html"), 403
 
 # Handle 404 errors.
 @app.errorhandler(404)
-def page_not_found(e):
+def page_not_found(e: Exception) -> tuple[str, int]:
     return render_template("404.html"), 404
 
 # Handles 500 errors.
 @app.errorhandler(500)
-def internal_server_error(e):
+def internal_server_error(e: Exception) -> tuple[str, int]:
     logging.critical(f"Internal Server Error: {str(e)}")
     return render_template("500.html"), 500
 

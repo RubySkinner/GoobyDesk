@@ -1,15 +1,20 @@
 #!/usr/bin/env python3
-from flask import Blueprint, request, jsonify
-import json, logging
+import json
+import logging
 from datetime import datetime
-import local_webhook_handler
-from local_config_loader import load_core_config
+
+from flask import Blueprint
+from flask import jsonify
+from flask import request
+
+import local_handlers.local_webhook_handler as local_webhook_handler
+from local_handlers.local_config_loader import load_core_config
 
 core_yaml_config = load_core_config()
 LOG_LEVEL = core_yaml_config["logging"]["level"]
 LOG_FILE = core_yaml_config["logging"]["file"]
 
-logging.basicConfig(filename=LOG_FILE,level=getattr(logging, LOG_LEVEL.upper(), logging.INFO),format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(filename=LOG_FILE, level=getattr(logging, LOG_LEVEL.upper(), logging.INFO), format="%(asctime)s - %(levelname)s - %(module)s/%(funcName)s - %(message)s")
 """ Above is the default logging configuration.
 Debug - Detailed information
 Info - Successes
@@ -170,22 +175,3 @@ def uptime_kuma_webhook():
     except Exception as e:
         logging.critical(f"API INGEST - Uptime Kuma webhook error: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
-"""
-@api_ingest_bp.route("/goobyddns", methods=["POST"])
-def goobyddns_webhook():
-
-new_ticket = {
-            "ticket_number": ticket_number,
-            "requestor_name": "GoobyDDNS",
-            "requestor_email": "noreply@goobyddns.example.org",
-            "ticket_subject": ticket_subject,
-            "ticket_message": ticket_message,
-            "request_type": request_type,
-            "ticket_impact": Low,
-            "ticket_urgency": Low,
-            "ticket_status": "Open",
-            "submission_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "ticket_notes": []
-        }
-"""
-    

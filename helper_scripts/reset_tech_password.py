@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-# Reset a technicians password using the legacy authentication method.
+import getpass
 import json
 import sys
-import getpass
-import local_config_loader
+
+import local_handlers.local_config_loader as local_config_loader
 
 def load_employees():
     core_yaml_config = local_config_loader.load_core_config()

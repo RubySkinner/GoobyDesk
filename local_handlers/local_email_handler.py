@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
-# Local module for send_email, extract_email_body and fetch_email_replies functions.
-__all__ = ["send_email", "extract_email_body", "fetch_email_replies"]
-import os
-import smtplib
-import imaplib
 import email
-import re
-import logging
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.header import decode_header
-from dotenv import load_dotenv
+import imaplib
 import json
+import logging
+import os
+import re
+import smtplib
 from datetime import datetime
-from local_config_loader import load_core_config
+from email.header import decode_header
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
-load_dotenv(".env")
+from dotenv import load_dotenv
+
+from local_handlers.local_config_loader import load_core_config
+
+__all__ = ["send_email", "extract_email_body", "fetch_email_replies"]
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 
 core_yaml_config = load_core_config()
@@ -32,7 +32,7 @@ LOG_FILE = core_yaml_config["logging"]["file"]
 logging.basicConfig(
     filename=LOG_FILE,
     level=getattr(logging, LOG_LEVEL.upper(), logging.INFO),
-    format="%(asctime)s - %(levelname)s - %(message)s"
+    format="%(asctime)s - %(levelname)s - %(module)s/%(funcName)s - %(message)s"
 )
 
 """
