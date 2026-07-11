@@ -33,16 +33,16 @@ async function updateTicketStatus(ticketId, newStatus) {
 
         // Parse JSON response from server
         let data = await response.json();
-        
+
         // Show success message to user
         alert(data.message);
-        
+
         // Refresh the page to reflect updated ticket status
         location.reload();
     } catch (error) {
         // Log error to console for debugging
         console.error("Error:", error);
-        
+
         // Show user-friendly error message
         alert("An error occurred while updating the ticket. Please try again.");
     }
@@ -56,7 +56,7 @@ async function updateTicketStatus(ticketId, newStatus) {
 function closeTicket() {
     // Get ticket ID from the input field on the dashboard
     let ticketId = document.getElementById("ticketIdInput").value;
-    
+
     // Call the generic updateTicketStatus function with "Closed" status
     updateTicketStatus(ticketId, "Closed");
 }
@@ -69,7 +69,7 @@ function closeTicket() {
 async function submitNote(ticketNumber) {
     // Get note content from textarea and remove leading/trailing whitespace
     let noteContent = document.getElementById("noteContent").value.trim();
-    
+
     // Validate that note is not empty
     if (!noteContent) {
         alert("Note content cannot be empty.");
@@ -87,7 +87,7 @@ async function submitNote(ticketNumber) {
 
         // Parse JSON response from server
         let data = await response.json();
-        
+
         // Check if request was successful
         if (!response.ok) {
             throw new Error(data.message || "Unknown error");
@@ -95,14 +95,23 @@ async function submitNote(ticketNumber) {
 
         // Show success message to user
         alert(data.message);
-        
+
         // Refresh the page to display the newly added note
         location.reload();
     } catch (error) {
         // Log error to console for debugging
         console.error("Error:", error);
-        
+
         // Show user-friendly error message
         alert("Failed to add note. Please try again.");
     }
 }
+
+/**
+ * GoobyDesk - Javascript Alerts and Pop-ups
+ * Auto-hides dismissible .alert banners a few seconds after they appear.
+ */
+setTimeout(function() {
+    let alerts = document.querySelectorAll(".alert");
+    alerts.forEach(alert => alert.style.display = "none");
+}, 5000);  // Hides after 5 seconds
