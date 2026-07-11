@@ -1,6 +1,8 @@
 @import url(https://fonts.bunny.net/css?family=ubuntu:300,400,600,700);
 @import url(https://fonts.bunny.net/css?family=ubuntu-mono:400);
+
 /* Global CSS - Page Specific Items Defined in Segments Below - Never add scripts!*/
+
 body {
     background-color: #29292B; /* Windows 10 Dark Mode Task Bar */
     font-family: 'Ubuntu', 'Ubuntu-mono', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -56,7 +58,9 @@ h2 {
     color: #b7b7b7;
     margin-top: 20px;
 }
+
 /* Index/Home Page Specific */
+
 label {
     font-size: 16px;
     font-weight: 600;
@@ -88,7 +92,9 @@ textarea {
     margin-top: 15px;
     width: 48%;
 }
+
 /* Dashboard Specific Items */
+
 a { /* TKT-Number - Subject - Status */
     text-decoration: none;
     color: #284389;
@@ -166,7 +172,9 @@ a:hover {
 .close-tkt-btn:hover {
 background-color: #ff8080;
 }
+
 /* Reporting */
+
 /* Reporting – KPI Cards */
 .kpi-grid {
     display: grid;
