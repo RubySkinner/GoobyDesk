@@ -49,7 +49,12 @@ def changes_home():
     tickets = load_tickets()
     # Filtering out tickets with the Closed Status on the main Dashboard.
     open_changes = [ticket for ticket in tickets if ticket["ticket_type"] == "Change" and ticket["ticket_status"].lower() != "closed"]
-    return render_template("under_construction.html")
+    return render_template(
+    "changes_home.html",
+    changes=open_changes,
+    loggedInTech=session["technician"],
+    BUILDID=core_yaml_config["buildid"],
+)
 
 # Export open change tickets as CSV.
 @changes_module_bp.route("/export/csv", methods=["GET"])
