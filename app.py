@@ -5,18 +5,16 @@ from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from functools import wraps
 
-from local_handlers.goobydesk_standard_library import (
-    fetch_email_replies,
-    load_core_config,
-    notify_ticket_event,
-    send_email,
-    hash_password,
-    verify_password,
-)
+import local_handlers.local_authentication_handler as local_authentication_handler
+import local_handlers.local_config_loader as local_config_loader
+import local_handlers.local_email_handler as local_email_handler
+import local_handlers.local_webhook_handler as local_webhook_handler
 
 from blueprints.api_module import api_module_bp
 from blueprints.reports_module import reports_module_bp
 from blueprints.changes_module import changes_module_bp
+
+BUILDID=str("1.0.0")
 
 """
 Rest in Peace Alex, July 2nd 2005 - December 14th 2024
@@ -30,7 +28,7 @@ CF_TURNSTILE_SECRET_KEY = os.getenv("CF_TURNSTILE_SECRET_KEY") # REQUIRED for CA
 TAILSCALE_NOTIFY_EMAIL = os.getenv("TAILSCALE_NOTIFY_EMAIL")
 
 # Configuration non-secret data loaded from YAML.
-core_yaml_config = load_core_config()
+core_yaml_config = local_config_loader.load_core_config()
 TICKETS_FILE = core_yaml_config["tickets_file"]
 EMPLOYEE_FILE = core_yaml_config["employee_file"]
 LOG_LEVEL = core_yaml_config["logging"]["level"]
@@ -163,7 +161,7 @@ def generate_change_request_number():
 # Background email inbox monitoring process.
 def background_email_monitor():
     while True:
-        fetch_email_replies()
+        local_email_handler.fetch_email_replies()
         time.sleep(600)  # Wait for emails every 10 minutes.
 #threading.Thread(target=background_email_monitor, daemon=True).start()
 
@@ -240,7 +238,7 @@ def home():
             if EMAIL_ENABLED:
                 try:
                     email_body = render_template("new-ticket-email.html", ticket=new_ticket)
-                    send_email(
+                    local_email_handler.send_email(
                         new_ticket["requestor_email"],
                         f"{ticket_number} - {new_ticket['ticket_subject']}",
                         email_body,
@@ -254,7 +252,7 @@ def home():
 
             # Send webhook notifications
             try:
-                notify_ticket_event(
+                local_webhook_handler.notify_ticket_event(
                     ticket_number,
                     new_ticket["ticket_subject"],
                     "Open"
@@ -294,7 +292,7 @@ def login():
             # LEGACY PASSWORD AUTO-MIGRATION
             if "tech_authcode" in employee:
                 if password == employee["tech_authcode"]:
-                    employee["password_hash"] = hash_password(password)
+                    employee["password_hash"] = local_authentication_handler.hash_password(password)
                     del employee["tech_authcode"]
 
                     save_employees(employees)
@@ -306,7 +304,7 @@ def login():
                 break
             # MODERN HASHED PASSWORD CHECK
             stored_hash = employee.get("password_hash")
-            if stored_hash and verify_password(password, stored_hash):
+            if stored_hash and local_authentication_handler.verify_password(password, stored_hash):
                 session["technician"] = username
                 logging.info(f"{username} logged in successfully.")
                 return redirect(url_for("dashboard"))
@@ -326,7 +324,7 @@ def dashboard():
     tickets = load_tickets()
     # Filtering out tickets with the Closed Status on the main Dashboard.
     open_tickets = [ticket for ticket in tickets if ticket["ticket_status"].lower() != "closed"]
-    return render_template("dashboard.html", tickets=open_tickets, loggedInTech=session["technician"])
+    return render_template("dashboard.html", tickets=open_tickets, loggedInTech=session["technician"], BUILDID=BUILDID)
 
 # Route for viewing a ticket in the Ticket Commander view.
 @app.route("/ticket/<ticket_number>")
@@ -371,7 +369,7 @@ def update_ticket_status(ticket_number, ticket_status):
             logging.info(f"Ticket {ticket_number} status updated to {ticket_status} by {loggedInTech}.")
             # Send webhook notifications for status update.
             try:
-                notify_ticket_event(ticket_number=ticket_number,ticket_status=ticket_status,ticket_subject=ticket_subject) # Consider a refactor later.
+                local_webhook_handler.notify_ticket_event(ticket_number=ticket_number,ticket_status=ticket_status,ticket_subject=ticket_subject) # Consider a refactor later.
                 logging.info(f"Ticket {ticket_number} status update notifications sent successfully.")
             except Exception as e:
                 logging.error(f"Failed to send ticket status update notifications for {ticket_number}: {str(e)}")
