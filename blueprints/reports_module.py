@@ -75,7 +75,7 @@ def reports_home():
         except (KeyError, ValueError):
             logging.warning("REPORTING - Invalid submission_date on ticket")
     
-    return render_template("reports_home.html",
+    return render_template("reports/reports_dashboard.html",
         total_tickets=total_tickets,
         open_tickets=status_counts["Open"],
         in_progress_tickets=status_counts["In-Progress"],
