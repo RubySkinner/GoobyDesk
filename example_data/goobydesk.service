@@ -1,13 +1,44 @@
+# GR_Core Systemd Service File
+#
+# Installation:
+#   1. Copy this file to /etc/systemd/system/goobydesk.service
+#   2. Update User, Group, and paths as needed
+#   3. Run: sudo systemctl daemon-reload
+#   4. Run: sudo systemctl enable goobydesk
+#   5. Run: sudo systemctl start goobydesk
+#
+# Commands:
+#   sudo systemctl start goobydesk    - Start the service
+#   sudo systemctl stop goobydesk     - Stop the service
+#   sudo systemctl restart goobydesk  - Restart the service
+#   sudo systemctl status goobydesk   - Check status
+#   sudo journalctl -u goobydesk -f   - View logs
+
 [Unit]
-Description=Gunicorn Instance serving GoobyDesk
+Description=GR_Core - IT Service Management Platform
+Documentation=https://github.com/GoobyFRS/GR_Desk/wiki
 After=network.target
 
 [Service]
+Type=notify
 User=$USER
 Group=www-data
+RuntimeDirectory=GoobyDesk
 WorkingDirectory=/var/www/GoobyDesk
 Environment="PATH=/var/www/GoobyDesk/venv/bin"
-ExecStart=/var/www/GoobyDesk/venv/bin/gunicorn -w 3 -b 127.0.0.1:8000 app:app
+Environment="PYTHONUNBUFFERED=1"
+ExecStart=/var/www/GoobyDesk/venv/bin/gunicorn \
+    --workers 3 \
+    --bind unix:/run/GoobyDesk/goobydesk.sock \
+    --access-logfile /var/log/GoobyDesk/access.log \
+    --error-logfile /var/log/GoobyDesk/error.log \
+    app:app
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp=true
+Restart=on-failure
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target

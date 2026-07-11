@@ -1,25 +1,12 @@
 #!/usr/bin/env python3
-"""Local module to support YAML-based configuration loading."""
-import os
-from typing import Any
-
+# Local module to support yaml based configuration.
+[__all__] = ["load_core_config"]
 import yaml
-
-__all__ = ["load_core_config"]
+import os
 
 CONFIG_PATH = "./my_data/core_configuration.yml"
 
-
-def load_core_config() -> dict[str, Any]:
-    """Load the core configuration from the YAML file.
-
-    Returns:
-        Configuration dictionary containing all settings from core_configuration.yml.
-
-    Raises:
-        FileNotFoundError: If the configuration file does not exist.
-        yaml.YAMLError: If the configuration file contains invalid YAML.
-    """
+def load_core_config():
     if not os.path.exists(CONFIG_PATH):
         raise FileNotFoundError(f"core_configuration.yml missing at {CONFIG_PATH}")
 

@@ -1,7 +1,5 @@
 # CHANGELOG
 
-**May.09.2026-1:** CLAUDE.md was created to attempt and implement strict code rules to aide in future development.
-
 **Nov.29.2025-1:** CHANGELOG has not been updated since my return to the project. I expect to leverage it again at some point in the future, but for now my commit notes and my own thoughts are what is keeping track for now. Peace, Love, and Happiness my friends! 
 
 **Mar.13.2025-1:** Patching an issue with logging and setup the basic framework for a visual confirmation message on ticket submission.
