@@ -8,7 +8,7 @@ from local_handlers.local_config_loader import load_core_config
 
 # CONFIG HELPERS
 def load_webhook_config():
-    return local_config_loader.load_core_config() or {}
+    return load_core_config() or {}
 
 def is_enabled(service_name: str) -> bool:
     webhook_service_status = load_webhook_config()
@@ -20,7 +20,7 @@ def get_webhook_urls():
     webhook_url_check = load_webhook_config()
     discord_url = webhook_url_check.get("discord", {}).get("webhook_url")
     slack_url = webhook_url_check.get("slack", {}).get("webhook_url")
-    #teams_url   = webhook_url_check.get("teams365", {}).get("webhook_url")
+    #teams_url = webhook_url_check.get("teams365", {}).get("webhook_url")
 
     return discord_url, slack_url, #teams_url
 

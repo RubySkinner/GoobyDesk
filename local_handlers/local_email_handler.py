@@ -7,11 +7,12 @@ import imaplib
 import email
 import re
 import logging
+import json
+
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.header import decode_header
 from dotenv import load_dotenv
-import json
 from datetime import datetime
 
 from local_handlers.local_config_loader import load_core_config
