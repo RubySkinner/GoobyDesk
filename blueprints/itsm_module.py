@@ -87,7 +87,7 @@ def dashboard():
     tickets = load_tickets()
     open_tickets = [t for t in tickets if t["ticket_status"].lower() != "closed"]
     return render_template(
-        "core/dashboard.html",
+        "itsm/dashboard.html",
         tickets=open_tickets,
         loggedInTech=session["technician"]
     )
