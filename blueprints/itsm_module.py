@@ -73,17 +73,8 @@ def technician_required(func):
     return wrapper
 
 @itsm_module_bp.route("/", methods=["GET"])
-def itsm_home():
-    """Placeholder landing route for the ITSM module."""
-    return jsonify({"message": "Welcome to the ITSM Module!"}), 200
-
-@itsm_module_bp.route("/dashboard")
-@technician_required
+#@technician_required
 def dashboard():
-    """Render the technician dashboard of all open/in-progress tickets.
-    Returns:
-        Rendered dashboard.html with the open ticket list.
-    """
     tickets = load_tickets()
     open_tickets = [t for t in tickets if t["ticket_status"].lower() != "closed"]
     return render_template(
