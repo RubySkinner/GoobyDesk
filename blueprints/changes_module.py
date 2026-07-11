@@ -63,8 +63,8 @@ def export_changes_csv():
     tickets = load_tickets()
 
     open_changes = [
-        t for t in tickets
-        if t.get("ticket_type") == "Change"
+        ticket for ticket in tickets
+        if t.get("request_type") == "Change"
         and t.get("ticket_status", "").lower() != "closed"
     ]
 
