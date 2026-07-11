@@ -18,7 +18,7 @@ from email.mime.text import MIMEText
 
 from dotenv import load_dotenv
 load_dotenv(".env")
-CONFIG_PATH = "./my_data/configuration.yml"
+CONFIG_PATH = "./prod_data/configuration.yml"
 
 def load_core_config():
     if not os.path.exists(CONFIG_PATH):

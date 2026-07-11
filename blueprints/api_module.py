@@ -11,6 +11,7 @@ from local_handlers.local_config_loader import load_core_config
 core_yaml_config = load_core_config()
 LOG_LEVEL = core_yaml_config["logging"]["level"]
 LOG_FILE = core_yaml_config["logging"]["file"]
+TAILSCALE_NOTIFY_EMAIL = core_yaml_config["email"]["tailscale_notify_email"]
 
 logging.basicConfig(filename=LOG_FILE,level=getattr(logging, LOG_LEVEL.upper(), logging.INFO),format="%(asctime)s - %(levelname)s - %(message)s")
 """ Above is the default logging configuration.
@@ -40,7 +41,6 @@ def api_status():
 @api_module_bp.route("/tailscale", methods=["POST"])
 def tailscale_webhook():
     load_tickets, save_tickets, generate_ticket_number = get_tickets_functions()
-    TAILSCALE_NOTIFY_EMAIL = api_module_bp.config.get('TAILSCALE_NOTIFY_EMAIL', 'noreply@tailscale.example.org')
     
     try:
         payload = request.json
@@ -189,6 +189,13 @@ new_ticket = {
             "ticket_status": "Open",
             "submission_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "ticket_notes": []
+        }
+"""
+"""
+@api_module_bp.route("/librenms", methods=["POST"])
+def librenms_webhook():
+
+new_ticket = {
         }
 """
     

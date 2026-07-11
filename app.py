@@ -15,7 +15,7 @@ from blueprints.reports_module import reports_module_bp
 from blueprints.changes_module import changes_module_bp
 from blueprints.itsm_module import itsm_module_bp
 
-BUILDID=str("0.9.9-RC1-a")
+BUILDID=str("0.9.9-RC1-c")
 
 """
 Rest in Peace Alex, July 2nd 2005 - December 14th 2024
@@ -30,8 +30,9 @@ TAILSCALE_NOTIFY_EMAIL = os.getenv("TAILSCALE_NOTIFY_EMAIL")
 
 # Configuration non-secret data loaded from YAML.
 core_yaml_config = local_config_loader.load_core_config()
-TICKETS_FILE = core_yaml_config["tickets_file"]
-EMPLOYEE_FILE = core_yaml_config["employee_file"]
+TICKETS_FILE = core_yaml_config["core"]["tickets_file"]
+EMPLOYEE_FILE = core_yaml_config["core"]["employee_file"]
+CUSTOMER_FILE = core_yaml_config["core"]["customers_file"]
 LOG_LEVEL = core_yaml_config["logging"]["level"]
 LOG_FILE = core_yaml_config["logging"]["file"]
 EMAIL_ENABLED = core_yaml_config["email"]["enabled"]
@@ -39,7 +40,7 @@ EMAIL_ACCOUNT = core_yaml_config["email"]["account"]
 IMAP_SERVER = core_yaml_config["email"]["imap_server"]
 SMTP_SERVER = core_yaml_config["email"]["smtp_server"]
 SMTP_PORT = core_yaml_config["email"]["smtp_port"]
-
+TAILSCALE_NOTIFY_EMAIL = core_yaml_config["email"]["tailscale_notify_email"]
 # Flask App core setup and configuration.
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASKAPP_SECRET_KEY")

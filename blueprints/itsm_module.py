@@ -10,15 +10,12 @@ from flask import Blueprint, render_template, request, jsonify, session
 import local_handlers.local_webhook_handler as local_webhook_handler
 from local_handlers.local_config_loader import load_core_config
 
-# BUILDID is duplicated from app.py since dashboard.html expects it.
-# Recommend centralizing this in prop_config.yml (loaded via load_core_config())
-# so it isn't hand-maintained in two files going forward.
-BUILDID = "0.9.9-RC1"
-
 core_yaml_config = load_core_config()
 TICKETS_FILE = core_yaml_config["tickets_file"]
 LOG_LEVEL = core_yaml_config["logging"]["level"]
 LOG_FILE = core_yaml_config["logging"]["file"]
+
+itsm_module_bp = Blueprint('itsm', __name__, url_prefix='/itsm')
 
 logging.basicConfig(
     filename=LOG_FILE,
@@ -32,9 +29,6 @@ Warning - Unexpected events
 Error - Function failures
 Critical - Serious application failures
 """
-
-itsm_module_bp = Blueprint('itsm', __name__, url_prefix='/itsm')
-
 def load_tickets():
     """Read/load the ticket JSON database into memory.
     Returns:
