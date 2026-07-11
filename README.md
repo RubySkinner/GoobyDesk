@@ -2,9 +2,9 @@
 
 The Ultimate Simple, Lightweight, Databaseless Service Desk for Home Labbers, Families, and One Man MSPs.
 
-**Current Version:**  v0.9.2
+**Current Version:**  v1.0.0
 
-**Revision Date:** 2026.01.10
+**Revision Date:** 2026.07.10
 
 [GoobyDesk Repo Wiki](https://github.com/GoobyFRS/GoobyDesk/wiki) & [Production Deployment Guide](https://github.com/GoobyFRS/GoobyDesk/wiki/Production-Deployment-Guide).
 
@@ -13,10 +13,6 @@ The Ultimate Simple, Lightweight, Databaseless Service Desk for Home Labbers, Fa
 GoobyDesk is a Python3, Flask-based web application with simple YAML configuration! Mobile-friendly landing page with lightweight ticket submission. It has support for multiple technicians. It can send and receive email replies and it can send notifications to Slack and Discord! Accepts incoming webhooks from Tailscale and Uptime-Kuma!
 
 > Lightweight, Readable, Ops-Friendly
-
-## Goals and Roadmap to Production v1.0
-
-- High Quality User Input Sanitation.
 
 ## Screenshots!
 
@@ -36,8 +32,8 @@ GoobyDesk is a Python3, Flask-based web application with simple YAML configurati
 
 ![Desktop_Ticket_Commander](https://github.com/user-attachments/assets/9c204797-4984-44eb-b66e-c0428f83e1c5)
 
-
 ### Reporting Module
+
 ![Desktop_Reporting_Module](https://github.com/user-attachments/assets/82a579cb-c3fb-4349-a6dd-1b7744718f66)
 
 ### Email Template
