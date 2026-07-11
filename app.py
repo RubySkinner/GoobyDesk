@@ -18,8 +18,6 @@ from blueprints.api_module import api_module_bp
 from blueprints.reports_module import reports_module_bp
 from blueprints.changes_module import changes_module_bp
 
-BUILDID=str("1.0.0")
-
 """
 Rest in Peace Alex, July 2nd 2005 - December 14th 2024
 Rest in Peace Dave, August 16th 1967 - December 19th 2025
