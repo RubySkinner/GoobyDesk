@@ -5,10 +5,14 @@ from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from functools import wraps
 
-import local_handlers.local_authentication_handler as local_authentication_handler
-import local_handlers.local_config_loader as local_config_loader
-import local_handlers.local_email_handler as local_email_handler
-import local_handlers.local_webhook_handler as local_webhook_handler
+from local_handlers.goobydesk_standard_library import (
+    fetch_email_replies,
+    load_core_config,
+    notify_ticket_event,
+    send_email,
+    hash_password,
+    verify_password,
+)
 
 from blueprints.api_module import api_module_bp
 from blueprints.reports_module import reports_module_bp
