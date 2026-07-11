@@ -22,12 +22,13 @@ EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 
 core_yaml_config = load_core_config()
 # Configuration variables from configuration.yml
+TICKETS_FILE = core_yaml_config["core"]["tickets_file"]
+
 EMAIL_ENABLED = core_yaml_config["email"]["enabled"]
 EMAIL_ACCOUNT = core_yaml_config["email"]["account"]
 IMAP_SERVER = core_yaml_config["email"]["imap_server"]
 SMTP_SERVER = core_yaml_config["email"]["smtp_server"]
 SMTP_PORT = core_yaml_config["email"]["smtp_port"]
-TICKETS_FILE = core_yaml_config["tickets_file"]
 LOG_LEVEL = core_yaml_config["logging"]["level"]
 LOG_FILE = core_yaml_config["logging"]["file"]
 
