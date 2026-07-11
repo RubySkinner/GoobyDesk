@@ -31,7 +31,6 @@ CF_TURNSTILE_SECRET_KEY = os.getenv("CF_TURNSTILE_SECRET_KEY") # REQUIRED for CA
 core_yaml_config = local_config_loader.load_core_config()
 TICKETS_FILE = core_yaml_config["core"]["tickets_file"]
 EMPLOYEE_FILE = core_yaml_config["core"]["employee_file"]
-CUSTOMER_FILE = core_yaml_config["core"]["customers_file"]
 LOG_LEVEL = core_yaml_config["logging"]["level"]
 LOG_FILE = core_yaml_config["logging"]["file"]
 EMAIL_ENABLED = core_yaml_config["email"]["enabled"]
