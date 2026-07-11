@@ -178,7 +178,7 @@ def technician_required(func):
         # Session-based auth check
         if not session.get("technician"):
             # Unauthorized access attempt
-            return render_template("403.html"), 403
+            return render_template("errors/403.html"), 403
         # Authorized technician → proceed to the route
         return func(*args, **kwargs)
     return wrapper
@@ -275,7 +275,7 @@ def home():
             return redirect(url_for("home"))
 
     # Refresh and reload the Home/Index
-    return render_template("index.html", sitekey=CF_TURNSTILE_SITE_KEY)
+    return render_template("public/index.html", sitekey=CF_TURNSTILE_SITE_KEY)
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -313,9 +313,9 @@ def login():
 
         # If we reach here -> authentication failed
         logging.warning(f"Failed login attempt for username: {username}")
-        return render_template("login.html", error="Invalid credentials.")
+        return render_template("public/login.html", error="Invalid credentials.")
 
-    return render_template("login.html", sitekey=CF_TURNSTILE_SITE_KEY)
+    return render_template("public/login.html", sitekey=CF_TURNSTILE_SITE_KEY)
 
 # Route for rendering the core technician dashboard. Displays all Open and In-Progress tickets.
 @app.route("/dashboard")
@@ -324,7 +324,7 @@ def dashboard():
     tickets = load_tickets()
     # Filtering out tickets with the Closed Status on the main Dashboard.
     open_tickets = [ticket for ticket in tickets if ticket["ticket_status"].lower() != "closed"]
-    return render_template("dashboard.html", tickets=open_tickets, loggedInTech=session["technician"], BUILDID=BUILDID)
+    return render_template("itsm/dashboard.html", tickets=open_tickets, loggedInTech=session["technician"], BUILDID=BUILDID)
 
 # Route for viewing a ticket in the Ticket Commander view.
 @app.route("/ticket/<ticket_number>")
@@ -336,7 +336,7 @@ def ticket_detail(ticket_number):
     if ticket:
         return render_template("ticket-commander.html", ticket=ticket, loggedInTech=session["technician"])
 
-    return render_template("404.html"), 404
+    return render_template("errors/404.html"), 404
 
 # Route for updating a ticket. Called from Dashboard and Ticket Commander.
 @app.route("/ticket/<ticket_number>/update_status/<ticket_status>", methods=["POST"])
@@ -345,11 +345,11 @@ def update_ticket_status(ticket_number, ticket_status):
     logging.info(f"{ticket_number} status has been changed to {ticket_status}.")
     
     if not session.get("technician"):
-        return render_template("403.html"), 403
+        return render_template("errors/403.html"), 403
     
     valid_statuses = ["Open", "In-Progress", "Closed"]
     if ticket_status not in valid_statuses:
-        return render_template("400.html"), 400
+        return render_template("errors/400.html"), 400
 
     loggedInTech = session["technician"]
     tickets = load_tickets()
@@ -376,7 +376,7 @@ def update_ticket_status(ticket_number, ticket_status):
 
             return jsonify({"message": f"Ticket {ticket_number} updated to {ticket_status}."})
 
-    return render_template("404.html"), 404
+    return render_template("errors/404.html"), 404
 
 # Route for appending a new note to a ticket.
 @app.route("/ticket/<ticket_number>/append_note", methods=["POST"])
@@ -412,23 +412,23 @@ def logout():
 # Handle 400 errors.
 @app.errorhandler(400)
 def bad_request(e):
-    return render_template("400.html"), 400
+    return render_template("errors/400.html"), 400
 
 # Handle 403 errors.
 @app.errorhandler(403)
 def forbidden(e):
-    return render_template("403.html"), 403
+    return render_template("errors/403.html"), 403
 
 # Handle 404 errors.
 @app.errorhandler(404)
 def page_not_found(e):
-    return render_template("404.html"), 404
+    return render_template("errors/404.html"), 404
 
 # Handles 500 errors.
 @app.errorhandler(500)
 def internal_server_error(e):
     logging.critical(f"Internal Server Error: {str(e)}")
-    return render_template("500.html"), 500
+    return render_template("errors/500.html"), 500
 
 if __name__ == "__main__":
     app.run() #debug=True
