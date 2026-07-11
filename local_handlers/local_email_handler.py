@@ -13,7 +13,8 @@ from email.header import decode_header
 from dotenv import load_dotenv
 import json
 from datetime import datetime
-from local_config_loader import load_core_config
+
+from local_handlers.local_config_loader import load_core_config
 
 load_dotenv(".env")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
