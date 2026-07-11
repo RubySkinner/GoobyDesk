@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-from flask import Blueprint, request, jsonify
-import json, logging
-from datetime import datetime
+import json
+import logging
 
+from datetime import datetime
+from flask import Blueprint, request, jsonify
 
 import local_handlers.local_webhook_handler as local_webhook_handler
 from local_handlers.local_config_loader import load_core_config
@@ -19,7 +20,7 @@ Warning - Unexpected events
 Error - Function failures
 Critical - Serious application failures
 """
-api_ingest_bp = Blueprint('api_ingest', __name__, url_prefix='/api')
+api_module_bp = Blueprint('api_module', __name__, url_prefix='/api')
 
 # Importing from APP to avoid circular imports. There might be a better way for this.
 def get_tickets_functions():
@@ -27,7 +28,7 @@ def get_tickets_functions():
     return load_tickets, save_tickets, generate_ticket_number
 
 # Status Endpoint at /api/status
-@api_ingest_bp.route("/status", methods=["GET"])
+@api_module_bp.route("/status", methods=["GET"])
 def api_status():
     return jsonify({
         "is_GoobyDesk": True,
@@ -36,10 +37,10 @@ def api_status():
         "license_key": None
     }), 200
 
-@api_ingest_bp.route("/tailscale", methods=["POST"])
+@api_module_bp.route("/tailscale", methods=["POST"])
 def tailscale_webhook():
     load_tickets, save_tickets, generate_ticket_number = get_tickets_functions()
-    TAILSCALE_NOTIFY_EMAIL = api_ingest_bp.config.get('TAILSCALE_NOTIFY_EMAIL', 'noreply@tailscale.example.org')
+    TAILSCALE_NOTIFY_EMAIL = api_module_bp.config.get('TAILSCALE_NOTIFY_EMAIL', 'noreply@tailscale.example.org')
     
     try:
         payload = request.json
@@ -93,7 +94,7 @@ def tailscale_webhook():
         logging.critical(f"API INGEST - Tailscale webhook error: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
 
-@api_ingest_bp.route("/uptime-kuma", methods=["POST"])
+@api_module_bp.route("/uptime-kuma", methods=["POST"])
 def uptime_kuma_webhook():
     load_tickets, save_tickets, generate_ticket_number = get_tickets_functions()
     
@@ -173,7 +174,7 @@ def uptime_kuma_webhook():
         logging.critical(f"API INGEST - Uptime Kuma webhook error: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
 """
-@api_ingest_bp.route("/goobyddns", methods=["POST"])
+@api_module_bp.route("/goobyddns", methods=["POST"])
 def goobyddns_webhook():
 
 new_ticket = {

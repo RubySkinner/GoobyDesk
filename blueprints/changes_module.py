@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
-from flask import Blueprint, render_template, session, Response
-import io, csv, json, logging
+import io
+import csv
+import json
+import logging
 from functools import wraps
+from flask import Blueprint, render_template, session, Response
 from local_handlers.local_config_loader import load_core_config
 
 # CONFIG & LOGGING

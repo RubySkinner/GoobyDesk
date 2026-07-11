@@ -10,7 +10,7 @@ import local_handlers.local_config_loader as local_config_loader
 import local_handlers.local_email_handler as local_email_handler
 import local_handlers.local_webhook_handler as local_webhook_handler
 
-from blueprints.api_ingest import api_ingest_bp
+from blueprints.api_module import api_module_bp
 from blueprints.reports_module import reports_module_bp
 from blueprints.changes_module import changes_module_bp
 
@@ -53,8 +53,8 @@ app.config.update(
     PERMANENT_SESSION_LIFETIME=timedelta(hours=12),
     MAX_CONTENT_LENGTH=16 * 1024 * 1024,)
 
-api_ingest_bp.config = {'TAILSCALE_NOTIFY_EMAIL': TAILSCALE_NOTIFY_EMAIL}
-app.register_blueprint(api_ingest_bp)
+api_module_bp.config = {'TAILSCALE_NOTIFY_EMAIL': TAILSCALE_NOTIFY_EMAIL}
+app.register_blueprint(api_module_bp)
 app.register_blueprint(reports_module_bp)
 app.register_blueprint(changes_module_bp)
 
@@ -400,12 +400,8 @@ def add_ticket_note(ticket_number):
 
 # ABOVE THIS LINE SHOULD ONLY BE TECHNICIAN/TICKETING PAGES ONLY!
 
-# Thanks to Claude Sonnet 4.5, API Ingest has moved to ./blueprints/reports_module.py
-
 # BELOW THIS LINE IS RESERVED FOR LOGOUT AND API INGEST ROUTES ONLY!
 # Removes the session cookie from the user browser, sending the Technician/user back to the login page.
-
-# Thanks to Claude Sonnet 4.5, API Ingest has moved to ./blueprints/api_ingest.py
 
 @app.route("/logout")
 def logout():
