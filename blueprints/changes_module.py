@@ -11,7 +11,7 @@ from local_handlers.local_config_loader import load_core_config
 core_yaml_config = load_core_config()
 LOG_LEVEL = core_yaml_config["logging"]["level"]
 LOG_FILE = core_yaml_config["logging"]["file"]
-TICKETS_FILE = core_yaml_config["tickets_file"]
+TICKETS_FILE = core_yaml_config["core"]["tickets_file"]
 
 logging.basicConfig(
     filename=LOG_FILE,
