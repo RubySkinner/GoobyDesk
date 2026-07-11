@@ -1,6 +1,9 @@
 # ==========================================
 # GoobyDesk TEMPLATE Core Configuration - DO NOT MODIFY THIS FILE
 # ==========================================
+build:
+  id: "1.0.0"
+  
 # Core Files
 tickets_file: "./my_data/tickets.json"
 employee_file: "./my_data/employee.json"
