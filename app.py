@@ -13,8 +13,9 @@ import local_handlers.local_webhook_handler as local_webhook_handler
 from blueprints.api_module import api_module_bp
 from blueprints.reports_module import reports_module_bp
 from blueprints.changes_module import changes_module_bp
+from blueprints.itsm_module import itsm_module_bp
 
-BUILDID=str("0.9.9-RC1")
+BUILDID=str("0.9.9-RC1-a")
 
 """
 Rest in Peace Alex, July 2nd 2005 - December 14th 2024
@@ -57,6 +58,7 @@ api_module_bp.config = {'TAILSCALE_NOTIFY_EMAIL': TAILSCALE_NOTIFY_EMAIL}
 app.register_blueprint(api_module_bp)
 app.register_blueprint(reports_module_bp)
 app.register_blueprint(changes_module_bp)
+app.register_blueprint(itsm_module_bp)
 
 # Security Headers for all responses.
 @app.after_request
@@ -172,6 +174,7 @@ else:
     logging.info("EMAIL_ENABLED is set to false. Skipping...")
 
 # Decorator to force authentication checking. Easy to append to routes.
+"""
 def technician_required(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -182,6 +185,7 @@ def technician_required(func):
         # Authorized technician → proceed to the route
         return func(*args, **kwargs)
     return wrapper
+    """
 
 @app.route("/", methods=["GET", "POST"])
 def home():
@@ -299,7 +303,7 @@ def login():
 
                     session["technician"] = username
                     logging.info(f"{username} logged in using legacy password and was auto-migrated.")
-                    return redirect(url_for("dashboard"))
+                    return redirect(url_for("itsm.dashboard"))
                 # Username matched, legacy password wrong -> stop checking
                 break
             # MODERN HASHED PASSWORD CHECK
@@ -307,7 +311,7 @@ def login():
             if stored_hash and local_authentication_handler.verify_password(password, stored_hash):
                 session["technician"] = username
                 logging.info(f"{username} logged in successfully.")
-                return redirect(url_for("dashboard"))
+                return redirect(url_for("itsm.dashboard"))
             # Username matched but password incorrect
             break
 
@@ -318,6 +322,7 @@ def login():
     return render_template("public/login.html", sitekey=CF_TURNSTILE_SITE_KEY)
 
 # Route for rendering the core technician dashboard. Displays all Open and In-Progress tickets.
+"""
 @app.route("/dashboard")
 @technician_required
 def dashboard():
@@ -332,7 +337,6 @@ def dashboard():
 def ticket_detail(ticket_number):
     tickets = load_tickets()
     ticket = next((t for t in tickets if t["ticket_number"] == ticket_number), None)
-    
     if ticket:
         return render_template("ticket-commander.html", ticket=ticket, loggedInTech=session["technician"])
 
@@ -397,6 +401,7 @@ def add_ticket_note(ticket_number):
             return jsonify({"message": "Note added successfully."}), 200  # Return JSON response
 
     return jsonify({"message": "Ticket not found."}), 404
+"""
 
 # ABOVE THIS LINE SHOULD ONLY BE TECHNICIAN/TICKETING PAGES ONLY!
 

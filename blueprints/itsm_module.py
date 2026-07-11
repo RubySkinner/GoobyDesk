@@ -35,7 +35,6 @@ Critical - Serious application failures
 
 itsm_module_bp = Blueprint('itsm', __name__, url_prefix='/itsm')
 
-
 def load_tickets():
     """Read/load the ticket JSON database into memory.
     Returns:
