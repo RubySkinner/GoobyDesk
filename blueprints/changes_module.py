@@ -2,8 +2,7 @@
 from flask import Blueprint, render_template, session, Response
 import io, csv, json, logging
 from functools import wraps
-from local_config_loader import load_core_config
-
+from local_handlers.local_config_loader import load_core_config
 
 # CONFIG & LOGGING
 core_yaml_config = load_core_config()
