@@ -23,15 +23,15 @@ After=network.target
 Type=notify
 User=$USER
 Group=www-data
-RuntimeDirectory=GR_Desk
-WorkingDirectory=/var/www/GR_Desk
-Environment="PATH=/var/www/GR_Desk/venv/bin"
+RuntimeDirectory=GoobyDesk
+WorkingDirectory=/var/www/GoobyDesk
+Environment="PATH=/var/www/GoobyDesk/venv/bin"
 Environment="PYTHONUNBUFFERED=1"
-ExecStart=/var/www/GR_Desk/venv/bin/gunicorn \
+ExecStart=/var/www/GoobyDesk/venv/bin/gunicorn \
     --workers 3 \
-    --bind unix:/run/GR_Desk/goobydesk.sock \
-    --access-logfile /var/log/GR_Desk/access.log \
-    --error-logfile /var/log/GR_Desk/error.log \
+    --bind unix:/run/GoobyDesk/goobydesk.sock \
+    --access-logfile /var/log/GoobyDesk/access.log \
+    --error-logfile /var/log/GoobyDesk/error.log \
     app:app
 ExecReload=/bin/kill -s HUP $MAINPID
 KillMode=mixed
