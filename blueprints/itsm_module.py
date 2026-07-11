@@ -90,13 +90,13 @@ def ticket_detail(ticket_number):
     Args:
         ticket_number (str): The ticket number to display.
     Returns:
-        Rendered ticket-commander.html, or a 404 page if not found.
+        Rendered console.html, or a 404 page if not found.
     """
     tickets = load_tickets()
     ticket = next((t for t in tickets if t["ticket_number"] == ticket_number), None)
     if ticket:
         return render_template(
-            "itsm/ticket-commander.html",
+            "itsm/console.html",
             ticket=ticket,
             loggedInTech=session["technician"],
         )
