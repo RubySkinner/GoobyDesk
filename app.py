@@ -321,88 +321,6 @@ def login():
 
     return render_template("public/login.html", sitekey=CF_TURNSTILE_SITE_KEY)
 
-# Route for rendering the core technician dashboard. Displays all Open and In-Progress tickets.
-"""
-@app.route("/dashboard")
-@technician_required
-def dashboard():
-    tickets = load_tickets()
-    # Filtering out tickets with the Closed Status on the main Dashboard.
-    open_tickets = [ticket for ticket in tickets if ticket["ticket_status"].lower() != "closed"]
-    return render_template("itsm/dashboard.html", tickets=open_tickets, loggedInTech=session["technician"], BUILDID=BUILDID)
-
-# Route for viewing a ticket in the Ticket Commander view.
-@app.route("/ticket/<ticket_number>")
-@technician_required
-def ticket_detail(ticket_number):
-    tickets = load_tickets()
-    ticket = next((t for t in tickets if t["ticket_number"] == ticket_number), None)
-    if ticket:
-        return render_template("ticket-commander.html", ticket=ticket, loggedInTech=session["technician"])
-
-    return render_template("errors/404.html"), 404
-
-# Route for updating a ticket. Called from Dashboard and Ticket Commander.
-@app.route("/ticket/<ticket_number>/update_status/<ticket_status>", methods=["POST"])
-@technician_required
-def update_ticket_status(ticket_number, ticket_status):
-    logging.info(f"{ticket_number} status has been changed to {ticket_status}.")
-    
-    if not session.get("technician"):
-        return render_template("errors/403.html"), 403
-    
-    valid_statuses = ["Open", "In-Progress", "Closed"]
-    if ticket_status not in valid_statuses:
-        return render_template("errors/400.html"), 400
-
-    loggedInTech = session["technician"]
-    tickets = load_tickets()
-
-    for ticket in tickets:
-        if ticket["ticket_number"] == ticket_number:
-            # Extract subject for webhook notifications
-            ticket_subject = ticket.get("ticket_subject", "No Subject Provided")
-            # Update ticket in memory
-            ticket["ticket_status"] = ticket_status
-            
-            if ticket_status == "Closed":
-                ticket["closed_by"] = loggedInTech
-                ticket["closure_date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-            save_tickets(tickets)
-            logging.info(f"Ticket {ticket_number} status updated to {ticket_status} by {loggedInTech}.")
-            # Send webhook notifications for status update.
-            try:
-                local_webhook_handler.notify_ticket_event(ticket_number=ticket_number,ticket_status=ticket_status,ticket_subject=ticket_subject) # Consider a refactor later.
-                logging.info(f"Ticket {ticket_number} status update notifications sent successfully.")
-            except Exception as e:
-                logging.error(f"Failed to send ticket status update notifications for {ticket_number}: {str(e)}")
-
-            return jsonify({"message": f"Ticket {ticket_number} updated to {ticket_status}."})
-
-    return render_template("errors/404.html"), 404
-
-# Route for appending a new note to a ticket.
-@app.route("/ticket/<ticket_number>/append_note", methods=["POST"])
-@technician_required
-def add_ticket_note(ticket_number):
-    new_tkt_note = request.form.get("note_content")  # Ensure the key matches the JS request
-
-    if not new_tkt_note:
-        return jsonify({"message": "Note Contents cannot be empty!"}), 400
-
-    tickets = load_tickets()  # Load tickets into memory.
-
-    for ticket in tickets:
-        if ticket["ticket_number"] == ticket_number:
-            ticket["ticket_notes"].append(new_tkt_note)  # Append note
-            save_tickets(tickets)  # Save updates
-            logging.info(f"Note successfully appended to {ticket_number}.")
-            return jsonify({"message": "Note added successfully."}), 200  # Return JSON response
-
-    return jsonify({"message": "Ticket not found."}), 404
-"""
-
 # ABOVE THIS LINE SHOULD ONLY BE TECHNICIAN/TICKETING PAGES ONLY!
 
 # BELOW THIS LINE IS RESERVED FOR LOGOUT AND API INGEST ROUTES ONLY!
@@ -410,8 +328,10 @@ def add_ticket_note(ticket_number):
 
 @app.route("/logout")
 def logout():
-    session.pop("technician", None)
-    return redirect(url_for("login"))
+    session.clear()
+    response = redirect(url_for("login"))
+    response.delete_cookie("goobydesk_session_cookie")
+    return response
 
 # BELOW THIS LINE IS RESERVED FOR FLASK ERROR ROUTES. PUT ALL CORE APP FUNCTIONS ABOVE THIS LINE!
 # Handle 400 errors.
