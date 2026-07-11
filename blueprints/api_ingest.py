@@ -2,8 +2,10 @@
 from flask import Blueprint, request, jsonify
 import json, logging
 from datetime import datetime
-import local_webhook_handler
-from local_config_loader import load_core_config
+
+
+import local_handlers.local_webhook_handler as local_webhook_handler
+from local_handlers.local_config_loader import load_core_config
 
 core_yaml_config = load_core_config()
 LOG_LEVEL = core_yaml_config["logging"]["level"]
