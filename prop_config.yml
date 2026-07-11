@@ -26,8 +26,8 @@ email:
 # Branding
 #########################
 brand:
-  name: ""
-  tagline: ""
+  name: "GoobyDesk"
+  tagline: "Open Source ITSM"
   logo_url: ""
   favicon_url: ""
 
@@ -44,7 +44,7 @@ colors:
   text_secondary: "#64748b"
 
 footer:
-  copyright: ""
+  copyright: "GoobyDesk"
   year: 2026
   links:
     - label: "Documentation"
@@ -70,12 +70,12 @@ webhooks:
     discord:
       enabled: false
       webhook_url: ""
-      username: "Service Desk"
+      username: "GoobyDesk"
       avatar_url: ""
     slack:
       enabled: false
       webhook_url: ""
-      username: "Service Desk"
+      username: "GoobyDesk"
       avatar_url: ""
     teams365:
       enabled: false
