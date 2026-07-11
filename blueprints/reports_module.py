@@ -2,7 +2,7 @@
 from flask import Blueprint, render_template, session, Response
 import io, csv, logging
 from datetime import datetime, timedelta
-from local_config_loader import load_core_config
+from local_handlers.local_config_loader import load_core_config
 
 core_yaml_config = load_core_config()
 LOG_LEVEL = core_yaml_config["logging"]["level"]
