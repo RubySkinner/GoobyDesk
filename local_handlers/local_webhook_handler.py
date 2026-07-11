@@ -3,7 +3,8 @@
 __all__ = ["notify_ticket_event", "send_webhook"]
 import logging
 import requests
-import local_config_loader
+
+from local_handlers.local_config_loader import load_core_config
 
 # CONFIG HELPERS
 def load_webhook_config():
