@@ -7,7 +7,7 @@
     <meta name="author" content="Matt Faulkner">
     <meta name="description" content="GoobyDesk Reports Home">
     <meta name="robots" content="noindex, nofollow"> <!--Discourage Search Engine Indexing of this page-->
-    <meta name="theme-color" content="#284389"> <!-- Mobile Browser stylized address bar.-->
+    <meta name="theme-color" content="#0d1117"> <!-- Mobile Browser stylized address bar.-->
     <meta http-equiv="X-UA-Compatible" content="IE=edge"> <!-- Force IE to use latest rendering engine available.-->
     <meta http-equiv="refresh" content="600">
     <!-- Performance Enhancements -->
@@ -20,7 +20,6 @@
     <script src="{{ url_for('static', filename='alerts.js') }}" defer></script>
     <title>GoobyDesk - Reports Home</title>
 </head>
-
 <body>
     <div class="container">
         <!-- Logo -->
@@ -28,48 +27,426 @@
             <img src="https://raw.githubusercontent.com/GoobyFRS/GoobyDesk/refs/heads/main/static/GoobyDesk-color.webp"
                  alt="GoobyDesk Logo">
         </div>
-        <h2>GoobyDesk Reporting</h2>
-        <div class="kpi-grid">        
-            <div class="kpi-card">
-                <h3>Open</h3>
-                <div class="kpi-value">{{ open_tickets }}</div>
+
+        <!--
+            Values below fall back to sample/placeholder numbers with the `default()` filter
+            wherever GoobyDesk's Flask route doesn't pass real data yet (queue_counts,
+            impact_counts, source_counts, resolution_stats, and the Change Management block).
+            The moment the route starts passing a variable with that same name, the real
+            value takes over automatically — no template changes needed.
+        -->
+        {% set active_tickets = active_tickets | default(open_tickets + in_progress_tickets) %}
+
+        {% set status_counts = status_counts | default({
+            'new': open_tickets,
+            'in_progress': in_progress_tickets,
+            'resolved': closed_tickets,
+            'cancelled': 0
+        }) %}
+
+        {% set time_buckets = time_buckets | default({
+            'last_7_days': last_7_days,
+            'last_14_days': last_14_days,
+            'last_30_days': last_30_days,
+            'last_60_days': last_60_days,
+            'last_90_days': 0
+        }) %}
+
+        {% set queue_counts = queue_counts | default({
+            'General Support': 4,
+            'Billing': 2,
+            'Technical': 7
+        }) %}
+
+        {% set impact_counts = impact_counts | default({
+            'critical': 1,
+            'high': 3,
+            'medium': 6,
+            'low': 4
+        }) %}
+
+        {% set source_counts = source_counts | default({
+            'Email': 9,
+            'Portal': 6,
+            'Phone': 2
+        }) %}
+
+        {% set resolution_stats = resolution_stats | default({
+            'total_resolved': closed_tickets,
+            'avg_resolution_hours': 0,
+            'min_resolution_hours': 0,
+            'max_resolution_hours': 0
+        }) %}
+
+        <div class="page-header">
+            <div>
+                <h2>GoobyDesk Reporting</h2>
+                <p class="text-muted">Ticket analytics and reporting</p>
             </div>
-            <div class="kpi-card">
-                <h3>In-Progress</h3>
-                <div class="kpi-value">{{ in_progress_tickets }}</div>
-            </div>
-            <div class="kpi-card">
-                <h3>Closed</h3>
-                <div class="kpi-value">{{ closed_tickets }}</div>
+            <div class="page-header-actions">
+                <form action="{{ url_for('dashboard') }}" method="GET">
+                    <button type="submit" class="submit-btn">Back to Dashboard</button>
+                </form>
+                <form action="{{ url_for('reports.export_tickets_csv') }}" method="GET">
+                    <button type="submit" class="submit-btn">Export CSV Report</button>
+                </form>
+                <!--
+                    Once there's a route for it, add another form/button here the same way,
+                    e.g. url_for('reports.export_open_tickets')
+                -->
             </div>
         </div>
-        <!-- Ticket Summary -->
-        <ul class="ticket-list">
-            <li><strong>Lifetime Tickets:</strong> {{ total_tickets }}</li>
-            <li><strong>Lifetime Closed:</strong> {{ closed_tickets }}</li>
-            <li><strong>Tickets Open:</strong> {{ open_tickets }}</li>
-            <li><strong>Tickets In-Progress:</strong> {{ in_progress_tickets }}</li>
-        </ul>
 
-        <h2>Trends over Time</h2>
+        <!-- Overview Stats -->
+        <section class="stats-grid" aria-label="Ticket overview statistics">
+            <div class="stat-card">
+                <div class="stat-card-title">Total Tickets</div>
+                <div class="stat-card-value">{{ total_tickets }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-title">Open</div>
+                <div class="stat-card-value">{{ open_tickets }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-title">In-Progress</div>
+                <div class="stat-card-value">{{ in_progress_tickets }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-title">Closed</div>
+                <div class="stat-card-value">{{ closed_tickets }}</div>
+            </div>
+        </section>
 
-        <ul class="ticket-list">
-            <li><strong>Last 60 Days:</strong> {{ last_60_days }}</li>
-            <li><strong>Last 30 Days:</strong> {{ last_30_days }}</li>
-            <li><strong>Last 14 Days:</strong> {{ last_14_days }}</li>
-            <li><strong>Last 7 Days:</strong> {{ last_7_days }}</li>
-        </ul>
+        <div class="grid grid-2">
+            <!-- Status Breakdown -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Status Breakdown</h3>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <caption class="sr-only">Ticket counts grouped by status</caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Status</th>
+                                <th scope="col">Count</th>
+                                <th scope="col">Percentage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for status, count in status_counts.items() %}
+                            <tr>
+                                <td>
+                                    <span class="badge badge-{% if status == 'new' %}info{% elif status == 'in_progress' %}warning{% elif status == 'resolved' %}success{% elif status == 'cancelled' %}secondary{% else %}primary{% endif %}">
+                                        {{ status | replace('_', ' ') | title }}
+                                    </span>
+                                </td>
+                                <td>{{ count }}</td>
+                                <td>{% if total_tickets > 0 %}{{ "%.1f"|format(count / total_tickets * 100) }}%{% else %}0%{% endif %}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
-        <!-- Navigation -->
-        <form action="{{ url_for('dashboard') }}" method="GET">
-            <button type="submit" class="submit-btn">Back to Dashboard</button>
-        </form>
-        <form action="{{ url_for('reports.export_tickets_csv') }}" method="GET">
-            <button type="submit" class="submit-btn">Export CSV Report</button>
-        </form>
+            <!-- Time-Based Analysis -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Tickets Created</h3>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <caption class="sr-only">Tickets created by time period</caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Time Period</th>
+                                <th scope="col">Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Last 7 Days</td>
+                                <td><strong>{{ time_buckets.last_7_days }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Last 14 Days</td>
+                                <td>{{ time_buckets.last_14_days }}</td>
+                            </tr>
+                            <tr>
+                                <td>Last 30 Days</td>
+                                <td>{{ time_buckets.last_30_days }}</td>
+                            </tr>
+                            <tr>
+                                <td>Last 60 Days</td>
+                                <td>{{ time_buckets.last_60_days }}</td>
+                            </tr>
+                            <tr>
+                                <td>Last 90 Days</td>
+                                <td>{% if time_buckets.last_90_days %}{{ time_buckets.last_90_days }}{% else %}&mdash;{% endif %}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-2">
+            <!-- Queue Distribution (sample data until GoobyDesk tracks queues) -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Active Tickets by Queue</h3>
+                </div>
+                <div class="card-body">
+                    {% if queue_counts %}
+                    <table class="table">
+                        <caption class="sr-only">Active ticket counts by queue</caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Queue</th>
+                                <th scope="col">Active Tickets</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for queue, count in queue_counts.items() %}
+                            <tr>
+                                <td>{{ queue | title }}</td>
+                                <td>{{ count }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <p class="text-muted">No active tickets</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Impact Distribution (sample data until GoobyDesk tracks impact) -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Active Tickets by Impact</h3>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <caption class="sr-only">Active ticket counts by impact level</caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Impact Level</th>
+                                <th scope="col">Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="badge badge-danger">Critical</span></td>
+                                <td>{{ impact_counts.critical }}</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge badge-warning">High</span></td>
+                                <td>{{ impact_counts.high }}</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge badge-info">Medium</span></td>
+                                <td>{{ impact_counts.medium }}</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge badge-secondary">Low</span></td>
+                                <td>{{ impact_counts.low }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-2">
+            <!-- Source Distribution (sample data until GoobyDesk tracks ticket source) -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Tickets by Source</h3>
+                </div>
+                <div class="card-body">
+                    {% if source_counts %}
+                    <table class="table">
+                        <caption class="sr-only">Ticket counts by source channel</caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Source</th>
+                                <th scope="col">Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for source, count in source_counts.items() %}
+                            <tr>
+                                <td>{{ source | title }}</td>
+                                <td>{{ count }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <p class="text-muted">No tickets found</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Resolution Statistics (hours not tracked yet - shows dashes until wired up) -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Resolution Statistics</h3>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <caption class="sr-only">Resolution time statistics</caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Metric</th>
+                                <th scope="col">Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Total Resolved</td>
+                                <td>{{ resolution_stats.total_resolved }}</td>
+                            </tr>
+                            <tr>
+                                <td>Average Resolution Time</td>
+                                <td>{% if resolution_stats.avg_resolution_hours %}{{ "%.1f"|format(resolution_stats.avg_resolution_hours) }} hours{% else %}&mdash;{% endif %}</td>
+                            </tr>
+                            <tr>
+                                <td>Fastest Resolution</td>
+                                <td>{% if resolution_stats.min_resolution_hours %}{{ "%.1f"|format(resolution_stats.min_resolution_hours) }} hours{% else %}&mdash;{% endif %}</td>
+                            </tr>
+                            <tr>
+                                <td>Slowest Resolution</td>
+                                <td>{% if resolution_stats.max_resolution_hours %}{{ "%.1f"|format(resolution_stats.max_resolution_hours) }} hours{% else %}&mdash;{% endif %}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!--
+            Change Management Section
+            GoobyDesk doesn't have a Changes feature yet, so everything here defaults to
+            zero rather than fake sample numbers - it's a scaffold, not a demo. Delete this
+            whole section if change management isn't on the roadmap.
+        -->
+        {% set total_changes = total_changes | default(0) %}
+        {% set active_changes = active_changes | default(0) %}
+        {% set change_status_counts = change_status_counts | default({
+            'Planned': 0,
+            'Scheduled': 0,
+            'InProgress': 0,
+            'Completed': 0,
+            'Cancelled': 0
+        }) %}
+        {% set change_risk_counts = change_risk_counts | default({
+            'High': 0,
+            'Medium': 0,
+            'Low': 0,
+            'None': 0
+        }) %}
+
+        <h2 class="section-title">Change Management</h2>
+
+        <section class="stats-grid" aria-label="Change management overview">
+            <div class="stat-card">
+                <div class="stat-card-title">Total Changes</div>
+                <div class="stat-card-value">{{ total_changes }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-title">Active Changes</div>
+                <div class="stat-card-value">{{ active_changes }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-title">Completed</div>
+                <div class="stat-card-value">{{ change_status_counts.Completed }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-title">High Risk</div>
+                <div class="stat-card-value">{{ change_risk_counts.High }}</div>
+            </div>
+        </section>
+
+        <div class="grid grid-2">
+            <!-- Change Status Breakdown -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Changes by Status</h3>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <caption class="sr-only">Change counts grouped by status</caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Status</th>
+                                <th scope="col">Count</th>
+                                <th scope="col">Percentage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for status, count in change_status_counts.items() %}
+                            <tr>
+                                <td>
+                                    <span class="badge badge-{% if status == 'Completed' %}success{% elif status == 'InProgress' %}warning{% elif status == 'Cancelled' %}secondary{% else %}info{% endif %}">
+                                        {{ status }}
+                                    </span>
+                                </td>
+                                <td>{{ count }}</td>
+                                <td>{% if total_changes > 0 %}{{ "%.1f"|format(count / total_changes * 100) }}%{% else %}0%{% endif %}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Change Risk Breakdown -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Changes by Risk Level</h3>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <caption class="sr-only">Change counts grouped by risk level</caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Risk Level</th>
+                                <th scope="col">Count</th>
+                                <th scope="col">Percentage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="badge badge-danger">High</span></td>
+                                <td>{{ change_risk_counts.High }}</td>
+                                <td>{% if total_changes > 0 %}{{ "%.1f"|format(change_risk_counts.High / total_changes * 100) }}%{% else %}0%{% endif %}</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge badge-warning">Medium</span></td>
+                                <td>{{ change_risk_counts.Medium }}</td>
+                                <td>{% if total_changes > 0 %}{{ "%.1f"|format(change_risk_counts.Medium / total_changes * 100) }}%{% else %}0%{% endif %}</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge badge-info">Low</span></td>
+                                <td>{{ change_risk_counts.Low }}</td>
+                                <td>{% if total_changes > 0 %}{{ "%.1f"|format(change_risk_counts.Low / total_changes * 100) }}%{% else %}0%{% endif %}</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge badge-secondary">None</span></td>
+                                <td>{{ change_risk_counts.None }}</td>
+                                <td>{% if total_changes > 0 %}{{ "%.1f"|format(change_risk_counts.None / total_changes * 100) }}%{% else %}0%{% endif %}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <!-- Footer -->
         <p class="footer-text">©2025 GoobyDesk, FOSS created by GoobyFRS | Logged In as: {{ loggedInTech }} | <a href="{{ url_for('dashboard') }}">Back to Dashboard</a></p>
-
     </div>
 </body>
 </html>

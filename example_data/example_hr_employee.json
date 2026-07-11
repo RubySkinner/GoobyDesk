@@ -37,6 +37,5 @@
     "has_tailnet_access": "true",
     "has_gitea_access": "true",
     "has_discord_access": "true",
-    "has_slack_access": "KeytrueValue"
-
+    "has_slack_access": "true"
 }

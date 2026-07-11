@@ -27,6 +27,171 @@
     --link-hover: #79c0ff;
 
     --alert: #238636;
+
+    /* Primer-style aliases used by the reusable dashboard block below.
+       Mapped onto the palette above so stat-card/card/table actually render. */
+    --color-canvas-subtle: var(--panel-alt);
+    --color-border-default: var(--border);
+    --color-border-muted: var(--border);
+    --color-fg-muted: var(--text-muted);
+    --color-accent-fg: var(--link);
+}
+
+/* GPT5 Reusable Dashboard */
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.page-header-actions {
+    display: flex;
+    gap: .75rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: var(--color-canvas-subtle);
+    border: 1px solid var(--color-border-default);
+    border-radius: 10px;
+    padding: 1.5rem;
+}
+
+.stat-card-title {
+    font-size: .9rem;
+    color: var(--color-fg-muted);
+}
+
+.stat-card-value {
+    margin-top: .5rem;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-accent-fg);
+}
+
+.grid {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.grid-2 {
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+}
+
+.card {
+    background: var(--color-canvas-subtle);
+    border: 1px solid var(--color-border-default);
+    border-radius: 10px;
+}
+
+.card-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--color-border-default);
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th,
+.table td {
+    padding: .75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--color-border-muted);
+}
+
+/* .container below has text-align:center for the centered marketing-page
+   look elsewhere on the site. These dashboard pieces read better left-aligned. */
+.page-header,
+.stat-card,
+.card {
+    text-align: left;
+}
+
+.section-title {
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.text-muted {
+    color: var(--text-muted);
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* ==========================================================
+   Badges (status/risk labels used in the reporting tables)
+   ========================================================== */
+
+.badge {
+    display: inline-block;
+    padding: .2rem .65rem;
+    border-radius: 999px;
+    font-size: .78rem;
+    font-weight: 600;
+    white-space: nowrap;
+    border: 1px solid transparent;
+}
+
+.badge-info {
+    background: rgba(88, 166, 255, .15);
+    color: #58a6ff;
+    border-color: rgba(88, 166, 255, .4);
+}
+
+.badge-warning {
+    background: rgba(210, 153, 34, .15);
+    color: #d29922;
+    border-color: rgba(210, 153, 34, .4);
+}
+
+.badge-success {
+    background: rgba(63, 185, 80, .15);
+    color: #3fb950;
+    border-color: rgba(63, 185, 80, .4);
+}
+
+.badge-secondary {
+    background: rgba(139, 148, 158, .15);
+    color: #8b949e;
+    border-color: rgba(139, 148, 158, .4);
+}
+
+.badge-danger {
+    background: rgba(248, 81, 73, .15);
+    color: #f85149;
+    border-color: rgba(248, 81, 73, .4);
+}
+
+.badge-primary {
+    background: rgba(163, 113, 247, .15);
+    color: #a371f7;
+    border-color: rgba(163, 113, 247, .4);
 }
 
 /* ==========================================================
