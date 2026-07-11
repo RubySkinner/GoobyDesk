@@ -83,7 +83,7 @@
                 <p class="text-muted">Ticket analytics and reporting</p>
             </div>
             <div class="page-header-actions">
-                <form action="{{ url_for('dashboard') }}" method="GET">
+                <form action="{{ url_for('itsm.dashboard') }}" method="GET">
                     <button type="submit" class="submit-btn">Back to Dashboard</button>
                 </form>
                 <form action="{{ url_for('reports.export_tickets_csv') }}" method="GET">
@@ -445,7 +445,7 @@
         </div>
 
         <!-- Footer -->
-        <p class="footer-text">©2025 GoobyDesk, FOSS created by GoobyFRS | Logged In as: {{ loggedInTech }} | <a href="{{ url_for('dashboard') }}">Back to Dashboard</a></p>
+        <p class="footer-text">©2025 GoobyDesk, FOSS created by GoobyFRS | Logged In as: {{ loggedInTech }} | <a href="{{ url_for('itsm.dashboard') }}">Back to Dashboard</a></p>
     </div>
 </body>
 </html>
