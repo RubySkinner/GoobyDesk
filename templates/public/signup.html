@@ -1,2 +1,101 @@
 <!DOCTYPE html>
 <html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account — GoobyDesk</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <main class="container">
+        <div class="logo">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="GoobyDesk logo">
+        </div>
+
+        <h2>Create your account</h2>
+        <p class="text-muted">
+            Sign up to submit and track your own support requests.
+        </p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert" role="alert">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!--
+            PLACEHOLDER FORM — /signup route does not exist yet in app.py.
+            When the customer dashboard is built, this should POST to a
+            /signup route that:
+              1. Validates the Turnstile token (same pattern as the "/"
+                 route's POST handler in app.py).
+              2. Validates required fields + password confirmation match.
+              3. Hashes the password via
+                 local_authentication_handler.hash_password().
+              4. Persists the new customer record (new JSON store, or an
+                 extension of the employee/customer data model — TBD).
+              5. Creates a session and redirects to the customer dashboard.
+            Until that route exists, this form has nowhere to submit to.
+        -->
+        <!-- action is a literal path (not url_for) since the "signup" endpoint doesn't exist in app.py yet -->
+        <form method="POST" action="/signup" novalidate>
+
+            <label for="full_name">Full name</label>
+            <input
+                type="text"
+                id="full_name"
+                name="full_name"
+                autocomplete="name"
+                required
+                aria-required="true">
+
+            <label for="email">Email address</label>
+            <input
+                type="email"
+                id="email"
+                name="email"
+                autocomplete="email"
+                required
+                aria-required="true">
+
+            <label for="password">Password</label>
+            <input
+                type="password"
+                id="password"
+                name="password"
+                autocomplete="new-password"
+                minlength="8"
+                required
+                aria-required="true"
+                aria-describedby="password_help">
+            <span id="password_help" class="footer-text" style="margin-top: 4px;">
+                At least 8 characters.
+            </span>
+
+            <label for="confirm_password">Confirm password</label>
+            <input
+                type="password"
+                id="confirm_password"
+                name="confirm_password"
+                autocomplete="new-password"
+                minlength="8"
+                required
+                aria-required="true">
+
+            {% if sitekey %}
+            <div class="cf-turnstile" data-sitekey="{{ sitekey }}" style="margin-top: 15px;"></div>
+            {% endif %}
+
+            <button type="submit" class="submit-btn">Create account</button>
+        </form>
+
+        <p class="footer-text">
+            Already have an account? <a href="{{ url_for('login') }}">Log in</a>
+        </p>
+    </main>
+
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+</body>
+</html>
