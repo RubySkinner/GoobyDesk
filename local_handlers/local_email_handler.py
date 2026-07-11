@@ -13,7 +13,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.header import decode_header
 from dotenv import load_dotenv
-from datetime import datetime
+from datetime import datetime # Pending removal.
 
 from local_handlers.local_config_loader import load_core_config
 
