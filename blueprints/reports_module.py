@@ -30,7 +30,7 @@ def get_app_functions():
 
 @reports_module_bp.route("/", endpoint='reports_home')
 def reports_home():
-    from app import load_tickets, BUILDID
+    from app import load_tickets
     
     if not session.get("technician"):
         return render_template("403.html"), 403
@@ -84,8 +84,8 @@ def reports_home():
         last_30_days=time_buckets["last_30_days"],
         last_14_days=time_buckets["last_14_days"],
         last_7_days=time_buckets["last_7_days"],
-        loggedInTech=session["technician"], 
-        BUILDID=BUILDID)
+        loggedInTech=session["technician"],
+        )
 
 @reports_module_bp.route("/export/csv", endpoint='export_tickets_csv')
 def export_tickets_csv():

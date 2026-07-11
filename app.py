@@ -33,7 +33,6 @@ TAILSCALE_NOTIFY_EMAIL = os.getenv("TAILSCALE_NOTIFY_EMAIL")
 
 # Configuration non-secret data loaded from YAML.
 core_yaml_config = load_core_config()
-BUILDID = core_yaml_config["build"]["id"]
 TICKETS_FILE = core_yaml_config["tickets_file"]
 EMPLOYEE_FILE = core_yaml_config["employee_file"]
 LOG_LEVEL = core_yaml_config["logging"]["level"]
@@ -329,7 +328,7 @@ def dashboard():
     tickets = load_tickets()
     # Filtering out tickets with the Closed Status on the main Dashboard.
     open_tickets = [ticket for ticket in tickets if ticket["ticket_status"].lower() != "closed"]
-    return render_template("dashboard.html", tickets=open_tickets, loggedInTech=session["technician"], BUILDID=BUILDID)
+    return render_template("dashboard.html", tickets=open_tickets, loggedInTech=session["technician"])
 
 # Route for viewing a ticket in the Ticket Commander view.
 @app.route("/ticket/<ticket_number>")
