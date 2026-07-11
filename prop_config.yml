@@ -1,0 +1,165 @@
+#########################
+# Core Configuration
+#########################
+employees_file: ""
+customers_file: ""
+tickets_file: ""
+changes_file: ""
+services_appid_file: ""
+
+logging:
+  level: "INFO"         # Valid: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  file: "latest.log" # Relative or absolute path
+
+session:
+  lifetime_hours: 24
+
+email:
+  enabled: false  # true / false - false by default.
+  account: ""   # Username/Email Address - Password should be stored in the .env file.
+  imap_server: ""
+  imap_port: 993
+  smtp_server: ""
+  smtp_port: 587
+
+#########################
+# Branding
+#########################
+brand:
+  name: ""
+  tagline: ""
+  logo_url: ""
+  favicon_url: ""
+
+colors:
+  primary: "#2563eb"
+  secondary: "#64748b"
+  success: "#22c55e"
+  warning: "#f59e0b"
+  danger: "#ef4444"
+  info: "#3b82f6"
+  background: "#f8fafc"
+  surface: "#ffffff"
+  text_primary: "#1e293b"
+  text_secondary: "#64748b"
+
+footer:
+  copyright: ""
+  year: 2026
+  links:
+    - label: "Documentation"
+      url: "/docs"
+    - label: "Support"
+      url: "/support"
+#########################
+# Webhooks
+#########################
+webhooks:
+  ingest:
+      generic:
+        enabled: false
+        api_key: ""  # X-API-Key header for authentication
+      tailscale:
+        enabled: false
+        secret: ""  # Webhook secret for signature verification
+      uptime_kuma:
+        enabled: false
+        token: ""  # Bearer token for authentication
+        create_ticket_on_up: false  # Only create tickets for DOWN events by default
+  egress:
+    discord:
+      enabled: false
+      webhook_url: ""
+      username: "Service Desk"
+      avatar_url: ""
+    slack:
+      enabled: false
+      webhook_url: ""
+      username: "Service Desk"
+      avatar_url: ""
+    teams365:
+      enabled: false
+      webhook_url: ""
+
+#########################
+# ITSM Options
+#########################
+tickets:
+  queues:
+    - support
+    - escalation
+    - billing
+  tk_status:
+    - new
+    - in_progress
+    - on_hold
+    - resolved
+    - cancelled
+  tk_impacts:
+    - low
+    - medium
+    - high
+    - critical
+  tk_urgency:
+    - low
+    - medium
+    - high
+    - critical
+  default_queue: "support"
+  default_status: "new"
+  default_impact: "low"
+  default_urgency: "low"
+
+employees:
+  access_roles:
+    - none
+    - support_technician
+    - hr_person
+    - manager
+    - admin
+  assignment_queues:
+    - support
+    - escalation
+    - billing
+  default_role: "none"
+  default_queue: "support"
+
+customers:
+  statuses:
+    - active
+    - closed
+    - suspended
+    - terminated
+  fraud_risk_levels:
+    - none
+    - low
+    - medium
+    - high
+  default_status: "active"
+  default_fraud_risk: "low"
+
+services:
+  statuses:
+    - active
+    - provisioning
+    - inactive
+    - suspended
+    - terminated
+  default_status: "provisioning"
+
+changes:
+  chg_status:
+    - Draft
+    - Pending
+    - Approved
+    - Completed
+    - Rollback
+    - Cancelled
+  chg_risk:
+    - None
+    - Low
+    - Medium
+    - High
+  default_status: "Draft"
+  default_risk: "None"
+  
