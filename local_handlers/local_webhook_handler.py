@@ -56,7 +56,7 @@ def send_webhook(url, payload, service_name):
         return False
 
     if not url:
-        logging.warning(f"WEBHOOK HANDLER - {service_name} webhook URL missing in core_configuration.yml")
+        logging.warning(f"WEBHOOK HANDLER - {service_name} webhook URL missing in configuration.yml")
         return False
 
     try:

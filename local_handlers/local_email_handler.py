@@ -21,7 +21,7 @@ load_dotenv(".env")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 
 core_yaml_config = load_core_config()
-# Configuration variables from core_configuration.yml
+# Configuration variables from configuration.yml
 EMAIL_ENABLED = core_yaml_config["email"]["enabled"]
 EMAIL_ACCOUNT = core_yaml_config["email"]["account"]
 IMAP_SERVER = core_yaml_config["email"]["imap_server"]
@@ -66,7 +66,7 @@ def send_email(requestor_email, ticket_subject, ticket_message, html=True):
         return False
 
     if not EMAIL_ACCOUNT or not EMAIL_PASSWORD or not SMTP_SERVER:
-        logging.error("EMAIL HANDLER - Email configuration incomplete. Check core_configuration.yml and .env.")
+        logging.error("EMAIL HANDLER - Email configuration incomplete. Check configuration.yml and .env.")
         return False
 
     msg = MIMEMultipart()

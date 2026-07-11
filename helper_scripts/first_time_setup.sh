@@ -59,7 +59,7 @@ echo "Copying configuration files..."
 cp example_dotenv .env || { echo "ERROR: Failed to copy .env file"; exit 1; }
 cp example_employee.json prod_data/employee.json || { echo "ERROR: Failed to copy employee.json"; exit 1; }
 cp example_tickets.json prod_data/tickets.json || { echo "ERROR: Failed to copy tickets.json"; exit 1; }
-cp template_configuration.yml prod_data/core_configuration.yml || { echo "ERROR: Failed to copy core_configuration.yml"; exit 1; }
+cp template_configuration.yml prod_data/configuration.yml || { echo "ERROR: Failed to copy configuration.yml"; exit 1; }
 
 # Create log file
 echo "Creating log file..."
