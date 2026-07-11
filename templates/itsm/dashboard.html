@@ -25,7 +25,7 @@
         <ul class="ticket-list">
             {% for ticket in tickets %}
                 <li>
-                    <a href="{{ url_for('ticket_detail', ticket_number=ticket.ticket_number) }}">
+                    <a href="{{ url_for('itsm.ticket_detail', ticket_number=ticket.ticket_number) }}">
                         {{ ticket.ticket_number }} - {{ ticket.ticket_subject }} ({{ ticket.ticket_status }})
                     </a>
                 </li>
