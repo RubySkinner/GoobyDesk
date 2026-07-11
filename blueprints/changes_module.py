@@ -61,12 +61,7 @@ def changes_home():
 @technician_required
 def export_changes_csv():
     tickets = load_tickets()
-
-    open_changes = [
-        ticket for ticket in tickets
-        if t.get("request_type") == "Change"
-        and t.get("ticket_status", "").lower() != "closed"
-    ]
+    open_changes = [ticket for ticket in tickets if ticket["request_type"].lower() == "change" and ticket.get("ticket_status", "").lower() != "closed"]
 
     output = io.StringIO()
     writer = csv.writer(output)
