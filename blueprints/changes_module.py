@@ -53,7 +53,6 @@ def changes_home():
     "changes_home.html",
     changes=open_changes,
     loggedInTech=session["technician"],
-    BUILDID=core_yaml_config["buildid"],
 )
 
 # Export open change tickets as CSV.
