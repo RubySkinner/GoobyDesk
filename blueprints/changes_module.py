@@ -48,7 +48,7 @@ def load_tickets():
 def changes_home():
     tickets = load_tickets()
     # Filtering out tickets with the Closed Status on the main Dashboard.
-    open_changes = [ticket for ticket in tickets if ticket["ticket_type"] == "Change" and ticket["ticket_status"].lower() != "closed"]
+    open_changes = [ticket for ticket in tickets if ticket["request_type"].lower() == "change" and ticket["ticket_status"].lower() != "closed"]
     return render_template(
     "changes_home.html",
     changes=open_changes,
