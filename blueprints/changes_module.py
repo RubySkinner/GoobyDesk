@@ -42,7 +42,7 @@ def load_tickets():
         exit(1)
         return [] # represents an empty list.
 
-# ROUTES
+# Dashboard Route
 @changes_module_bp.route("/", methods=["GET"])
 @technician_required
 def changes_home():
@@ -52,6 +52,26 @@ def changes_home():
     return render_template("changes/changes_dashboard.html", changes=open_changes,
     loggedInTech=session["technician"],
 )
+
+# Submit New Change Route
+@changes_module_bp.route("/submit-new", methods=["GET", "POST"])
+@technician_required
+def submit_new() -> str:
+    """Create new change form.
+    Returns:
+        Rendered form or redirect on success.
+    """
+
+# Edit Change Ticket Route
+@changes_module_bp.route("/changes/<change_number>/edit", methods=["POST"])
+@technician_required
+def edit_profile(change_number:str) -> str:
+    """Update change profile.
+    Args:
+        change_number: The change number (CHG-YYYY-NNNN).
+    Returns:
+        Redirect to profile page.
+    """
 
 # Export open change tickets as CSV.
 @changes_module_bp.route("/export/csv", methods=["GET"])

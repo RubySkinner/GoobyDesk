@@ -15,7 +15,7 @@ from blueprints.reports_module import reports_module_bp
 from blueprints.changes_module import changes_module_bp
 from blueprints.itsm_module import itsm_module_bp
 
-BUILDID=str("0.9.9-RC1-c")
+BUILDID=str("0.9.9-RC1-d")
 
 """
 Rest in Peace Alex, July 2nd 2005 - December 14th 2024
@@ -53,7 +53,7 @@ app.config.update(
     PERMANENT_SESSION_LIFETIME=timedelta(hours=12),
     MAX_CONTENT_LENGTH=16 * 1024 * 1024,)
 
-api_module_bp.config = {'TAILSCALE_NOTIFY_EMAIL': TAILSCALE_NOTIFY_EMAIL}
+#api_module_bp.config = {'TAILSCALE_NOTIFY_EMAIL': TAILSCALE_NOTIFY_EMAIL}
 app.register_blueprint(api_module_bp)
 app.register_blueprint(reports_module_bp)
 app.register_blueprint(changes_module_bp)
