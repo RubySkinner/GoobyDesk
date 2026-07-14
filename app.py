@@ -324,6 +324,14 @@ def login():
 
     return render_template("public/login.html", sitekey=CF_TURNSTILE_SITE_KEY)
 
+@app.route("/debug/routes")
+def debug_routes():
+    routes = sorted(
+        f"{rule.endpoint:35} {rule.rule}"
+        for rule in app.url_map.iter_rules()
+    )
+    return "<pre>" + "\n".join(routes) + "</pre>"
+
 # ABOVE THIS LINE SHOULD ONLY BE TECHNICIAN/TICKETING PAGES ONLY!
 
 # BELOW THIS LINE IS RESERVED FOR LOGOUT AND API INGEST ROUTES ONLY!
