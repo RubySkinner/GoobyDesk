@@ -54,6 +54,10 @@ def crm_dashboard():
     return render_template("crm/crm_dashboard.html", customers=customers, loggedInTech=session["technician"])
 
 # Create New Customer Route
+@crm_module_bp.route("/submit-new", methods=["GET", "POST"])
+@technician_required
+def new_customer():
+    return render_template("crm/submit_new.html")
 
 # View Customer Details Route
 
