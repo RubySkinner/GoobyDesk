@@ -13,7 +13,7 @@ LOG_FILE = core_yaml_config["logging"]["file"]
 CUSTOMERS_FILE = core_yaml_config["core"]["customers_file"]
 SERVICE_APPID_FILE = core_yaml_config["core"]["serviceid_appid_file"]
 
-logging.basicConfig(filename=LOG_FILE, level=getattr(logging, LOG_LEVEL.upper(), logging.INFO), format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(filename=LOG_FILE, level=getattr(logging, LOG_LEVEL.upper(), logging.INFO), format="%(asctime)s - %(levelname)s - %(message)s",)
 
 crm_module_bp = Blueprint('crm_module', __name__, url_prefix='/crm')
 

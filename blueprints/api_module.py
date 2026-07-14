@@ -13,7 +13,7 @@ LOG_LEVEL = core_yaml_config["logging"]["level"]
 LOG_FILE = core_yaml_config["logging"]["file"]
 TAILSCALE_NOTIFY_EMAIL = core_yaml_config["email"]["tailscale_notify_email"]
 
-logging.basicConfig(filename=LOG_FILE,level=getattr(logging, LOG_LEVEL.upper(), logging.INFO),format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(filename=LOG_FILE,level=getattr(logging, LOG_LEVEL.upper(), logging.INFO),format="%(asctime)s - %(levelname)s - %(message)s",)
 """ Above is the default logging configuration.
 Debug - Detailed information
 Info - Successes
