@@ -6,6 +6,7 @@ core:
   tickets_file: "./prod_data/tickets.json" # Load as TICKETS_FILE
   employee_auth_file: "./prod_data/employee_auth.json" # Load as EMPLOYEE_FILE
   customers_file: "./prod_data/customers.json" # Load as CUSTOMERS_FILE
+  changes_file: "./prod_data/changes.json" # Load as CHANGES_FILE
   hr_file: "./prod_data/hr_file.json" # Load as HR_FILE
   serviceid_appid_file: "./prod_data/serviceid.json" # Load as SERVICE_APPID_FILE
 
