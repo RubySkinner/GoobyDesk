@@ -10,7 +10,7 @@ CRM Dashboard
 
     <div class="page-header-actions">
 
-        <a href="{{ url_for('crm.new_customer') }}"
+        <a href="{{ url_for('crm_module.new_customer') }}"
            class="submit-btn">
             + New Customer
         </a>
@@ -195,9 +195,7 @@ CRM Dashboard
 
                 <td>
 
-                    <a href="{{ url_for(
-                        'crm.customer',
-                        customer_id=customer.customer_id) }}">
+                    <a href="{{ url_for('crm.customer', customer_id=customer.customer_id) }}">
 
                         View →
 
