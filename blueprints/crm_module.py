@@ -60,7 +60,18 @@ def new_customer():
     return render_template("crm/submit_new.html")
 
 # View Customer Details Route
+@crm_module_bp.route("/profile/<uuid>", methods=["GET"])
+@technician_required
+def customer_profile(uuid):
+    customers = load_customers_file()
+    customer = next((c for c in customers if c["uuid"] == uuid), None)
+    if not customer:
+        return render_template("errors/404.html"), 404
+    return render_template("crm/customer_profile.html", customer=customer, loggedInTech=session["technician"])
 
+"""
 # Edit Customer Details Route
-
+@crm_module_bp.route("/profile/<uuid>/edit", methods=["POST"])
+@technician_required
+"""
 # Export Customer Data Route
