@@ -28,7 +28,7 @@ def get_app_functions():
     from app import load_tickets, technician_required
     return load_tickets, technician_required
 
-@reports_module_bp.route("/dashboad", methods=["GET"])
+@reports_module_bp.route("/dashboard", methods=["GET"])
 def reports_home():
     from app import load_tickets
     

@@ -36,7 +36,7 @@ def load_hr_file():
         return [] # represents an empty list
 
 # Dashboard Route
-@hr_module_bp.route("/dashboard", methods=["GET"])
+@hr_module_bp.route("/", methods=["GET"])
 @technician_required
 def hr_dashboard():
     # Render the HR dashboard with a list of employees

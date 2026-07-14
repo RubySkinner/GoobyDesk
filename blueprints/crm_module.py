@@ -39,13 +39,13 @@ def load_customers_file():
         return [] # represents an empty list.
 
 # Dashboard Route
-@crm_module_bp.route("/dashboard", methods=["GET"])
+@crm_module_bp.route("/", methods=["GET"])
 @technician_required
 def crm_dashboard():
     # Render the CRM dashboard with a list of customers
     try:
-        with open(CUSTOMERS_FILE, "r") as customer_file:
-            customers = json.load(customer_file)
+        with open(CUSTOMERS_FILE, "r") as customers_file:
+            customers = json.load(customers_file)
     except FileNotFoundError:
         logging.critical("Customer JSON Database file could not be located.")
         exit(1)
