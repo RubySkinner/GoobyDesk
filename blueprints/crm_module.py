@@ -11,7 +11,7 @@ core_yaml_config = load_core_config()
 LOG_LEVEL = core_yaml_config["logging"]["level"]
 LOG_FILE = core_yaml_config["logging"]["file"]
 CUSTOMERS_FILE = core_yaml_config["core"]["customers_file"]
-SERVICE_APPID_FILE = core_yaml_config["core"]["service_appid_file"]
+SERVICE_APPID_FILE = core_yaml_config["core"]["serviceid_appid_file"]
 
 logging.basicConfig(filename=LOG_FILE, level=getattr(logging, LOG_LEVEL.upper(), logging.INFO), format="%(asctime)s - %(levelname)s - %(message)s")
 
