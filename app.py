@@ -14,6 +14,8 @@ from blueprints.api_module import api_module_bp
 from blueprints.reports_module import reports_module_bp
 from blueprints.changes_module import changes_module_bp
 from blueprints.itsm_module import itsm_module_bp
+from blueprints.hr_module import hr_module_bp
+from blueprints.crm_module import crm_module_bp
 
 BUILDID=str("0.9.9-RC1-d")
 
@@ -31,10 +33,10 @@ CF_TURNSTILE_SECRET_KEY = os.getenv("CF_TURNSTILE_SECRET_KEY") # REQUIRED for CA
 core_yaml_config = local_config_loader.load_core_config()
 TICKETS_FILE = core_yaml_config["core"]["tickets_file"]
 EMPLOYEE_FILE = core_yaml_config["core"]["employee_file"]
-# CHANGES_FILE = core_yaml_config["core"]["changes_file"] # Not used yet, but will be used for change requests.
-# CUSTOMERS_FILE = core_yaml_config["core"]["customers_file"] # Not used yet, but will be used for CRM module.
-# HR_FILE = core_yaml_config["core"]["hr_file"] # Not used yet, but will be used for HR module.
-# SERVICE_APPID_FILE = core_yaml_config["core"]["service_appid_file"] # Not used yet, but will be used for Service AppID module.
+CHANGES_FILE = core_yaml_config["core"]["changes_file"] # Not used yet, but will be used for change requests.
+CUSTOMERS_FILE = core_yaml_config["core"]["customers_file"] # Not used yet, but will be used for CRM module.
+HR_FILE = core_yaml_config["core"]["hr_file"] # Not used yet, but will be used for HR module.
+SERVICE_APPID_FILE = core_yaml_config["core"]["service_appid_file"] # Not used yet, but will be used for Service AppID module.
 LOG_LEVEL = core_yaml_config["logging"]["level"]
 LOG_FILE = core_yaml_config["logging"]["file"]
 EMAIL_ENABLED = core_yaml_config["email"]["enabled"]
@@ -58,10 +60,12 @@ app.config.update(
     MAX_CONTENT_LENGTH=16 * 1024 * 1024,)
 
 #api_module_bp.config = {'TAILSCALE_NOTIFY_EMAIL': TAILSCALE_NOTIFY_EMAIL}
+app.register_blueprint(itsm_module_bp)
 app.register_blueprint(api_module_bp)
 app.register_blueprint(reports_module_bp)
 app.register_blueprint(changes_module_bp)
-app.register_blueprint(itsm_module_bp)
+app.register_blueprint(hr_module_bp)
+app.register_blueprint(crm_module_bp)
 
 # Security Headers for all responses.
 @app.after_request
@@ -94,11 +98,7 @@ def set_security_headers(response):
     
     return response
 
-logging.basicConfig(
-    filename=LOG_FILE,
-    level=getattr(logging, LOG_LEVEL.upper(), logging.INFO),
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(filename=LOG_FILE, level=getattr(logging, LOG_LEVEL.upper(), logging.INFO), format="%(asctime)s - %(levelname)s - %(message)s")
 """ Above is the default logging configuration.
 Debug - Detailed information
 Info - Successes
