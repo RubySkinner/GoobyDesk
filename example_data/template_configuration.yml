@@ -4,8 +4,9 @@
 # Core Files
 core:
   tickets_file: "./prod_data/tickets.json"
-  employee_file: "./prod_data/employee.json"
-  customer_file: "./prod_data/customers.json"
+  employee_auth_file: "./prod_data/employee_auth.json"
+  customers_file: "./prod_data/customers.json"
+  hr_file: ".prod_data/hr_file.json"
   serviceid-appid_file: "./prod_data/serviceid.json"
 
 # Logging

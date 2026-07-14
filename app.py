@@ -17,7 +17,7 @@ from blueprints.itsm_module import itsm_module_bp
 from blueprints.hr_module import hr_module_bp
 from blueprints.crm_module import crm_module_bp
 
-BUILDID=str("0.9.9-RC1-d")
+BUILDID=str("0.9.9-RC1-g")
 
 """
 Rest in Peace Alex, July 2nd 2005 - December 14th 2024
@@ -32,7 +32,7 @@ CF_TURNSTILE_SECRET_KEY = os.getenv("CF_TURNSTILE_SECRET_KEY") # REQUIRED for CA
 # Configuration non-secret data loaded from YAML.
 core_yaml_config = local_config_loader.load_core_config()
 TICKETS_FILE = core_yaml_config["core"]["tickets_file"]
-EMPLOYEE_FILE = core_yaml_config["core"]["employee_file"]
+EMPLOYEE_FILE = core_yaml_config["core"]["employee_auth_file"]
 CHANGES_FILE = core_yaml_config["core"]["changes_file"] # Not used yet, but will be used for change requests.
 CUSTOMERS_FILE = core_yaml_config["core"]["customers_file"] # Not used yet, but will be used for CRM module.
 HR_FILE = core_yaml_config["core"]["hr_file"] # Not used yet, but will be used for HR module.
