@@ -40,7 +40,7 @@ def load_tickets():
         return [] # represents an empty list.
 
 # Dashboard Route
-@changes_module_bp.route("/", methods=["GET"])
+@changes_module_bp.route("/dashboard", methods=["GET"])
 @technician_required
 def changes_home():
     tickets = load_tickets()

@@ -71,29 +71,15 @@ def technician_required(func):
 def dashboard():
     tickets = load_tickets()
     open_tickets = [t for t in tickets if t["ticket_status"].lower() != "closed"]
-    return render_template(
-        "itsm/dashboard.html",
-        tickets=open_tickets,
-        loggedInTech=session["technician"]
-    )
+    return render_template("itsm/dashboard.html", tickets=open_tickets, loggedInTech=session["technician"])
 
 @itsm_module_bp.route("/ticket/<ticket_number>")
 @technician_required
 def ticket_detail(ticket_number):
-    """Render the Ticket Commander view for a single ticket.
-    Args:
-        ticket_number (str): The ticket number to display.
-    Returns:
-        Rendered console.html, or a 404 page if not found.
-    """
     tickets = load_tickets()
     ticket = next((t for t in tickets if t["ticket_number"] == ticket_number), None)
     if ticket:
-        return render_template(
-            "itsm/console.html",
-            ticket=ticket,
-            loggedInTech=session["technician"],
-        )
+        return render_template("itsm/console.html", ticket=ticket, loggedInTech=session["technician"],)
     return render_template("errors/404.html"), 404
 
 @itsm_module_bp.route("/ticket/<ticket_number>/update_status/<ticket_status>", methods=["POST"])

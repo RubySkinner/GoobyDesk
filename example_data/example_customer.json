@@ -24,5 +24,19 @@
     "customer_status_reason": "null",
     "preferred_contact_method": "email",
     "marketing_opt_in": "true",
-    "maintenance_notifications_enabled": "true"
-}   
+    "maintenance_notifications_enabled": "true",
+    "customer_notes": "null",
+    "assigned_account_manager": "null",
+    "customer_tags": "null",
+    "customer_company": "null",
+    "customer_phone": "null",
+    "customer_country": "null",
+    "customer_timezone": "null",
+    "customer_avatar": "null",
+    "customer_services": "null",
+    "customer_open_ticket_count": "null",
+    "customer_last_ip": "null",
+    "customer_last_seen": "null",
+    "customer_verified_email": "null",
+    "customer_billing_currenc": "null"
+}
