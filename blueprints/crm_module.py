@@ -54,9 +54,14 @@ def crm_dashboard():
     active_customers = sum(1 for customer in customers if customer.get("status") == "active")
     vip_customers = sum(1 for customer in customers if customer.get("vip") is True)
     total_lifetime_value = sum(customer.get("lifetime_value", 0) for customer in customers)
+    crm_base_stats = {
+        "total_customers": total_customers,
+        "active_customers": active_customers,
+        "vip_customers": vip_customers,
+        "total_lifetime_value": total_lifetime_value
+    }
 
-
-    return render_template("crm/crm_dashboard.html", customers=customers, loggedInTech=session["technician"])
+    return render_template("crm/crm_dashboard.html", customers=customers, loggedInTech=session["technician"], crm_base_stats=crm_base_stats)
 
 # Create New Customer Route
 @crm_module_bp.route("/submit-new", methods=["GET", "POST"])
