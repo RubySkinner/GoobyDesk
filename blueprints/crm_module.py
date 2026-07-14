@@ -50,6 +50,11 @@ def crm_dashboard():
         logging.critical("Customer JSON Database file could not be located.")
         exit(1)
         return []  # represents an empty list.
+    total_customers = len(customers)
+    active_customers = sum(1 for customer in customers if customer.get("status") == "active")
+    vip_customers = sum(1 for customer in customers if customer.get("vip") is True)
+    total_lifetime_value = sum(customer.get("lifetime_value", 0) for customer in customers)
+
 
     return render_template("crm/crm_dashboard.html", customers=customers, loggedInTech=session["technician"])
 
