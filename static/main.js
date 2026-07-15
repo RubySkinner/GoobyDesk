@@ -21,7 +21,7 @@ async function updateTicketStatus(ticketId, newStatus) {
 
     try {
         // Send POST request to Flask backend to update ticket status
-        let response = await fetch(`itsm/ticket/${ticketId}/update_status/${newStatus}`, {
+        let response = await fetch(`/itsm/ticket/${ticketId}/update_status/${newStatus}`, {
             method: "POST",
             headers: { "Accept": "application/json" }
         });
@@ -78,7 +78,7 @@ async function submitNote(ticketNumber) {
 
     try {
         // Send POST request to Flask backend to append note
-        let response = await fetch(`itsm/ticket/${ticketNumber}/append_note`, {
+        let response = await fetch(`/itsm/ticket/${ticketNumber}/append_note`, {
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             // Encode form data - key must match Flask's expected parameter name
