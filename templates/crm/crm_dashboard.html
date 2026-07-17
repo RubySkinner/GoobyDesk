@@ -1,27 +1,22 @@
 CRM Dashboard
 <div class="page-header">
-
     <div>
         <h2>Customer Relationship Management</h2>
         <p class="text-muted">
             Manage customer accounts, billing information and account health.
         </p>
     </div>
-
     <div class="page-header-actions">
 
         <a href="{{ url_for('crm_module.new_customer') }}"
            class="submit-btn">
             + New Customer
         </a>
-
     </div>
-
 </div>
 
 
 <div class="stats-grid">
-
     <div class="stat-card">
         <div class="stat-card-title">
             Total Customers
@@ -30,75 +25,56 @@ CRM Dashboard
             {{ stats.total_customers }}
         </div>
     </div>
-
     <div class="stat-card">
         <div class="stat-card-title">
             Active Accounts
         </div>
-
         <div class="stat-card-value">
             {{ stats.active_customers }}
         </div>
     </div>
-
     <div class="stat-card">
         <div class="stat-card-title">
             VIP Customers
         </div>
-
         <div class="stat-card-value">
             {{ stats.vip_customers }}
         </div>
     </div>
-
     <div class="stat-card">
         <div class="stat-card-title">
             Lifetime Revenue
         </div>
-
         <div class="stat-card-value">
             ${{ stats.total_lifetime_value }}
         </div>
     </div>
-
 </div>
 
 
 <div class="card">
-
     <div class="card-header">
         <strong>Search Customers</strong>
     </div>
-
     <div class="card-body">
-
         <form method="GET">
-
             <input
                 type="text"
                 name="search"
                 placeholder="Name, Email, Customer ID, Discord..."
                 value="{{ request.args.get('search', '') }}">
-
         </form>
-
     </div>
-
 </div>
 
 
 <div class="card" style="margin-top:25px;">
-
     <div class="card-header">
         <strong>Customer Directory</strong>
     </div>
-
     <div class="card-body">
-
         <table class="table">
-
             <thead>
-
                 <tr>
                     <th>Customer</th>
                     <th>Status</th>
@@ -108,17 +84,13 @@ CRM Dashboard
                     <th>Last Login</th>
                     <th></th>
                 </tr>
-
             </thead>
-
             <tbody>
 
             {% for customer in customers %}
 
             <tr>
-
                 <td>
-
                     <strong>
 
                         {{ customer.customer_preferred_name
@@ -127,17 +99,11 @@ CRM Dashboard
                         {{ customer.customer_last_name }}
 
                     </strong>
-
                     <br>
-
                     <small class="text-muted">
-
                         {{ customer.customer_id }}
-
                     </small>
-
                 </td>
-
                 <td>
 
                     {% if customer.customer_account_status == "active" %}
@@ -154,7 +120,6 @@ CRM Dashboard
                     {% endif %}
 
                 </td>
-
                 <td>
 
                     {% if customer.customer_fraud_risk == "low" %}
@@ -169,7 +134,6 @@ CRM Dashboard
                     {% endif %}
 
                 </td>
-
                 <td>
 
                     {% if customer.customer_vip_status == "yes" %}
@@ -179,37 +143,29 @@ CRM Dashboard
                     {% endif %}
 
                 </td>
-
                 <td>
 
                     ${{ customer.customer_total_lifetime_value }}
 
                 </td>
-
                 <td>
 
                     {{ customer.customer_last_login or "Never" }}
 
                 </td>
-
                 <td>
 
-                    <a href="{{ url_for('crm.customer', customer_id=customer.customer_id) }}">
+                    <a href="{{ url_for('crm_module.customer_profile', uuid=customer.uuid) }}">
 
                         View →
 
                     </a>
-
                 </td>
-
             </tr>
 
             {% endfor %}
 
             </tbody>
-
         </table>
-
     </div>
-
 </div>
