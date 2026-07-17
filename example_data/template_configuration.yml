@@ -24,6 +24,7 @@ email:
   smtp_server: ""
   smtp_port: 587
   tailscale_notify_email: "tailscale@example.org"
+  librenms_notify_email: "librenms@example.org"
 
 # Discord Support
 discord:
