@@ -79,7 +79,7 @@
                         <tr>
                             <td>
                                 <a href="{{ url_for('crm_module.customer_profile', uuid=customer.uuid) }}">
-                                    {{ customer.get('cid', customer.uuid) }}
+                                    {{ customer.get('customer_id', customer.uuid) }}
                                 </a>
                             </td>
                             <td>{{ customer.get('preferred_name', '—') }}</td>
