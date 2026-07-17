@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import io
 import csv
 import json
@@ -51,17 +50,17 @@ def crm_dashboard():
         exit(1)
         return []  # represents an empty list.
     total_customers = len(customers)
-    active_customers = sum(1 for customer in customers if customer.get("status") == "active")
+    active_customers_list = [customer for customer in customers if customer.get("status") == "active"]
     vip_customers = sum(1 for customer in customers if customer.get("vip") is True)
     total_lifetime_value = sum(customer.get("lifetime_value", 0) for customer in customers)
     crm_base_stats = {
         "total_customers": total_customers,
-        "active_customers": active_customers,
+        "active_customers": len(active_customers_list),
         "vip_customers": vip_customers,
         "total_lifetime_value": total_lifetime_value
     }
     #return render_template("under_construction.html")
-    return render_template("crm/crm_dashboard.html", customers=customers, loggedInTech=session["technician"], stats=crm_base_stats)
+    return render_template("crm/crm_dashboard.html", customers=active_customers_list, loggedInTech=session["technician"], stats=crm_base_stats)
 
 # Create New Customer Route
 @crm_module_bp.route("/submit-new", methods=["GET", "POST"])
@@ -85,3 +84,15 @@ def customer_profile(uuid):
 @technician_required
 """
 # Export Customer Data Route
+@crm_module_bp.route("/export", methods=["GET"])
+@technician_required
+def export_customers():
+    customers = load_customers_file()
+    # Create a CSV in memory
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=customers[0].keys())
+    writer.writeheader()
+    writer.writerows(customers)
+    output.seek(0)
+    # Return the CSV as a response
+    return Response(output, mimetype="text/csv", headers={"Content-Disposition": "attachment;filename=customers_export.csv"})
