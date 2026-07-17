@@ -1,9 +1,14 @@
+#!/usr/bin/env python3
 import io
 import csv
 import json
 import logging
+import uuid
+
+from datetime import datetime, timezone
 from functools import wraps
-from flask import Blueprint, render_template, session, Response
+
+from flask import Blueprint, render_template, request, redirect, url_for, session, Response
 from local_handlers.local_config_loader import load_core_config
 
 core_yaml_config = load_core_config()
@@ -37,6 +42,28 @@ def load_customers_file():
         exit(1)
         return [] # represents an empty list.
 
+def save_customers_file(customers):
+    """Write the given customers back to the customer JSON database.
+    Args:
+        customers (list[dict]): The full set of customer records to persist.
+    """
+    with open(CUSTOMERS_FILE, "w") as customer_file_write_op:
+        json.dump(customers, customer_file_write_op, indent=4)
+    logging.debug("The Customer JSON Database file was modified.")
+
+def generate_customer_id(customers):
+    """Generate the next sequential CID for the current year.
+    Args:
+        customers (list[dict]): Existing customer records to scan.
+    Returns:
+        str: A new customer ID in the form CID-YYYY-NNNN.
+    """
+    current_year = datetime.now(timezone.utc).year
+    year_prefix = f"CID-{current_year}-"
+    existing_ids = [c.get("customer_id", "") for c in customers if c.get("customer_id", "").startswith(year_prefix)]
+    next_sequence = len(existing_ids) + 1
+    return f"{year_prefix}{next_sequence:04d}"
+
 # Dashboard Route
 @crm_module_bp.route("/", methods=["GET"])
 @technician_required
@@ -66,7 +93,82 @@ def crm_dashboard():
 @crm_module_bp.route("/submit-new", methods=["GET", "POST"])
 @technician_required
 def new_customer():
-    return render_template("crm/submit_new.html")
+    if request.method == "GET":
+        return render_template("crm/submit_new.html")
+
+    first_name = request.form.get("first_name", "").strip()
+    last_name = request.form.get("last_name", "").strip()
+    email = request.form.get("email", "").strip()
+
+    if not first_name or not last_name or not email:
+        return render_template(
+            "crm/submit_new.html",
+            error="First Name, Last Name, and Email are required."
+        ), 400
+
+    customers = load_customers_file()
+    submission_timestamp = datetime.now(timezone.cst).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    new_customer_record = {
+        "uuid": str(uuid.uuid4()),
+        "customer_id": generate_customer_id(customers),
+        "first_name": first_name,
+        "last_name": last_name,
+        "preferred_name": request.form.get("preferred_name", "").strip() or first_name,
+
+        "company": request.form.get("company", "").strip() or None,
+        "email": email,
+        "phone": request.form.get("phone", "").strip() or None,
+
+        "discord_username": request.form.get("discord_username", "").strip() or None,
+        "discord_user_id": None,
+        "minecraft_username": request.form.get("minecraft_username", "").strip() or None,
+
+        "country": request.form.get("country", "").strip() or None,
+        "timezone": request.form.get("timezone", "").strip() or None,
+        "created": submission_timestamp,
+        "last_seen": None,
+        "last_login": None,
+
+        "status": request.form.get("status", "active"),
+        "status_reason": None,
+        "account_locked": False,
+        "email_verified": False,
+        "mfa_enabled": False,
+
+        "vip": request.form.get("vip") == "on",
+        "content_creator": request.form.get("content_creator") == "on",
+
+        "risk_level": "low",
+        "lifetime_value": 0.00,
+        "billing_currency": "USD",
+        "last_order": None,
+        "last_payment": None,
+
+        "preferred_contact": request.form.get("preferred_contact", "email"),
+        "marketing_opt_in": request.form.get("marketing_opt_in") == "on",
+        "maintenance_notifications": request.form.get("maintenance_notifications") == "on",
+        "assigned_account_manager": None,
+        "services": [],
+
+        "account_tags": [],
+
+        "notes": [],
+    }
+
+    initial_note = request.form.get("notes", "").strip()
+    if initial_note:
+        new_customer_record["notes"].append({
+            "date": submission_timestamp,
+            "author": session["technician"],
+            "note": initial_note,
+        })
+
+    customers.append(new_customer_record)
+    save_customers_file(customers)
+    logging.info(f"CRM MODULE - Customer {new_customer_record['customer_id']} created by {session['technician']}.")
+
+    return redirect(url_for("crm_module.customer_profile", uuid=new_customer_record["uuid"]))
 
 # View Customer Details Route
 @crm_module_bp.route("/profile/<uuid>", methods=["GET"])
@@ -84,15 +186,3 @@ def customer_profile(uuid):
 @technician_required
 """
 # Export Customer Data Route
-@crm_module_bp.route("/export", methods=["GET"])
-@technician_required
-def export_customers():
-    customers = load_customers_file()
-    # Create a CSV in memory
-    output = io.StringIO()
-    writer = csv.DictWriter(output, fieldnames=customers[0].keys())
-    writer.writeheader()
-    writer.writerows(customers)
-    output.seek(0)
-    # Return the CSV as a response
-    return Response(output, mimetype="text/csv", headers={"Content-Disposition": "attachment;filename=customers_export.csv"})

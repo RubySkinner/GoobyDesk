@@ -1,2 +1,154 @@
 <!DOCTYPE html>
 <html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/x-icon" href="static/img/favicon.ico"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Matt Faulkner">
+    <meta name="robots" content="noindex, nofollow"> <!--Discourage Search Engine Indexing of this page-->
+    <meta name="theme-color" content="#284389"> <!-- Mobile Browser stylized address bar.-->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"> <!-- Force IE to use latest rendering engine available.-->
+    <meta http-equiv="refresh" content="300"> <!-- 5 Minute Page Refresh -->
+    <link rel="preconnect" href="https://fonts.bunny.net/css">
+    <link rel="preconnect" href="https://fonts.bunny.net/css" crossorigin>
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <title>New Customer Creation — GoobyDesk</title>
+    <style>
+        /* Scoped to this page: checkboxes shouldn't stretch to input's width:100%,
+           and we want label+checkbox sitting on one line instead of stacked. */
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .checkbox-row input[type="checkbox"] {
+            width: auto;
+            margin-top: 0;
+        }
+        .checkbox-row label {
+            margin-top: 0;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" style="width: 60%;">
+        <h2>New Customer</h2>
+        <p class="text-muted">Fields marked with * are required.</p>
+
+        {% if error %}
+        <div class="alert" style="background: var(--danger); width: 100%;">{{ error }}</div>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('crm_module.new_customer') }}">
+
+            <div class="form-row">
+                <div>
+                    <label for="first_name">First Name *</label>
+                    <input type="text" id="first_name" name="first_name" required>
+                </div>
+                <div>
+                    <label for="last_name">Last Name *</label>
+                    <input type="text" id="last_name" name="last_name" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="preferred_name">Preferred Name</label>
+                    <input type="text" id="preferred_name" name="preferred_name" placeholder="Defaults to First Name">
+                </div>
+                <div>
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="company">Company</label>
+                    <input type="text" id="company" name="company">
+                </div>
+                <div>
+                    <label for="phone">Phone</label>
+                    <input type="tel" id="phone" name="phone">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="discord_username">Discord Username</label>
+                    <input type="text" id="discord_username" name="discord_username">
+                </div>
+                <div>
+                    <label for="minecraft_username">Minecraft Username</label>
+                    <input type="text" id="minecraft_username" name="minecraft_username">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="country">Country</label>
+                    <input type="text" id="country" name="country" placeholder="US">
+                </div>
+                <div>
+                    <label for="timezone">Timezone</label>
+                    <input type="text" id="timezone" name="timezone" placeholder="America/Los_Angeles">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="status">Status</label>
+                    <select id="status" name="status">
+                        <option value="active" selected>Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="suspended">Suspended</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="preferred_contact">Preferred Contact</label>
+                    <select id="preferred_contact" name="preferred_contact">
+                        <option value="email" selected>Email</option>
+                        <option value="phone">Phone</option>
+                        <option value="discord">Discord</option>
+                    </select>
+                </div>
+            </div>
+
+            <label for="notes">Initial Note</label>
+            <textarea id="notes" name="notes" placeholder="Optional note about this customer..."></textarea>
+
+            <div class="checkbox-row">
+                <input type="checkbox" id="vip" name="vip">
+                <label for="vip">VIP Customer</label>
+            </div>
+
+            <div class="checkbox-row">
+                <input type="checkbox" id="content_creator" name="content_creator">
+                <label for="content_creator">Content Creator</label>
+            </div>
+
+            <div class="checkbox-row">
+                <input type="checkbox" id="marketing_opt_in" name="marketing_opt_in" checked>
+                <label for="marketing_opt_in">Marketing Opt-In</label>
+            </div>
+
+            <div class="checkbox-row">
+                <input type="checkbox" id="maintenance_notifications" name="maintenance_notifications" checked>
+                <label for="maintenance_notifications">Maintenance Notifications</label>
+            </div>
+
+            <button type="submit" class="submit-btn">Create Customer</button>
+            <a href="{{ url_for('crm_module.crm_dashboard') }}" style="display: block; margin-top: 10px;">Cancel</a>
+
+        </form>
+    </div>
+</body>
+</html>
