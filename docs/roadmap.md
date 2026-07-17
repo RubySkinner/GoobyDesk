@@ -57,3 +57,22 @@ JsonStore.atomic_write()
 ## 1.0.0
 
 Pending
+
+## 1.1.0
+
+High quality centralized json storage layer with individual module support. **Example:**
+
+```txt
+storage/
+├── __init__.py
+├── base_store.py          # Common interface
+├── json_store.py          # Generic JSON implementation
+├── ticket_store.py        # Ticket-specific operations
+├── employee_store.py      # Employee-specific operations
+├── crm_store.py
+├── asset_store.py
+├── alert_store.py
+├── backup.py
+├── validator.py
+└── file_lock.py
+```
