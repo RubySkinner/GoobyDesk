@@ -194,9 +194,107 @@ new_ticket = {
 """
 @api_module_bp.route("/librenms", methods=["POST"])
 def librenms_webhook():
+    load_tickets, save_tickets, generate_ticket_number = get_tickets_functions()
 
-new_ticket = {
+    try:
+        if not request.is_json:
+            logging.warning("API INGEST - LibreNMS webhook sent invalid content type.")
+            return jsonify({"error": "Invalid content type"}), 400
+
+        payload = request.json
+
+        logging.info("API INGEST - LibreNMS webhook received.")
+
+        state = str(payload.get("state", "")).lower()
+        severity = str(payload.get("severity", "warning")).lower()
+
+        device = payload.get("hostname", "Unknown Device")
+        alert_name = payload.get("title", "LibreNMS Alert")
+        rule = payload.get("rule", "")
+        message = payload.get("msg", "")
+
+        # Ignore recovery notifications
+        if state in ["ok", "clear", "recovered", "0"]:
+            logging.info(
+                f"API INGEST - Ignoring LibreNMS recovery notification for {device}."
+            )
+            return jsonify(
+                {
+                    "status": "ignored",
+                    "reason": "Recovery notification"
+                }
+            ), 200
+
+        if severity in ["critical", "fatal"]:
+            impact = "High"
+            urgency = "High"
+        elif severity == "warning":
+            impact = "Medium"
+            urgency = "Medium"
+        else:
+            impact = "Low"
+            urgency = "Low"
+
+        ticket_number = generate_ticket_number()
+
+        ticket_subject = f"LibreNMS Alert - {device}"
+
+        ticket_message = json.dumps(
+            {
+                "device": device,
+                "alert": alert_name,
+                "rule": rule,
+                "severity": severity,
+                "message": message,
+                "payload": payload
+            },
+            indent=4
+        )
+
+        new_ticket = {
+            "ticket_number": ticket_number,
+            "requestor_name": "LibreNMS",
+            "requestor_email": "noreply@librenms.local",
+            "ticket_subject": ticket_subject,
+            "ticket_message": ticket_message,
+            "request_type": "Incident",
+            "ticket_impact": impact,
+            "ticket_urgency": urgency,
+            "ticket_status": "Open",
+            "submission_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "ticket_notes": []
         }
+
+        tickets = load_tickets()
+        tickets.append(new_ticket)
+        save_tickets(tickets)
+
+        logging.info(
+            f"API INGEST - LibreNMS ticket {ticket_number} created successfully."
+        )
+
+        try:
+            local_webhook_handler.notify_ticket_event(
+                ticket_number=ticket_number,
+                ticket_status="Open",
+                ticket_subject=ticket_subject
+            )
+        except Exception as e:
+            logging.error(
+                f"API INGEST - Failed sending notification for "
+                f"{ticket_number}: {e}"
+            )
+
+        return jsonify(
+            {
+                "status": "success",
+                "ticket": ticket_number
+            }
+        ), 200
+
+    except Exception as e:
+        logging.critical(f"API INGEST - LibreNMS webhook error: {e}")
+        return jsonify({"error": "Internal server error"}), 500
 """
 """
 @api_module_bp.route("/generic", methods=["POST"])
