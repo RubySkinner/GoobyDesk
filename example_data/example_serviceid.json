@@ -1,31 +1,80 @@
-{
-    "uuid": "null",
-    "service_id": "null",
-    "service_sku": "null",
-    "service_type": "null",
-    "cost_of_goods": "null",
-    "customer_price": "null",
-    "service_name": "null",
-    "service_status": "null",
-    "provisioning_status": "null",
-    "service_ip": "null",
-    "service_subdomain": "null",
-    "service_created_timestamp": "null",
-    "service_terminated_timestamp": "null",
-    "service_updated_timestamp": "null",
-    "service_provision_source": "null",
-    "customer_uuid": "null",
-    "customer_id": "null",
-    "node_id": "null",
-    "cluster_id": "null",
-    "server_type": "null",
-    "allocated_ram_mb": "null",
-    "allocated_disk_gb": "null",
-    "allocated_cpu_cores": "null",
-    "allocated_ports": "null",
-    "minecraft_version": "null",
-    "service_rcon_port": "null",
-    "service_rcon_pwd": "null",
-    "modpack_name": "null",
-    "player_limit": "null"
-}
+[
+    {
+        "uuid": "d5e14db5-988f-4b0f-9dcb-63ddde7fb3f2",
+        "service_id": "SVC-2026-0001",
+        "customer_uuid": "6d779d6c-a34d-4679-b7f4-0bca8b64d72c",
+        "customer_id": "CID-2026-0001",
+
+        "sku": "MC-STD-4G",
+        "name": "John's Survival Server",
+        "description": "Primary Minecraft server",
+
+        "type": "minecraft",
+        "status": "active",
+        "status_reason": null,
+        "provisioning_status": "provisioned",
+
+        "created": "2026-04-01T18:45:12Z",
+        "updated": "2026-05-10T16:31:42Z",
+        "terminated": null,
+
+        "created_by": "system",
+        "last_modified_by": "matt",
+
+        "node_id": "SEA-MC-03",
+        "cluster_id": "SEA-MC",
+
+        "hostname": "survival.grhost.net",
+        "domain": null,
+        "ip_address": "203.0.113.10",
+        "ipv6_address": "2001:db8::10",
+
+        "billing": {
+            "currency": "USD",
+            "billing_cycle": "monthly",
+            "customer_price": 14.99,
+            "cost_of_goods": 5.42,
+            "renewal_date": "2026-08-01",
+            "auto_renew": true
+        },
+
+        "resources": {
+            "cpu_cores": 2,
+            "memory_mb": 4096,
+            "disk_gb": 50,
+            "allocated_ports": [
+                25565,
+                25575
+            ]
+        },
+
+        "monitoring": {
+            "enabled": true,
+            "backup_enabled": true,
+            "maintenance_notifications": true,
+            "last_backup": "2026-07-15T03:00:01Z"
+        },
+
+        "minecraft": {
+            "edition": "java",
+            "version": "1.21.8",
+            "mod_loader": "fabric",
+            "modpack": null,
+            "player_limit": 20,
+            "rcon_enabled": true,
+            "rcon_port": 25575,
+            "query_enabled": true
+        },
+
+        "wordpress": null,
+        "virtual_machine": null,
+        "nextcloud": null,
+        "discord_bot": null,
+        "mumble": null,
+
+        "tags": [
+            "premium",
+            "beta"
+        ]
+    }
+]

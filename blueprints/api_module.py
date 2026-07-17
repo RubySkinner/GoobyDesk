@@ -198,4 +198,11 @@ def librenms_webhook():
 new_ticket = {
         }
 """
+"""
+@api_module_bp.route("/generic", methods=["POST"])
+def generic_webhook():
+
+new_ticket = {
+        }
+"""
     
