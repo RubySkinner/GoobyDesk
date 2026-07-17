@@ -61,7 +61,7 @@ def crm_dashboard():
         "total_lifetime_value": total_lifetime_value
     }
     #return render_template("under_construction.html")
-    return render_template("crm/crm_dashboard.html", customers=customers, loggedInTech=session["technician"], crm_base_stats=crm_base_stats)
+    return render_template("crm/crm_dashboard.html", customers=customers, loggedInTech=session["technician"], stats=crm_base_stats)
 
 # Create New Customer Route
 @crm_module_bp.route("/submit-new", methods=["GET", "POST"])
