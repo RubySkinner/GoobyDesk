@@ -34,7 +34,7 @@ def load_customers_file():
         with open(CUSTOMERS_FILE, "r") as customer_file:
             return json.load(customer_file)
     except FileNotFoundError:
-        logging.critical("Ticket JSON Database file could not be located.")
+        logging.critical("Customer JSON Database file could not be located.")
         exit(1)
         return [] # represents an empty list.
 
@@ -60,8 +60,8 @@ def crm_dashboard():
         "vip_customers": vip_customers,
         "total_lifetime_value": total_lifetime_value
     }
-    return render_template("under_construction.html")
-    #return render_template("crm/crm_dashboard.html", customers=customers, loggedInTech=session["technician"], crm_base_stats=crm_base_stats)
+    #return render_template("under_construction.html")
+    return render_template("crm/crm_dashboard.html", customers=customers, loggedInTech=session["technician"], crm_base_stats=crm_base_stats)
 
 # Create New Customer Route
 @crm_module_bp.route("/submit-new", methods=["GET", "POST"])
