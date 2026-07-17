@@ -17,8 +17,6 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <script src="{{ url_for('static', filename='main.js') }}"></script>
     <title>Open Changes - GoobyDesk</title>
-
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 
 <body>
@@ -61,7 +59,7 @@
     {% endif %}
 
     <!-- Actions -->
-    <div style="margin-top: 20px;">
+    <div class="page-actions">
         <a href="{{ url_for('changes.export_changes_csv') }}" class="submit-btn">
             Export Open Changes (CSV)
         </a>

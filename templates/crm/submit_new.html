@@ -14,36 +14,14 @@
     <script src="{{ url_for('static', filename='main.js') }}"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <title>New Customer Creation — GoobyDesk</title>
-    <style>
-        /* Scoped to this page: checkboxes shouldn't stretch to input's width:100%,
-           and we want label+checkbox sitting on one line instead of stacked. */
-        .checkbox-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 12px;
-        }
-        .checkbox-row input[type="checkbox"] {
-            width: auto;
-            margin-top: 0;
-        }
-        .checkbox-row label {
-            margin-top: 0;
-        }
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0 20px;
-        }
-    </style>
 </head>
 <body>
-    <div class="container" style="width: 60%;">
+    <div class="container container--narrow">
         <h2>New Customer</h2>
         <p class="text-muted">Fields marked with * are required.</p>
 
         {% if error %}
-        <div class="alert" style="background: var(--danger); width: 100%;">{{ error }}</div>
+        <div class="alert alert--danger">{{ error }}</div>
         {% endif %}
 
         <form method="POST" action="{{ url_for('crm_module.new_customer') }}">
@@ -146,7 +124,7 @@
             </div>
 
             <button type="submit" class="submit-btn">Create Customer</button>
-            <a href="{{ url_for('crm_module.crm_dashboard') }}" style="display: block; margin-top: 10px;">Cancel</a>
+            <a href="{{ url_for('crm_module.crm_dashboard') }}" class="form-link">Cancel</a>
 
         </form>
     </div>

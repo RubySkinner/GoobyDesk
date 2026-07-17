@@ -14,45 +14,14 @@
     <script src="{{ url_for('static', filename='main.js') }}"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <title>{{ customer.get('preferred_name', customer.first_name) }} {{ customer.last_name }} — GoobyDesk CRM</title>
-    <style>
-        .profile-name {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .tag-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-top: 6px;
-        }
-        .notes-list {
-            list-style: none;
-            padding: 0;
-            text-align: left;
-        }
-        .notes-list li {
-            background: var(--panel-alt);
-            margin: 8px 0;
-            padding: 12px;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-        }
-        .notes-list .note-meta {
-            font-size: 13px;
-            color: var(--text-muted);
-            margin-bottom: 6px;
-        }
-    </style>
 </head>
 <body>
-    <div class="container" style="width: 80%;">
+    <div class="container container--wide">
 
         <div class="page-header">
             <div>
                 <div class="profile-name">
-                    <h2 style="margin: 0;">{{ customer.get('preferred_name', customer.first_name) }} {{ customer.last_name }}</h2>
+                    <h2 class="card-title">{{ customer.get('preferred_name', customer.first_name) }} {{ customer.last_name }}</h2>
                     {% if customer.get('vip') %}
                         <span class="badge badge-primary">VIP</span>
                     {% endif %}
@@ -85,14 +54,14 @@
             </div>
             <div class="stat-card">
                 <div class="stat-card-title">Customer Since</div>
-                <div class="stat-card-value" style="font-size: 1.2rem;">{{ customer.get('created', '—') }}</div>
+                <div class="stat-card-value stat-card-value--compact">{{ customer.get('created', '—') }}</div>
             </div>
         </div>
 
         <div class="grid grid-2">
 
             <div class="card">
-                <div class="card-header"><h3 style="margin: 0;">Contact Info</h3></div>
+                <div class="card-header"><h3 class="card-title">Contact Info</h3></div>
                 <div class="card-body ticket-details">
                     <p><strong>Email:</strong> {{ customer.get('email', '—') }}
                         {% if customer.get('email_verified') %}<span class="badge badge-success">Verified</span>{% endif %}
@@ -107,7 +76,7 @@
             </div>
 
             <div class="card">
-                <div class="card-header"><h3 style="margin: 0;">Accounts & Access</h3></div>
+                <div class="card-header"><h3 class="card-title">Accounts & Access</h3></div>
                 <div class="card-body ticket-details">
                     <p><strong>Discord:</strong> {{ customer.get('discord_username') or '—' }}</p>
                     <p><strong>Minecraft:</strong> {{ customer.get('minecraft_username') or '—' }}</p>
@@ -131,7 +100,7 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    <p class="text-muted" style="margin: 0;">No services on file.</p>
+                    <p class="text-muted text-muted--flush">No services on file.</p>
                 {% endif %}
             </div>
         </div>
@@ -146,7 +115,7 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    <p class="text-muted" style="margin: 0;">No tags on file.</p>
+                    <p class="text-muted text-muted--flush">No tags on file.</p>
                 {% endif %}
             </div>
         </div>
@@ -164,7 +133,7 @@
                         {% endfor %}
                     </ul>
                 {% else %}
-                    <p class="text-muted" style="margin: 0;">No notes on file.</p>
+                    <p class="text-muted text-muted--flush">No notes on file.</p>
                 {% endif %}
             </div>
         </div>

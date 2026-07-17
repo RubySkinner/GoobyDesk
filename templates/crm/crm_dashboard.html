@@ -13,21 +13,9 @@
     <link rel="preconnect" href="https://fonts.bunny.net/css" crossorigin>
     <script src="{{ url_for('static', filename='main.js') }}"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <style>
-        /* Scoped to this page: submit-btn defaults to width:100%, which doesn't
-           work as an inline header action. Keep the same visual style, just sized
-           to content instead of editing the shared submit-btn rule globally. */
-        .page-header-actions .submit-btn {
-            width: auto;
-            margin-top: 0;
-            display: inline-block;
-            text-decoration: none;
-            text-align: center;
-        }
-    </style>
 </head>
 <body>
-    <div class="container" style="width: 90%;">
+    <div class="container container--wide">
 
         <div class="page-header">
             <div>
@@ -60,7 +48,7 @@
 
         <div class="card">
             <div class="card-header">
-                <h3 style="margin: 0;">Active Customers</h3>
+                <h3 class="card-title">Active Customers</h3>
             </div>
             <div class="card-body">
                 <table class="table">

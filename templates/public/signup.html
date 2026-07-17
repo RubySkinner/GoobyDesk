@@ -70,7 +70,7 @@
                 required
                 aria-required="true"
                 aria-describedby="password_help">
-            <span id="password_help" class="footer-text" style="margin-top: 4px;">
+            <span id="password_help" class="footer-text form-help">
                 At least 8 characters.
             </span>
 
@@ -85,7 +85,7 @@
                 aria-required="true">
 
             {% if sitekey %}
-            <div class="cf-turnstile" data-sitekey="{{ sitekey }}" style="margin-top: 15px;"></div>
+            <div class="cf-turnstile" data-sitekey="{{ sitekey }}"></div>
             {% endif %}
 
             <button type="submit" class="submit-btn">Create account</button>

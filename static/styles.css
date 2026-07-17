@@ -53,6 +53,119 @@
     gap: .75rem;
 }
 
+.page-header-actions .submit-btn {
+    width: auto;
+    margin-top: 0;
+    display: inline-block;
+    text-decoration: none;
+    text-align: center;
+}
+
+.page-actions {
+    margin-top: 20px;
+}
+
+.container--wide {
+    width: 90%;
+    max-width: 1400px;
+}
+
+.container--narrow {
+    width: 60%;
+    max-width: 900px;
+}
+
+.card-title {
+    margin: 0;
+}
+
+.alert--danger {
+    background: var(--danger);
+    width: 100%;
+}
+
+.form-link {
+    display: block;
+    margin-top: 10px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 20px;
+}
+
+.checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.checkbox-row input[type="checkbox"] {
+    width: auto;
+    margin-top: 0;
+}
+
+.checkbox-row label {
+    margin-top: 0;
+}
+
+.form-help {
+    display: block;
+    margin-top: 4px;
+}
+
+.profile-name {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
+}
+
+.notes-list {
+    list-style: none;
+    padding: 0;
+    text-align: left;
+}
+
+.notes-list li {
+    background: var(--panel-alt);
+    margin: 8px 0;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+}
+
+.notes-list .note-meta {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+
+.stat-card-value--compact {
+    font-size: 1.2rem;
+}
+
+.text-muted--flush {
+    margin: 0;
+}
+
+.cf-turnstile {
+    margin-top: 15px;
+}
+
+.error-page {
+    background-color: #ffffff;
+}
+
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
