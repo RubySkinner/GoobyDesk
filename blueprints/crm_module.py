@@ -178,7 +178,7 @@ def customer_profile(uuid):
     customer = next((c for c in customers if c["uuid"] == uuid), None)
     if not customer:
         return render_template("errors/404.html"), 404
-    return render_template("crm/customer_profile.html", customer=customer, loggedInTech=session["technician"])
+    return render_template("crm/profile.html", customer=customer, loggedInTech=session["technician"])
 
 """
 # Edit Customer Details Route
