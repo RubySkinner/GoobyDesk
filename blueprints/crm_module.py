@@ -107,7 +107,7 @@ def new_customer():
         ), 400
 
     customers = load_customers_file()
-    submission_timestamp = datetime.now(timezone.cst).strftime("%Y-%m-%dT%H:%M:%SZ")
+    submission_timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     new_customer_record = {
         "uuid": str(uuid.uuid4()),
