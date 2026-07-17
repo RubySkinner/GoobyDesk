@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -13,10 +12,10 @@
     <link rel="preconnect" href="https://fonts.bunny.net/css" crossorigin>
     <script src="{{ url_for('static', filename='main.js') }}"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <!-- Performance Enhancements -->
     <title>GoobyDesk - CRM Dashboard</title>
 </head>
-CRM Dashboard
+<body>
+ 
 <div class="page-header">
     <div>
         <h2>Customer Relationship Management</h2>
@@ -25,58 +24,46 @@ CRM Dashboard
         </p>
     </div>
     <div class="page-header-actions">
-
-        <a href="{{ url_for('crm_module.new_customer') }}"
-           class="submit-btn">
+        <a href="{{ url_for('crm_module.new_customer') }}" class="submit-btn">
             + New Customer
         </a>
+        <!--
+            FUTURE WORK: crm_module.export_customers does not exist yet.
+            Add a route that streams a CSV of the current filtered customer
+            list, then swap this comment out for the real url_for() call.
+        -->
+        <!-- <a href="{{ url_for('crm_module.export_customers') }}" class="submit-btn">Export CSV</a> -->
     </div>
 </div>
-
-
+ 
 <div class="stats-grid">
     <div class="stat-card">
-        <div class="stat-card-title">
-            Total Customers
-        </div>
-        <div class="stat-card-value">
-            {{ stats.total_customers }}
-        </div>
+        <div class="stat-card-title">Total Customers</div>
+        <div class="stat-card-value">{{ stats.total_customers }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-card-title">
-            Active Accounts
-        </div>
-        <div class="stat-card-value">
-            {{ stats.active_customers }}
-        </div>
+        <div class="stat-card-title">Active Accounts</div>
+        <div class="stat-card-value">{{ stats.active_customers }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-card-title">
-            VIP Customers
-        </div>
-        <div class="stat-card-value">
-            {{ stats.vip_customers }}
-        </div>
+        <div class="stat-card-title">VIP Customers</div>
+        <div class="stat-card-value">{{ stats.vip_customers }}</div>
     </div>
     <div class="stat-card">
-        <div class="stat-card-title">
-            Lifetime Revenue
-        </div>
-        <div class="stat-card-value">
-            ${{ stats.total_lifetime_value }}
-        </div>
+        <div class="stat-card-title">Lifetime Revenue</div>
+        <div class="stat-card-value">${{ stats.total_lifetime_value }}</div>
     </div>
 </div>
-
-
+ 
 <div class="card">
     <div class="card-header">
         <strong>Search Customers</strong>
     </div>
     <div class="card-body">
         <form method="GET">
+            <label for="search" class="sr-only">Search customers</label>
             <input
+                id="search"
                 type="text"
                 name="search"
                 placeholder="Name, Email, Customer ID, Discord..."
@@ -84,106 +71,86 @@ CRM Dashboard
         </form>
     </div>
 </div>
-
-
+ 
 <div class="card" style="margin-top:25px;">
     <div class="card-header">
         <strong>Customer Directory</strong>
     </div>
     <div class="card-body">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Customer</th>
-                    <th>Status</th>
-                    <th>Risk</th>
-                    <th>VIP</th>
-                    <th>LTV</th>
-                    <th>Last Login</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-
-            {% for customer in customers %}
-
-            <tr>
-                <td>
-                    <strong>
-
-                        {{ customer.customer_preferred_name
-                           or customer.customer_first_name }}
-
-                        {{ customer.customer_last_name }}
-
-                    </strong>
-                    <br>
-                    <small class="text-muted">
-                        {{ customer.customer_id }}
-                    </small>
-                </td>
-                <td>
-
-                    {% if customer.customer_account_status == "active" %}
-                        <span class="badge badge-success">Active</span>
-
-                    {% elif customer.customer_account_status == "locked" %}
-                        <span class="badge badge-danger">Locked</span>
-
+        <div class="table-wrapper">
+            <table class="table">
+                <caption class="sr-only">
+                    Customer accounts with status, risk, VIP flag, and lifetime value
+                </caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Customer</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Risk</th>
+                        <th scope="col">VIP</th>
+                        <th scope="col">LTV</th>
+                        <th scope="col">Last Login</th>
+                        <th scope="col"><span class="sr-only">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for customer in customers %}
+                    <tr>
+                        <td>
+                            <strong>
+                                {{ customer.customer_preferred_name
+                                   or customer.customer_first_name }}
+                                {{ customer.customer_last_name }}
+                            </strong>
+                            <br>
+                            <small class="text-muted">{{ customer.customer_id }}</small>
+                        </td>
+                        <td>
+                            {% if customer.customer_account_status == "active" %}
+                                <span class="badge badge-success">Active</span>
+                            {% elif customer.customer_account_status == "locked" %}
+                                <span class="badge badge-danger">Locked</span>
+                            {% else %}
+                                <span class="badge badge-secondary">
+                                    {{ customer.customer_account_status }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if customer.customer_fraud_risk == "low" %}
+                                <span class="badge badge-success">Low</span>
+                            {% elif customer.customer_fraud_risk == "medium" %}
+                                <span class="badge badge-warning">Medium</span>
+                            {% else %}
+                                <span class="badge badge-danger">High</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if customer.customer_vip_status == "yes" %}
+                                <span class="badge badge-primary">VIP</span>
+                            {% endif %}
+                        </td>
+                        <td>${{ customer.customer_total_lifetime_value }}</td>
+                        <td>{{ customer.customer_last_login or "Never" }}</td>
+                        <td>
+                            <a href="{{ url_for('crm_module.customer_profile', uuid=customer.uuid) }}">
+                                View &rarr;
+                            </a>
+                        </td>
+                    </tr>
                     {% else %}
-                        <span class="badge badge-secondary">
-                            {{ customer.customer_account_status }}
-                        </span>
-
-                    {% endif %}
-
-                </td>
-                <td>
-
-                    {% if customer.customer_fraud_risk == "low" %}
-                        <span class="badge badge-success">Low</span>
-
-                    {% elif customer.customer_fraud_risk == "medium" %}
-                        <span class="badge badge-warning">Medium</span>
-
-                    {% else %}
-                        <span class="badge badge-danger">High</span>
-
-                    {% endif %}
-
-                </td>
-                <td>
-
-                    {% if customer.customer_vip_status == "yes" %}
-                        <span class="badge badge-primary">
-                            VIP
-                        </span>
-                    {% endif %}
-
-                </td>
-                <td>
-
-                    ${{ customer.customer_total_lifetime_value }}
-
-                </td>
-                <td>
-
-                    {{ customer.customer_last_login or "Never" }}
-
-                </td>
-                <td>
-
-                    <a href="{{ url_for('crm_module.customer_profile', uuid=customer.uuid) }}">
-
-                        View →
-
-                    </a>
-                </td>
-            </tr>
-
-            {% endfor %}
-
-            </tbody>
-        </table>
+                    <tr>
+                        <td colspan="7" class="text-muted" style="text-align:center; padding: 2rem;">
+                            No customers found.
+                            <a href="{{ url_for('crm_module.new_customer') }}">Create the first customer</a>.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
+ 
+</body>
+</html>
