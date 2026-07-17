@@ -47,8 +47,8 @@ def hr_dashboard():
         logging.critical("Employee JSON Database file could not be located.")
         exit(1)
         return []  # represents an empty list
-
-    return render_template("hr/hr_dashboard.html", employees=employees, loggedInTech=session["technician"])
+    return render_template("under_construction.html")
+    #return render_template("hr/hr_dashboard.html", employees=employees, loggedInTech=session["technician"])
 
 # Create New Employee Route
 
