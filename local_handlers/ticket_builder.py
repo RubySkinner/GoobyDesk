@@ -19,7 +19,11 @@ def build_ticket_record(form_or_payload: Any, ticket_number: str, source: str = 
     Returns:
         dict: Ticket ready to persist (not persisted by this function).
     """
-    get = getattr(form_or_payload, "get", lambda k, d=None: form_or_payload.get(k, d) if isinstance(form_or_payload, dict) else d)
+    if hasattr(form_or_payload, "get"):
+        get = form_or_payload.get
+    else:
+        def get(key, default=None):
+            return getattr(form_or_payload, key, default)
 
     requestor_name = get("requestor_name", "") or ""
     requestor_email = get("requestor_email", "") or ""
