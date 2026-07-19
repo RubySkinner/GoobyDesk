@@ -2,7 +2,7 @@
 
 ## 0.9.9-X
 
-Remove duplicate logic in the webhook module to simplify new implementations. **Example:**
+Remove duplicate logic in the webhook module to simplify new implementations. **Example:** Index.html/app.py
 
 ```python3
 def create_api_ticket(
@@ -52,6 +52,29 @@ JsonStore.validate()
 JsonStore.lock()
 JsonStore.exists()
 JsonStore.atomic_write()
+```
+
+Simplify CRM Customer Creation. **Example:**
+
+```python3
+def build_customer_record(form, technician, customers):
+    ...
+    return customer
+```
+then something like
+
+```python3
+customers = load_customers_file()
+
+customer = build_customer_record(
+    request.form,
+    session["technician"],
+    customers
+)
+
+customers.append(customer)
+
+save_customers_file(customers)
 ```
 
 ## 1.0.0
