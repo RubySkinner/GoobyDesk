@@ -4,6 +4,7 @@ import csv
 import logging
 from functools import wraps
 from flask import Blueprint, render_template, session, Response
+from local_handlers.auth_decorators import role_required, ROLE_ITSM_TECH
 from local_handlers.local_config_loader import load_core_config
 from storage.ticket_store import TicketStore
 
@@ -19,24 +20,14 @@ logging.basicConfig(filename=LOG_FILE, level=getattr(logging, LOG_LEVEL.upper(),
 # BLUEPRINT
 changes_module_bp = Blueprint("changes_module", __name__, url_prefix="/changes")
 
-# Helpers
-def technician_required(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        # Session-based auth check
-        if not session.get("technician"):
-            # Unauthorized access attempt
-            return render_template("errors/403.html"), 403
-        # Authorized technician → proceed to the route
-        return func(*args, **kwargs)
-    return wrapper
+# NOTE: use role_required(ROLE_ITSM_TECH) for protected routes
 
 def load_tickets():
     return ticket_store.load_all()
 
 # Dashboard Route
 @changes_module_bp.route("/", methods=["GET"])
-@technician_required
+@role_required(ROLE_ITSM_TECH)
 def changes_home():
     tickets = load_tickets()
     # Filtering out tickets with the Closed Status on the main Dashboard.
@@ -47,7 +38,7 @@ def changes_home():
 
 # Submit New Change Route
 @changes_module_bp.route("/submit-new", methods=["GET", "POST"])
-@technician_required
+@role_required(ROLE_ITSM_TECH)
 def submit_new() -> str:
     """Create new change form.
     Returns:
@@ -56,7 +47,7 @@ def submit_new() -> str:
 
 # Edit Change Ticket Route
 @changes_module_bp.route("/changes/<change_number>/edit", methods=["POST"])
-@technician_required
+@role_required(ROLE_ITSM_TECH)
 def edit_profile(change_number:str) -> str:
     """Update change profile.
     Args:
@@ -67,7 +58,7 @@ def edit_profile(change_number:str) -> str:
 
 # Export open change tickets as CSV.
 @changes_module_bp.route("/export/csv", methods=["GET"])
-@technician_required
+@role_required(ROLE_ITSM_TECH)
 def export_changes_csv():
     tickets = load_tickets()
     open_changes = [ticket for ticket in tickets if ticket["request_type"].lower() == "change" and ticket.get("ticket_status", "").lower() != "closed"]

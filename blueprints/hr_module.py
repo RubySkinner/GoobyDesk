@@ -12,6 +12,7 @@ from functools import wraps
 from flask import Blueprint, render_template, session
 
 from local_handlers.local_config_loader import load_core_config
+from local_handlers.auth_decorators import role_required, ROLE_HR_TECH
 from storage.hr_store import HrStore
 
 core_yaml_config = load_core_config()
@@ -27,23 +28,7 @@ hr_module_bp = Blueprint("hr_module", __name__, url_prefix="/hr")
 
 CERT_EXPIRY_WARNING_DAYS = 90  # Certifications expiring within this window are flagged.
 
-# Helpers
-def technician_required(func):
-    """Restrict a route to authenticated technicians.
-
-    Args:
-        func: The view function to wrap.
-
-    Returns:
-        The wrapped view function. Unauthenticated sessions receive an
-        HTTP 403 response instead of invoking ``func``.
-    """
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        if not session.get("technician"):
-            return render_template("errors/403.html"), 403
-        return func(*args, **kwargs)
-    return wrapper
+# NOTE: HR routes should require HR technician role; use `@role_required(ROLE_HR_TECH)`
 
 def load_hr_employees() -> list[dict]:
     """Load the employee roster from the HR JSON database.
@@ -110,7 +95,7 @@ def build_hr_stats(employees: list[dict]) -> dict:
 
 # Dashboard Route
 @hr_module_bp.route("/", methods=["GET"])
-@technician_required
+@role_required(ROLE_HR_TECH)
 def hr_dashboard():
     """Render the HR dashboard listing all employees and summary stats.
 
@@ -128,7 +113,7 @@ def hr_dashboard():
 
 # View Employee Details Route
 @hr_module_bp.route("/employee/<uuid>", methods=["GET"])
-@technician_required
+@role_required(ROLE_HR_TECH)
 def employee_profile(uuid: str):
     """Render a single employee's profile page.
 

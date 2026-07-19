@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from functools import wraps
 
 from flask import Blueprint, render_template, request, redirect, url_for, session, Response
+from local_handlers.auth_decorators import role_required, ROLE_ITSM_TECH
 from local_handlers.local_config_loader import load_core_config
 from storage.crm_store import CrmStore
 
@@ -23,17 +24,7 @@ logging.basicConfig(filename=LOG_FILE, level=getattr(logging, LOG_LEVEL.upper(),
 
 crm_module_bp = Blueprint('crm_module', __name__, url_prefix='/crm')
 
-# Helpers
-def technician_required(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        # Session-based auth check
-        if not session.get("technician"):
-            # Unauthorized access attempt
-            return render_template("errors/403.html"), 403
-        # Authorized technician → proceed to the route
-        return func(*args, **kwargs)
-    return wrapper
+# NOTE: use @role_required(ROLE_ITSM_TECH) on routes requiring ITSM technicians
 
 def load_customers_file():
     return crm_store.load_all()
@@ -57,7 +48,7 @@ def generate_customer_id(customers):
 
 # Dashboard Route
 @crm_module_bp.route("/", methods=["GET"])
-@technician_required
+@role_required(ROLE_ITSM_TECH)
 def crm_dashboard():
     # Render the CRM dashboard with a list of customers
     customers = load_customers_file()
@@ -76,7 +67,7 @@ def crm_dashboard():
 
 # Create New Customer Route
 @crm_module_bp.route("/submit-new", methods=["GET", "POST"])
-@technician_required
+@role_required(ROLE_ITSM_TECH)
 def new_customer():
     if request.method == "GET":
         return render_template("crm/submit_new.html")
@@ -216,7 +207,7 @@ def new_customer():
 
 # View Customer Details Route
 @crm_module_bp.route("/profile/<uuid>", methods=["GET"])
-@technician_required
+@role_required(ROLE_ITSM_TECH)
 def customer_profile(uuid):
     customers = load_customers_file()
     customer = next((c for c in customers if c["uuid"] == uuid), None)

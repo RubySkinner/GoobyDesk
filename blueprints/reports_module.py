@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from flask import Blueprint, render_template, session, Response
+from local_handlers.auth_decorators import role_required
 import io, csv, logging
 from datetime import datetime, timedelta
 from local_handlers.local_config_loader import load_core_config
@@ -29,11 +30,9 @@ def get_app_functions():
     return load_tickets, technician_required
 
 @reports_module_bp.route("/dashboard", methods=["GET"])
+@role_required("*")
 def reports_home():
     from app import load_tickets
-    
-    if not session.get("technician"):
-        return render_template("403.html"), 403
     
     tickets = load_tickets()
     now = datetime.now()
@@ -86,11 +85,9 @@ def reports_home():
         )
 
 @reports_module_bp.route("/export/csv", endpoint='export_tickets_csv')
+@role_required("*")
 def export_tickets_csv():
     from app import load_tickets
-    
-    if not session.get("technician"):
-        return render_template("403.html"), 403
     
     tickets = load_tickets()
     output = io.StringIO()

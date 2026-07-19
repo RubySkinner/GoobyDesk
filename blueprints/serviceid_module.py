@@ -3,6 +3,7 @@ import logging
 from functools import wraps
 
 from flask import Blueprint, redirect, render_template, request, session, url_for
+from local_handlers.auth_decorators import role_required, ROLE_ITSM_TECH
 
 from local_handlers.local_config_loader import load_core_config
 from storage.service_appid_store import ServiceAppIdStore
@@ -17,24 +18,18 @@ logging.basicConfig(filename=LOG_FILE, level=getattr(logging, LOG_LEVEL.upper(),
 
 serviceid_module_bp = Blueprint("serviceid_module", __name__, url_prefix="/serviceid")
 
-def technician_required(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        if not session.get("technician"):
-            return render_template("errors/403.html"), 403
-        return func(*args, **kwargs)
-    return wrapper
+# use @role_required(ROLE_ITSM_TECH)
 
 def load_service_appids():
     return service_appid_store.load_all()
 
 @serviceid_module_bp.route("/", methods=["GET"])
-@technician_required
+@role_required(ROLE_ITSM_TECH)
 def serviceid_dashboard():
     services = load_service_appids()
     return render_template("services-appid/dashboard.html", services=services, loggedInTech=session["technician"],)
 
 @serviceid_module_bp.route("/submit-new", methods=["GET"])
-@technician_required
+@role_required(ROLE_ITSM_TECH)
 def services_appid_dashboard():
     return redirect(url_for("under_construction"))

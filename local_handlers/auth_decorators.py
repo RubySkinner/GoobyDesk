@@ -59,10 +59,15 @@ def role_required(*required_roles: str, require_all: bool = False, redirect_to_l
                 return render_template("errors/403.html"), 403
 
             roles = get_current_roles()
-            if require_all:
-                allowed = all(r in roles for r in required_roles)
+
+            # Special-case: wildcard role '*' → allow any authenticated user
+            if required_roles == ("*",) or any(r == "*" for r in required_roles):
+                allowed = True
             else:
-                allowed = any(r in roles for r in required_roles)
+                if require_all:
+                    allowed = all(r in roles for r in required_roles)
+                else:
+                    allowed = any(r in roles for r in required_roles)
 
             if not allowed:
                 logger.warning("User %s lacks required role(s) %s for %s", username, required_roles, func.__name__)
