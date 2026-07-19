@@ -4,11 +4,11 @@
         "employee_id": "EMP-2026-0001",
         "first_name": "Archer",
         "last_name": "Sterling",
-        "preferred_name": "Admin",
+        "preferred_name": "TheAdmin",
         "date_of_birth": "1970-01-01",
         "email": "admin@example.com",
         "phone": "555-555-5555",
-        "timezone": "America/Chicago",
+        "timezone": "PST",
 
         "discord_username": null,
         "discord_user_id": null,
@@ -29,8 +29,8 @@
             "salary_exempt": true,
             "bonus_eligible": false,
             "bonus_rate": 0.0,
-            "pto_available_hours": 120,
-            "pto_used_hours": 24
+            "pto_available_hours": 40,
+            "pto_used_hours": 1
         },
 
         "access": {
@@ -78,14 +78,6 @@
             "Python",
             "Networking",
             "Flask"
-        ],
-
-        "notes": [
-            {
-                "date": "2026-02-01T10:15:00Z",
-                "author": "goober",
-                "note": "Completed onboarding."
-            }
         ],
 
         "created": "2025-01-01T08:00:00Z",
