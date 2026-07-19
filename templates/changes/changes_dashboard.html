@@ -18,23 +18,16 @@
     <script src="{{ url_for('static', filename='main.js') }}"></script>
     <title>Open Changes - GoobyDesk</title>
 </head>
-
 <body>
 <div class="container">
-
     <!-- Logo -->
-    <div class="logo">
-        <img src="https://raw.githubusercontent.com/GoobyFRS/GoobyDesk/refs/heads/main/static/GoobyDesk-color.webp"
-             alt="GoobyDesk Logo">
+    <div class="logo"><img src="https://raw.githubusercontent.com/GoobyFRS/GoobyDesk/refs/heads/main/static/GoobyDesk-color.webp" alt="GoobyDesk Logo">
     </div>
-
     <h2>GoobyDesk - Open Changes</h2>
-
     <!-- KPI Summary -->
     <p>
         <strong>Total Open Changes:</strong> {{ changes|length }}
     </p>
-
     <!-- Change List -->
     {% if changes %}
         <ul class="ticket-list">
@@ -55,12 +48,12 @@
             {% endfor %}
         </ul>
     {% else %}
-        <p>No open change tickets 🎉</p>
+        <p>No open change tickets.</p>
     {% endif %}
 
     <!-- Actions -->
     <div class="page-actions">
-        <a href="{{ url_for('changes.export_changes_csv') }}" class="submit-btn">
+        <a href="{{ url_for('changes_module.export_changes_csv'') }}" class="submit-btn">
             Export Open Changes (CSV)
         </a>
     </div>
@@ -69,7 +62,7 @@
 
     <!-- Navigation -->
     <form action="{{ url_for('itsm.dashboard') }}" method="GET">
-        <button type="submit" class="submit-btn">Back to Dashboard</button>
+        <button type="submit" class="submit-btn">Back to ITSM Dashboard</button>
     </form>
 
     <!-- Footer -->
@@ -77,7 +70,6 @@
         ©2025 GoobyDesk |
         Logged in as: {{ loggedInTech }}
     </p>
-
 </div>
 </body>
 </html>
