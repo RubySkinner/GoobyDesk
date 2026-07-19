@@ -1,62 +1,95 @@
-[
-    {
-        "uuid": "6d779d6c-a34d-4679-b7f4-0bca8b64d72c",
-        "customer_id": "CID-2026-0001",
-        "first_name": "Gooby",
-        "last_name": "McGooberson",
-        "preferred_name": "Goobs",
+{
+    "uuid": "uuid4",
+    "customer_id": "CID-2026-0001",
 
-        "company": null,
-        "customer_email": "gooby@example.com",
-        "phone": null,
+    "first_name": "",
+    "last_name": "",
+    "preferred_name": "",
 
-        "discord_username": "notarealusername",
-        "discord_user_id": "123456789012345678",
-        "minecraft_username": "notarealusername_mc",
+    "company": null,
+    "job_title": null,
 
-        "country": "US",
-        "timezone": "America/Los_Angeles",
-        "created": "YYYY-MM-DD HH:MM",
-        "last_seen": null,
-        "last_login": null,
+    "email": "",
+    "phone": null,
 
-        "status": "active",
-        "status_reason": null,
-        "account_locked": false,
-        "email_verified": false,
-        "mfa_enabled": false,
+    "address": {
+        "street": null,
+        "city": null,
+        "state": null,
+        "postal_code": null,
+        "country": "US"
+    },
 
-        "vip": false,
-        "account_tier": "basic",
-        "content_creator": false,
+    "timezone": "UTC",
+    "language": "en-US",
 
-        "risk_level": "low",
-        "lifetime_value": 0.00,
-        "billing_currency": "USD",
-        "last_order": null,
-        "last_payment": null,
-        "vat-taxid": "0123456789",
+    "discord": {
+        "username": null,
+        "user_id": null
+    },
 
-        "preferred_contact": "email",
-        "marketing_opt_in": false,
-        "maintenance_notifications": true,
-        "assigned_account_manager": null,
-        "services": [
-                "SVC-2026-0001",
-                "SVC-2026-0002"
-        ],
-        
-        "account_tags": [
-            "example-tag1",
-            "example-tag2"
-        ],
+    "minecraft": {
+        "username": null,
+        "uuid": null
+    },
 
-        "notes": [
-            {
-                "date": "YYYY-MM-DD HH:MM",
-                "author": "MrTechnician",
-                "note": "Requested migration assistance."
-            }
-        ]
+    "created": "",
+    "created_by": "",
+
+    "last_seen": null,
+    "last_login": null,
+
+    "status": "active",
+    "status_reason": null,
+
+    "account_locked": false,
+    "email_verified": false,
+    "mfa_enabled": false,
+
+    "customer_type": "individual",
+
+    "account_tier": "basic",
+
+    "vip": false,
+
+    "content_creator": false,
+
+    "risk_level": "low",
+
+    "lifetime_value": 0.00,
+
+    "billing_currency": "USD",
+
+    "preferred_contact": "email",
+
+    "marketing_opt_in": false,
+
+    "maintenance_notifications": true,
+
+    "assigned_account_manager": null,
+
+    "services": [],
+
+    "licenses": [],
+
+    "domains": [],
+
+    "servers": [],
+
+    "support_contract": {
+        "enabled": false,
+        "sla": null,
+        "expires": null
+    },
+
+    "custom_fields": {},
+
+    "account_tags": [],
+
+    "crm_worknotes": [],
+
+    "audit": {
+        "last_modified": "",
+        "last_modified_by": ""
     }
-]
+}

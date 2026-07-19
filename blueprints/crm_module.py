@@ -107,54 +107,113 @@ def new_customer():
         ), 400
 
     customers = load_customers_file()
-    submission_timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    submission_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     new_customer_record = {
         "uuid": str(uuid.uuid4()),
         "customer_id": generate_customer_id(customers),
+
         "first_name": first_name,
         "last_name": last_name,
-        "preferred_name": request.form.get("preferred_name", "").strip() or first_name,
+        "preferred_name": request.form.get(
+            "preferred_name",
+            first_name
+        ).strip(),
 
-        "company": request.form.get("company", "").strip() or None,
+        "company": request.form.get("company") or None,
+        "job_title": request.form.get("job_title") or None,
+
         "email": email,
-        "phone": request.form.get("phone", "").strip() or None,
+        "phone": request.form.get("phone") or None,
 
-        "discord_username": request.form.get("discord_username", "").strip() or None,
-        "discord_user_id": None,
-        "minecraft_username": request.form.get("minecraft_username", "").strip() or None,
+        "address": {
+            "street": None,
+            "city": None,
+            "state": None,
+            "postal_code": None,
+            "country": request.form.get("country") or "US"
+        },
 
-        "country": request.form.get("country", "").strip() or None,
-        "timezone": request.form.get("timezone", "").strip() or None,
+        "timezone": request.form.get("timezone") or "UTC",
+        "language": "en-US",
+
+        "discord": {
+            "username": request.form.get("discord_username") or None,
+            "user_id": None
+            },
+
+        "minecraft": {
+            "username": request.form.get("minecraft_username") or None,
+            "uuid": None
+        },
+
         "created": submission_timestamp,
+        "created_by": session["technician"],
+
         "last_seen": None,
         "last_login": None,
 
         "status": request.form.get("status", "active"),
         "status_reason": None,
+
         "account_locked": False,
         "email_verified": False,
         "mfa_enabled": False,
 
-        "vip": request.form.get("vip") == "on",
-        "content_creator": request.form.get("content_creator") == "on",
+        "customer_type": request.form.get(
+            "customer_type",
+            "individual"
+        ),
+
+        "account_tier": request.form.get(
+            "account_tier",
+            "basic"
+        ),
+
+        "vip": "vip" in request.form,
+        "content_creator": "content_creator" in request.form,
 
         "risk_level": "low",
-        "lifetime_value": 0.00,
-        "billing_currency": "USD",
-        "last_order": None,
-        "last_payment": None,
 
-        "preferred_contact": request.form.get("preferred_contact", "email"),
-        "marketing_opt_in": request.form.get("marketing_opt_in") == "on",
-        "maintenance_notifications": request.form.get("maintenance_notifications") == "on",
+        "lifetime_value": 0.00,
+
+        "billing_currency": "USD",
+
+        "preferred_contact": request.form.get(
+            "preferred_contact",
+            "email"
+        ),
+
+        "marketing_opt_in": "marketing_opt_in" in request.form,
+
+        "maintenance_notifications":
+            "maintenance_notifications" in request.form,
+
         "assigned_account_manager": None,
+
         "services": [],
+        "licenses": [],
+        "domains": [],
+        "servers": [],
+
+        "support_contract": {
+            "enabled": False,
+            "sla": None,
+            "expires": None
+        },
+
+        "custom_fields": {},
 
         "account_tags": [],
 
-        "notes": [],
-    }
+        "crm_worknotes": [],
+
+        "audit": {
+            "creation_source": "auth_web",
+            "last_modified": submission_timestamp,
+            "last_modified_by": session["technician"]
+        }
+}
 
     initial_note = request.form.get("notes", "").strip()
     if initial_note:
