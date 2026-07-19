@@ -1,19 +1,13 @@
 #!/usr/bin/env python3
-"""CRM customer JSON store wrapper."""
-
+# JSON Storage Wrapper for CRM records.
 from __future__ import annotations
-
 from datetime import datetime, timezone
 from typing import Any
-
 from local_handlers.local_config_loader import load_core_config
 from storage.json_store import JsonStore
 from storage.validator import is_list
 
-
 class CrmStore:
-    """Storage wrapper for CRM customer records."""
-
     def __init__(self, file_path: str) -> None:
         self.store = JsonStore(file_path=file_path, default_factory=list, validator=is_list)
 

@@ -1,14 +1,10 @@
 #!/usr/bin/env python3
-"""HR employee JSON store wrapper."""
-
+# JSON Storage Wrapper for HR records.
 from __future__ import annotations
-
 from typing import Any
-
 from local_handlers.local_config_loader import load_core_config
 from storage.json_store import JsonStore
 from storage.validator import is_list
-
 
 class HrStore:
     """Storage wrapper for HR records."""

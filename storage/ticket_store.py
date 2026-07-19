@@ -1,19 +1,13 @@
 #!/usr/bin/env python3
-"""Ticket JSON store wrapper."""
-
+# JSON Storage Wrapper for ticket operations.
 from __future__ import annotations
-
 from datetime import datetime
 from typing import Any
-
 from local_handlers.local_config_loader import load_core_config
 from storage.json_store import JsonStore
 from storage.validator import is_list
 
-
 class TicketStore:
-    """Storage wrapper for ticket operations."""
-
     def __init__(self, file_path: str) -> None:
         self.store = JsonStore(file_path=file_path, default_factory=list, validator=is_list)
 

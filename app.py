@@ -141,6 +141,32 @@ def save_employees(employees):
     employee_store.save_all(employees)
     logging.debug("The Employee JSON Database file was modified.")
 
+
+def _assign_roles_to_session(employee: dict) -> None:
+    """Set `session['roles']` from employee record, with safe defaults and simple inference.
+
+    - Uses explicit `roles` list when present.
+    - Falls back to inferring from `tech_type` for backwards compatibility.
+    """
+    roles = employee.get("roles")
+    if isinstance(roles, list):
+        session["roles"] = roles
+        return
+
+    # infer simple mappings from legacy `tech_type`
+    tech_type = (employee.get("tech_type") or "").strip().lower()
+    inferred: list[str] = []
+    if tech_type == "technician":
+        inferred.append("itsm_technician")
+    if tech_type == "hr":
+        inferred.append("hr_technician")
+    if tech_type == "manager":
+        inferred.append("manager")
+    if tech_type == "admin":
+        inferred.append("admin")
+
+    session["roles"] = inferred
+
 # Generate a new ticket number.
 def generate_ticket_number():
     return ticket_store.next_ticket_number(datetime.now().year)
@@ -282,6 +308,7 @@ def login():
                     save_employees(employees)
 
                     session["technician"] = username
+                    _assign_roles_to_session(employee)
                     logging.info(f"{username} logged in using legacy password and was auto-migrated.")
                     return redirect(url_for("itsm.dashboard"))
                 # Username matched, legacy password wrong -> stop checking
@@ -290,6 +317,7 @@ def login():
             stored_hash = employee.get("password_hash")
             if stored_hash and local_authentication_handler.verify_password(password, stored_hash):
                 session["technician"] = username
+                _assign_roles_to_session(employee)
                 logging.info(f"{username} logged in successfully.")
                 return redirect(url_for("itsm.dashboard"))
             # Username matched but password incorrect

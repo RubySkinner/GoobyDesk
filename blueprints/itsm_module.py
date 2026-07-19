@@ -5,6 +5,7 @@ from datetime import datetime
 from functools import wraps
 
 from flask import Blueprint, render_template, request, jsonify, session
+from local_handlers.auth_decorators import role_required, ROLE_ITSM_TECH
 
 import local_handlers.local_webhook_handler as local_webhook_handler
 from local_handlers.local_config_loader import load_core_config
@@ -77,7 +78,7 @@ def dashboard():
     return render_template("itsm/dashboard.html", tickets=open_tickets, loggedInTech=session["technician"])
 
 @itsm_module_bp.route("/services-appid", methods=["GET"])
-@technician_required
+@role_required(ROLE_ITSM_TECH)
 def services_appid_dashboard():
     services = load_service_appids()
     return render_template(
@@ -88,7 +89,7 @@ def services_appid_dashboard():
 
 
 @itsm_module_bp.route("/ticket/<ticket_number>")
-@technician_required
+@role_required(ROLE_ITSM_TECH)
 def ticket_detail(ticket_number):
     tickets = load_tickets()
     ticket = next((t for t in tickets if t["ticket_number"] == ticket_number), None)
@@ -97,7 +98,7 @@ def ticket_detail(ticket_number):
     return render_template("errors/404.html"), 404
 
 @itsm_module_bp.route("/ticket/<ticket_number>/update_status/<ticket_status>", methods=["POST"])
-@technician_required
+@role_required(ROLE_ITSM_TECH)
 def update_ticket_status(ticket_number, ticket_status):
     """Update a ticket's status. Called from the Dashboard and Ticket Commander.
     Args:
@@ -145,7 +146,7 @@ def update_ticket_status(ticket_number, ticket_status):
     return render_template("errors/404.html"), 404
 
 @itsm_module_bp.route("/ticket/<ticket_number>/append_note", methods=["POST"])
-@technician_required
+@role_required(ROLE_ITSM_TECH)
 def add_ticket_note(ticket_number):
     """Append a technician note to a ticket.
 
