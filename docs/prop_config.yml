@@ -1,11 +1,13 @@
 #########################
 # Core Configuration
 #########################
-employees_file: ""
-customers_file: ""
-tickets_file: ""
-changes_file: ""
-services_appid_file: ""
+core:
+  employee_auth_file: ""
+  customers_file: ""
+  tickets_file: ""
+  changes_file: ""
+  services_appid_file: ""
+  hr_file: ""
 
 logging:
   level: "INFO"         # Valid: DEBUG, INFO, WARNING, ERROR, CRITICAL
@@ -21,6 +23,9 @@ email:
   imap_port: 993
   smtp_server: ""
   smtp_port: 587
+  tailscale_notify_email: ""
+  limbrenms_notify_email : ""
+
 
 #########################
 # Branding
@@ -55,31 +60,29 @@ footer:
 # Webhooks
 #########################
 webhooks:
-  ingest:
-      generic:
-        enabled: false
-        api_key: ""  # X-API-Key header for authentication
-      tailscale:
-        enabled: false
-        secret: ""  # Webhook secret for signature verification
-      uptime_kuma:
-        enabled: false
-        token: ""  # Bearer token for authentication
-        create_ticket_on_up: false  # Only create tickets for DOWN events by default
-  egress:
-    discord:
-      enabled: false
-      webhook_url: ""
-      username: "GoobyDesk"
-      avatar_url: ""
-    slack:
-      enabled: false
-      webhook_url: ""
-      username: "GoobyDesk"
-      avatar_url: ""
-    teams365:
-      enabled: false
-      webhook_url: ""
+  generic:
+    enabled: false
+    api_key: ""  # X-API-Key header for authentication
+  tailscale:
+    enabled: false
+    secret: ""  # Webhook secret for signature verification
+  uptime_kuma:
+    enabled: false
+    token: ""  # Bearer token for authentication
+    create_ticket_on_up: false  # Only create tickets for DOWN events by default
+  discord:
+    enabled: false
+    webhook_url: ""
+    username: "GoobyDesk"
+    avatar_url: ""
+  slack:
+    enabled: false
+    webhook_url: ""
+    username: "GoobyDesk"
+    avatar_url: ""
+  teams365:
+    enabled: false
+    webhook_url: ""
 
 #########################
 # ITSM Options

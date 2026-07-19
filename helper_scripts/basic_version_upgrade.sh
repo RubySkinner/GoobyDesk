@@ -14,11 +14,11 @@ NC='\033[0m' # No Color
 # Configuration
 APP_DIR="/var/www/GoobyDesk"
 SERVICE_NAME="goobydesk.service"
-DATA_DIR="${APP_DIR}/my_data"
+DATA_DIR="${APP_DIR}/prod_data"
 LOG_FILE="/var/log/goobydesk.log"
 BACKUP_DIR="/var/tmp"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-BACKUP_NAME="my_data_backup_${TIMESTAMP}.tgz"
+BACKUP_NAME="prod_data_backup_${TIMESTAMP}.tgz"
 BACKUP_PATH="${BACKUP_DIR}/${BACKUP_NAME}"
 
 echo -e "${GREEN}=============================================${NC}"
@@ -48,13 +48,13 @@ echo ""
 # Step 2: Create backup
 echo -e "${YELLOW}Step 2/6: Creating backup...${NC}"
 BACKUP_TEMP_DIR=$(mktemp -d)
-mkdir -p "${BACKUP_TEMP_DIR}/my_data"
+mkdir -p "${BACKUP_TEMP_DIR}/prod_data"
 
 if [ -d "$DATA_DIR" ]; then
-    cp -r "$DATA_DIR"/* "${BACKUP_TEMP_DIR}/my_data/" 2>/dev/null || true
-    echo "  - my_data folder backed up"
+    cp -r "$DATA_DIR"/* "${BACKUP_TEMP_DIR}/prod_data/" 2>/dev/null || true
+    echo "  - prod_data folder backed up"
 else
-    echo -e "${YELLOW}  - Warning: my_data directory not found${NC}"
+    echo -e "${YELLOW}  - Warning: prod_data directory not found${NC}"
 fi
 
 if [ -f "$LOG_FILE" ]; then

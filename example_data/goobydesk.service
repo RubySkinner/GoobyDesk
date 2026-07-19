@@ -1,4 +1,4 @@
-# GR_Core Systemd Service File
+# GoobyDesk Systemd Service File
 #
 # Installation:
 #   1. Copy this file to /etc/systemd/system/goobydesk.service
@@ -15,8 +15,8 @@
 #   sudo journalctl -u goobydesk -f   - View logs
 
 [Unit]
-Description=GR_Core - IT Service Management Platform
-Documentation=https://github.com/GoobyFRS/GR_Desk/wiki
+Description=GoobyDesk - IT Service Management Platform
+Documentation=https://github.com/GoobyFRS/GoobyDesk/wiki
 After=network.target
 
 [Service]

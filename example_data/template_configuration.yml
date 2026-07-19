@@ -2,8 +2,13 @@
 # GoobyDesk TEMPLATE Core Configuration - DO NOT MODIFY THIS FILE
 # ==========================================
 # Core Files
-tickets_file: "./my_data/tickets.json"
-employee_file: "./my_data/employee.json"
+core:
+  tickets_file: "./prod_data/tickets.json" # Load as TICKETS_FILE
+  employee_auth_file: "./prod_data/employee_auth.json" # Load as EMPLOYEE_FILE
+  customers_file: "./prod_data/customers.json" # Load as CUSTOMERS_FILE
+  changes_file: "./prod_data/changes.json" # Load as CHANGES_FILE
+  hr_file: "./prod_data/hr_file.json" # Load as HR_FILE
+  serviceid_appid_file: "./prod_data/serviceid.json" # Load as SERVICE_APPID_FILE
 
 # Logging
 logging:
@@ -18,6 +23,8 @@ email:
   imap_port: 993
   smtp_server: ""
   smtp_port: 587
+  tailscale_notify_email: "tailscale@example.org"
+  librenms_notify_email: "librenms@example.org"
 
 # Discord Support
 discord:

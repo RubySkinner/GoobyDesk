@@ -13,6 +13,9 @@ import local_handlers.local_webhook_handler as local_webhook_handler
 from blueprints.api_module import api_module_bp
 from blueprints.reports_module import reports_module_bp
 from blueprints.changes_module import changes_module_bp
+from blueprints.itsm_module import itsm_module_bp
+from blueprints.hr_module import hr_module_bp
+from blueprints.crm_module import crm_module_bp
 
 BUILDID=str("0.9.9-RC1")
 
@@ -25,12 +28,15 @@ load_dotenv(dotenv_path=".env")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD") # App Password from Gmail or relevant email provider.
 CF_TURNSTILE_SITE_KEY = os.getenv("CF_TURNSTILE_SITE_KEY") # REQUIRED for CAPTCHA functionality.
 CF_TURNSTILE_SECRET_KEY = os.getenv("CF_TURNSTILE_SECRET_KEY") # REQUIRED for CAPTCHA functionality.
-TAILSCALE_NOTIFY_EMAIL = os.getenv("TAILSCALE_NOTIFY_EMAIL")
 
 # Configuration non-secret data loaded from YAML.
 core_yaml_config = local_config_loader.load_core_config()
-TICKETS_FILE = core_yaml_config["tickets_file"]
-EMPLOYEE_FILE = core_yaml_config["employee_file"]
+TICKETS_FILE = core_yaml_config["core"]["tickets_file"]
+EMPLOYEE_FILE = core_yaml_config["core"]["employee_auth_file"]
+CHANGES_FILE = core_yaml_config["core"]["changes_file"]
+CUSTOMERS_FILE = core_yaml_config["core"]["customers_file"]
+HR_FILE = core_yaml_config["core"]["hr_file"]
+SERVICE_APPID_FILE = core_yaml_config["core"]["serviceid_appid_file"]
 LOG_LEVEL = core_yaml_config["logging"]["level"]
 LOG_FILE = core_yaml_config["logging"]["file"]
 EMAIL_ENABLED = core_yaml_config["email"]["enabled"]
@@ -38,7 +44,7 @@ EMAIL_ACCOUNT = core_yaml_config["email"]["account"]
 IMAP_SERVER = core_yaml_config["email"]["imap_server"]
 SMTP_SERVER = core_yaml_config["email"]["smtp_server"]
 SMTP_PORT = core_yaml_config["email"]["smtp_port"]
-
+TAILSCALE_NOTIFY_EMAIL = core_yaml_config["email"]["tailscale_notify_email"]
 # Flask App core setup and configuration.
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASKAPP_SECRET_KEY")
@@ -53,10 +59,13 @@ app.config.update(
     PERMANENT_SESSION_LIFETIME=timedelta(hours=12),
     MAX_CONTENT_LENGTH=16 * 1024 * 1024,)
 
-api_module_bp.config = {'TAILSCALE_NOTIFY_EMAIL': TAILSCALE_NOTIFY_EMAIL}
+#api_module_bp.config = {'TAILSCALE_NOTIFY_EMAIL': TAILSCALE_NOTIFY_EMAIL}
+app.register_blueprint(itsm_module_bp)
 app.register_blueprint(api_module_bp)
 app.register_blueprint(reports_module_bp)
 app.register_blueprint(changes_module_bp)
+app.register_blueprint(hr_module_bp)
+app.register_blueprint(crm_module_bp)
 
 # Security Headers for all responses.
 @app.after_request
@@ -89,11 +98,7 @@ def set_security_headers(response):
     
     return response
 
-logging.basicConfig(
-    filename=LOG_FILE,
-    level=getattr(logging, LOG_LEVEL.upper(), logging.INFO),
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(filename=LOG_FILE, level=getattr(logging, LOG_LEVEL.upper(), logging.INFO), format="%(asctime)s - %(levelname)s - %(message)s")
 """ Above is the default logging configuration.
 Debug - Detailed information
 Info - Successes
@@ -172,6 +177,7 @@ else:
     logging.info("EMAIL_ENABLED is set to false. Skipping...")
 
 # Decorator to force authentication checking. Easy to append to routes.
+"""
 def technician_required(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -182,6 +188,7 @@ def technician_required(func):
         # Authorized technician → proceed to the route
         return func(*args, **kwargs)
     return wrapper
+    """
 
 @app.route("/", methods=["GET", "POST"])
 def home():
@@ -299,7 +306,7 @@ def login():
 
                     session["technician"] = username
                     logging.info(f"{username} logged in using legacy password and was auto-migrated.")
-                    return redirect(url_for("dashboard"))
+                    return redirect(url_for("itsm.dashboard"))
                 # Username matched, legacy password wrong -> stop checking
                 break
             # MODERN HASHED PASSWORD CHECK
@@ -307,7 +314,7 @@ def login():
             if stored_hash and local_authentication_handler.verify_password(password, stored_hash):
                 session["technician"] = username
                 logging.info(f"{username} logged in successfully.")
-                return redirect(url_for("dashboard"))
+                return redirect(url_for("itsm.dashboard"))
             # Username matched but password incorrect
             break
 
@@ -317,86 +324,13 @@ def login():
 
     return render_template("public/login.html", sitekey=CF_TURNSTILE_SITE_KEY)
 
-# Route for rendering the core technician dashboard. Displays all Open and In-Progress tickets.
-@app.route("/dashboard")
-@technician_required
-def dashboard():
-    tickets = load_tickets()
-    # Filtering out tickets with the Closed Status on the main Dashboard.
-    open_tickets = [ticket for ticket in tickets if ticket["ticket_status"].lower() != "closed"]
-    return render_template("itsm/dashboard.html", tickets=open_tickets, loggedInTech=session["technician"], BUILDID=BUILDID)
-
-# Route for viewing a ticket in the Ticket Commander view.
-@app.route("/ticket/<ticket_number>")
-@technician_required
-def ticket_detail(ticket_number):
-    tickets = load_tickets()
-    ticket = next((t for t in tickets if t["ticket_number"] == ticket_number), None)
-    
-    if ticket:
-        return render_template("ticket-commander.html", ticket=ticket, loggedInTech=session["technician"])
-
-    return render_template("errors/404.html"), 404
-
-# Route for updating a ticket. Called from Dashboard and Ticket Commander.
-@app.route("/ticket/<ticket_number>/update_status/<ticket_status>", methods=["POST"])
-@technician_required
-def update_ticket_status(ticket_number, ticket_status):
-    logging.info(f"{ticket_number} status has been changed to {ticket_status}.")
-    
-    if not session.get("technician"):
-        return render_template("errors/403.html"), 403
-    
-    valid_statuses = ["Open", "In-Progress", "Closed"]
-    if ticket_status not in valid_statuses:
-        return render_template("errors/400.html"), 400
-
-    loggedInTech = session["technician"]
-    tickets = load_tickets()
-
-    for ticket in tickets:
-        if ticket["ticket_number"] == ticket_number:
-            # Extract subject for webhook notifications
-            ticket_subject = ticket.get("ticket_subject", "No Subject Provided")
-            # Update ticket in memory
-            ticket["ticket_status"] = ticket_status
-            
-            if ticket_status == "Closed":
-                ticket["closed_by"] = loggedInTech
-                ticket["closure_date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-            save_tickets(tickets)
-            logging.info(f"Ticket {ticket_number} status updated to {ticket_status} by {loggedInTech}.")
-            # Send webhook notifications for status update.
-            try:
-                local_webhook_handler.notify_ticket_event(ticket_number=ticket_number,ticket_status=ticket_status,ticket_subject=ticket_subject) # Consider a refactor later.
-                logging.info(f"Ticket {ticket_number} status update notifications sent successfully.")
-            except Exception as e:
-                logging.error(f"Failed to send ticket status update notifications for {ticket_number}: {str(e)}")
-
-            return jsonify({"message": f"Ticket {ticket_number} updated to {ticket_status}."})
-
-    return render_template("errors/404.html"), 404
-
-# Route for appending a new note to a ticket.
-@app.route("/ticket/<ticket_number>/append_note", methods=["POST"])
-@technician_required
-def add_ticket_note(ticket_number):
-    new_tkt_note = request.form.get("note_content")  # Ensure the key matches the JS request
-
-    if not new_tkt_note:
-        return jsonify({"message": "Note Contents cannot be empty!"}), 400
-
-    tickets = load_tickets()  # Load tickets into memory.
-
-    for ticket in tickets:
-        if ticket["ticket_number"] == ticket_number:
-            ticket["ticket_notes"].append(new_tkt_note)  # Append note
-            save_tickets(tickets)  # Save updates
-            logging.info(f"Note successfully appended to {ticket_number}.")
-            return jsonify({"message": "Note added successfully."}), 200  # Return JSON response
-
-    return jsonify({"message": "Ticket not found."}), 404
+@app.route("/debug/routes")
+def debug_routes():
+    routes = sorted(
+        f"{rule.endpoint:35} {rule.rule}"
+        for rule in app.url_map.iter_rules()
+    )
+    return "<pre>" + "\n".join(routes) + "</pre>"
 
 # ABOVE THIS LINE SHOULD ONLY BE TECHNICIAN/TICKETING PAGES ONLY!
 
@@ -405,8 +339,10 @@ def add_ticket_note(ticket_number):
 
 @app.route("/logout")
 def logout():
-    session.pop("technician", None)
-    return redirect(url_for("login"))
+    session.clear()
+    response = redirect(url_for("login"))
+    response.delete_cookie("goobydesk_session_cookie")
+    return response
 
 # BELOW THIS LINE IS RESERVED FOR FLASK ERROR ROUTES. PUT ALL CORE APP FUNCTIONS ABOVE THIS LINE!
 # Handle 400 errors.

@@ -11,8 +11,10 @@ from local_handlers.local_config_loader import load_core_config
 core_yaml_config = load_core_config()
 LOG_LEVEL = core_yaml_config["logging"]["level"]
 LOG_FILE = core_yaml_config["logging"]["file"]
+TAILSCALE_NOTIFY_EMAIL = core_yaml_config["email"]["tailscale_notify_email"]
+LIBRENMS_NOTIFY_EMAIL = core_yaml_config["email"]["librenms_notify_email"]
 
-logging.basicConfig(filename=LOG_FILE,level=getattr(logging, LOG_LEVEL.upper(), logging.INFO),format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(filename=LOG_FILE,level=getattr(logging, LOG_LEVEL.upper(), logging.INFO),format="%(asctime)s - %(levelname)s - %(message)s",)
 """ Above is the default logging configuration.
 Debug - Detailed information
 Info - Successes
@@ -40,7 +42,6 @@ def api_status():
 @api_module_bp.route("/tailscale", methods=["POST"])
 def tailscale_webhook():
     load_tickets, save_tickets, generate_ticket_number = get_tickets_functions()
-    TAILSCALE_NOTIFY_EMAIL = api_module_bp.config.get('TAILSCALE_NOTIFY_EMAIL', 'noreply@tailscale.example.org')
     
     try:
         payload = request.json
@@ -191,4 +192,78 @@ new_ticket = {
             "ticket_notes": []
         }
 """
-    
+@api_module_bp.route("/librenms", methods=["POST"])
+def librenms_webhook():
+    """Ingest LibreNMS alert-transport webhooks and open a ticket.
+    Expects LibreNMS's default JSON alert transport payload. Only
+    newly-triggered alerts (state == 1) create a ticket; recoveries
+    and acknowledgements are logged and ignored.
+    Returns:
+        JSON confirmation with the created ticket number on success,
+        an "ignored" status for untracked states, or 400/500 on failure.
+    """
+    load_tickets, save_tickets, generate_ticket_number = get_tickets_functions()
+
+    try:
+        if not request.is_json:
+            logging.warning("API INGEST - LibreNMS webhook sent invalid content type.")
+            return jsonify({"error": "Invalid content type"}), 400
+
+        payload = request.json
+        if not payload:
+            logging.warning("API INGEST - LibreNMS webhook sent an empty payload.")
+            return jsonify({"error": "Empty payload"}), 400
+
+        logging.info(f"API INGEST - LibreNMS payload received: {payload}")
+
+        state = payload.get("state")
+        hostname = payload.get("hostname", "Unknown Host")
+        title = payload.get("title", "LibreNMS Alert")
+        severity = str(payload.get("severity", "")).lower()
+
+        if state != 1:
+            logging.info(f"API INGEST - Skipping ticket creation for {hostname} (state={state}).")
+            return jsonify({"status": "ignored", "reason": f"state {state} not tracked"}), 200
+
+        ticket_impact, ticket_urgency = "Medium", "Medium"
+        if severity == "critical": 
+            ticket_impact, ticket_urgency = "High", "High"
+        ticket_subject = f"LibreNMS Alert - {hostname}: {title}"
+        ticket_message = json.dumps(payload, indent=4)
+        ticket_number = generate_ticket_number()
+
+        new_ticket = {
+            "ticket_number": ticket_number,
+            "requestor_name": "LibreNMS",
+            "requestor_email": LIBRENMS_NOTIFY_EMAIL,
+            "ticket_subject": ticket_subject,
+            "ticket_message": ticket_message,
+            "request_type": "Incident",
+            "ticket_impact": ticket_impact,
+            "ticket_urgency": ticket_urgency,
+            "ticket_status": "Open",
+            "submission_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "ticket_notes": []
+        }
+
+        tickets = load_tickets()
+        tickets.append(new_ticket)
+        save_tickets(tickets)
+
+        logging.info(f"API INGEST - LibreNMS Notification {ticket_number} created successfully (Severity: {severity or 'unknown'}).")
+
+        try:
+            local_webhook_handler.notify_ticket_event(
+                ticket_number=ticket_number,
+                ticket_status="Open",
+                ticket_subject=ticket_subject
+            )
+            logging.info(f"API INGEST - Ticket {ticket_number} status update notifications sent successfully.")
+        except Exception as e:
+            logging.error(f"API INGEST - Failed to send ticket status update notifications for {ticket_number}: {str(e)}")
+
+        return jsonify({"status": "success", "ticket": ticket_number}), 200
+
+    except Exception as e:
+        logging.critical(f"API INGEST - LibreNMS webhook error: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500

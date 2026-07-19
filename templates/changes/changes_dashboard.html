@@ -17,8 +17,6 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <script src="{{ url_for('static', filename='main.js') }}"></script>
     <title>Open Changes - GoobyDesk</title>
-
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 
 <body>
@@ -42,7 +40,7 @@
         <ul class="ticket-list">
             {% for change in changes %}
                 <li>
-                    <a href="{{ url_for('ticket_detail', ticket_number=change.ticket_number) }}">
+                    <a href="{{ url_for('itsm.ticket_detail', ticket_number=change.ticket_number) }}">
                         {{ change.ticket_number }} {{ change.ticket_subject }}
                         ({{ change.ticket_status }})
                     </a>
@@ -61,7 +59,7 @@
     {% endif %}
 
     <!-- Actions -->
-    <div style="margin-top: 20px;">
+    <div class="page-actions">
         <a href="{{ url_for('changes.export_changes_csv') }}" class="submit-btn">
             Export Open Changes (CSV)
         </a>
@@ -70,7 +68,7 @@
     <br>
 
     <!-- Navigation -->
-    <form action="{{ url_for('dashboard') }}" method="GET">
+    <form action="{{ url_for('itsm.dashboard') }}" method="GET">
         <button type="submit" class="submit-btn">Back to Dashboard</button>
     </form>
 

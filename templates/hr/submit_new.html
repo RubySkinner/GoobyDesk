@@ -1,2 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/x-icon" href="static/img/favicon.ico"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Matt Faulkner">
+    <meta name="description" content="Create New Employee">
+    <meta name="robots" content="noindex, nofollow"> <!--Discourage Search Engine Indexing of this page-->
+    <meta name="theme-color" content="#284389"> <!-- Mobile Browser stylized address bar.-->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"> <!-- Force IE to use latest rendering engine available.-->
+    <meta http-equiv="refresh" content="300"> <!-- 5 Minute Page Refresh -->
+    <link rel="preconnect" href="https://fonts.bunny.net/css">
+    <link rel="preconnect" href="https://fonts.bunny.net/css" crossorigin>
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <!-- Performance Enhancements -->
+    <title>Create New Employee - GoobyDesk</title>
+<body>
+    <div class="container container--narrow">
+        <h2>New Employee</h2>
+        <p class="text-muted">Fields marked with * are required.</p>
+
+        {% if error %}
+        <div class="alert alert--danger">{{ error }}</div>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('hr_module.new_employee') }}">
+
+            <div class="form-row">
+                <div>
+                    <label for="first_name">First Name *</label>
+                    <input type="text" id="first_name" name="first_name" required>
+                </div>
+                <div>
+                    <label for="last_name">Last Name *</label>
+                    <input type="text" id="last_name" name="last_name" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="preferred_name">Preferred Name</label>
+                    <input type="text" id="preferred_name" name="preferred_name" placeholder="Defaults to First Name">
+                </div>
+                <div>
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+            </div>
+
+
+            </div>
+
+            <button type="submit" class="submit-btn">Create Customer</button>
+            <a href="{{ url_for('crm_module.crm_dashboard') }}" class="form-link">Cancel</a>
+
+        </form>
+    </div>
+</body>
+</html>

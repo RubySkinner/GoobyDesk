@@ -11,12 +11,9 @@ from local_handlers.local_config_loader import load_core_config
 core_yaml_config = load_core_config()
 LOG_LEVEL = core_yaml_config["logging"]["level"]
 LOG_FILE = core_yaml_config["logging"]["file"]
-TICKETS_FILE = core_yaml_config["tickets_file"]
+TICKETS_FILE = core_yaml_config["core"]["tickets_file"]
 
-logging.basicConfig(
-    filename=LOG_FILE,
-    level=getattr(logging, LOG_LEVEL.upper(), logging.INFO),
-    format="%(asctime)s - %(levelname)s - %(message)s",)
+logging.basicConfig(filename=LOG_FILE, level=getattr(logging, LOG_LEVEL.upper(), logging.INFO), format="%(asctime)s - %(levelname)s - %(message)s",)
 
 # BLUEPRINT
 changes_module_bp = Blueprint("changes", __name__, url_prefix="/changes")
@@ -42,8 +39,8 @@ def load_tickets():
         exit(1)
         return [] # represents an empty list.
 
-# ROUTES
-@changes_module_bp.route("/", methods=["GET"])
+# Dashboard Route
+@changes_module_bp.route("/dashboard", methods=["GET"])
 @technician_required
 def changes_home():
     tickets = load_tickets()
@@ -52,6 +49,26 @@ def changes_home():
     return render_template("changes/changes_dashboard.html", changes=open_changes,
     loggedInTech=session["technician"],
 )
+
+# Submit New Change Route
+@changes_module_bp.route("/submit-new", methods=["GET", "POST"])
+@technician_required
+def submit_new() -> str:
+    """Create new change form.
+    Returns:
+        Rendered form or redirect on success.
+    """
+
+# Edit Change Ticket Route
+@changes_module_bp.route("/changes/<change_number>/edit", methods=["POST"])
+@technician_required
+def edit_profile(change_number:str) -> str:
+    """Update change profile.
+    Args:
+        change_number: The change number (CHG-YYYY-NNNN).
+    Returns:
+        Redirect to profile page.
+    """
 
 # Export open change tickets as CSV.
 @changes_module_bp.route("/export/csv", methods=["GET"])

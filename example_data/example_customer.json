@@ -1,28 +1,60 @@
-{
-    "uuid": "KeyValue",
-    "customer_id": "CID-2026-0001",
-    "customer_first_name": "John",
-    "customer_last_name": "Doe",
-    "customer_preferred_name": "John",
-    "customer_ingame_username": "johndoe1",
-    "customer_discord_user_id": "johnnydoe#1234",
-    "customer_contact_email": "john@example.com",
-    "customer_account_created_date": "2026-04-01",
-    "customer_account_status": "active",
-    "customer_fraud_risk": "low",
-    "customer_vip_status": "no",
-    "customer_account_value": "0",
-    "is_content_creator": "no",
-    "vat_taxid": "null",
-    "customer_mfa_enabled": "no",
-    "customer_last_login": "null",
-    "password_last_changed": "null",
-    "customer_account_locked": "yes",
-    "customer_last_order_date": "null",
-    "customer_last_payment_date": "null",
-    "customer_total_lifetime_value": "0",
-    "customer_status_reason": "null",
-    "preferred_contact_method": "email",
-    "marketing_opt_in": "true",
-    "maintenance_notifications_enabled": "true"
-}   
+[
+    {
+        "uuid": "6d779d6c-a34d-4679-b7f4-0bca8b64d72c",
+        "customer_id": "CID-2026-0001",
+        "first_name": "John",
+        "last_name": "Doe",
+        "preferred_name": "John",
+
+        "company": null,
+        "email": "john@example.com",
+        "phone": null,
+
+        "discord_username": "johndoe",
+        "discord_user_id": "123456789012345678",
+        "minecraft_username": "JohnDoe",
+
+        "country": "US",
+        "timezone": "America/Los_Angeles",
+        "created": "2026-04-01T18:45:12Z",
+        "last_seen": null,
+        "last_login": null,
+
+        "status": "active",
+        "status_reason": null,
+        "account_locked": false,
+        "email_verified": true,
+        "mfa_enabled": false,
+
+        "vip": false,
+        "content_creator": false,
+
+        "risk_level": "low",
+        "lifetime_value": 0.00,
+        "billing_currency": "USD",
+        "last_order": null,
+        "last_payment": null,
+
+        "preferred_contact": "email",
+        "marketing_opt_in": true,
+        "maintenance_notifications": true,
+        "assigned_account_manager": null,
+        "services": [
+                "SVC-2026-0001",
+                "SVC-2026-0002"
+        ],
+        
+        "account_tags": [
+            "beta",
+            "discord"
+        ],
+
+        "notes": [
+            {
+                "date": "2026-05-15T22:31:14Z",
+                "author": "matt",
+                "note": "Requested migration assistance."
+            }
+        ]
+    }
+]

@@ -51,15 +51,15 @@ echo "Setting directory ownership to caddy..."
 sudo chown -R caddy /var/www/GoobyDesk || { echo "ERROR: Failed to set ownership"; exit 1; }
 
 # Create data directory
-echo "Creating my_data directory..."
-sudo mkdir -p /var/www/GoobyDesk/my_data || { echo "ERROR: Failed to create my_data directory"; exit 1; }
+echo "Creating prod_data directory..."
+sudo mkdir -p /var/www/GoobyDesk/prod_data || { echo "ERROR: Failed to create prod_data directory"; exit 1; }
 
 # Copy configuration files
 echo "Copying configuration files..."
 cp example_dotenv .env || { echo "ERROR: Failed to copy .env file"; exit 1; }
-cp example_employee.json my_data/employee.json || { echo "ERROR: Failed to copy employee.json"; exit 1; }
-cp example_tickets.json my_data/tickets.json || { echo "ERROR: Failed to copy tickets.json"; exit 1; }
-cp template_configuration.yml my_data/core_configuration.yml || { echo "ERROR: Failed to copy core_configuration.yml"; exit 1; }
+cp example_employee.json prod_data/employee.json || { echo "ERROR: Failed to copy employee.json"; exit 1; }
+cp example_tickets.json prod_data/tickets.json || { echo "ERROR: Failed to copy tickets.json"; exit 1; }
+cp template_configuration.yml prod_data/configuration.yml || { echo "ERROR: Failed to copy configuration.yml"; exit 1; }
 
 # Create log file
 echo "Creating log file..."
@@ -112,7 +112,7 @@ echo ""
 echo "GoobyDesk will be accessible on http://127.0.0.1:8000"
 echo ""
 echo "Next steps:"
-echo "1. Review and edit configuration files in /var/www/GoobyDesk/my_data/"
+echo "1. Review and edit configuration files in /var/www/GoobyDesk/prod_data/"
 echo "2. Edit .env file if needed. I like to use nano."
 echo "3. Start the service: sudo systemctl start goobydesk.service"
 echo "4. Check status: sudo systemctl status goobydesk.service"
