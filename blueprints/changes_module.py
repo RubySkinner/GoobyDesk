@@ -16,7 +16,7 @@ TICKETS_FILE = core_yaml_config["core"]["tickets_file"]
 logging.basicConfig(filename=LOG_FILE, level=getattr(logging, LOG_LEVEL.upper(), logging.INFO), format="%(asctime)s - %(levelname)s - %(message)s",)
 
 # BLUEPRINT
-changes_module_bp = Blueprint("changes", __name__, url_prefix="/changes")
+changes_module_bp = Blueprint("changes_module", __name__, url_prefix="/changes")
 
 # Helpers
 def technician_required(func):
@@ -40,7 +40,7 @@ def load_tickets():
         return [] # represents an empty list.
 
 # Dashboard Route
-@changes_module_bp.route("/dashboard", methods=["GET"])
+@changes_module_bp.route("/", methods=["GET"])
 @technician_required
 def changes_home():
     tickets = load_tickets()
