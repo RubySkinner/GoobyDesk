@@ -65,37 +65,16 @@
                 aria-required="true">
 
             <label for="email">Email address</label>
-            <input
-                type="email"
-                id="email"
-                name="email"
-                autocomplete="email"
-                required
-                aria-required="true">
+            <input type="email" id="email" name="requestor_email" placeholder="richard.hammond@example.com" title="" minlength="6" maxlength="48" autocomplete="email" pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}" required>
 
             <label for="password">Password</label>
-            <input
-                type="password"
-                id="password"
-                name="password"
-                autocomplete="new-password"
-                minlength="8"
-                required
-                aria-required="true"
-                aria-describedby="password_help">
+            <input type="password" id="password" name="password" autocomplete="new-password" minlength="8" required aria-required="true" aria-describedby="password_help">
             <span id="password_help" class="footer-text form-help">
                 At least 8 characters.
             </span>
 
             <label for="confirm_password">Confirm password</label>
-            <input
-                type="password"
-                id="confirm_password"
-                name="confirm_password"
-                autocomplete="new-password"
-                minlength="8"
-                required
-                aria-required="true">
+            <input type="password" id="confirm_password" name="confirm_password" autocomplete="new-password" minlength="8" required aria-required="true">
 
             {% if sitekey %}
             <div class="cf-turnstile" data-sitekey="{{ sitekey }}"></div>
@@ -105,7 +84,7 @@
         </form>
 
         <p class="footer-text">
-            Already have an account? <a href="{{ url_for('login') }}">Log in</a>
+            Already have an account? <a href="{{ url_for('login') }}">Login</a>
         </p>
     </main>
 

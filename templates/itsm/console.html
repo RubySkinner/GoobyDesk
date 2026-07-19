@@ -34,8 +34,8 @@
             <p><strong>Impact:</strong> {{ ticket.ticket_impact }}</p>
             <p><strong>Urgency:</strong> {{ ticket.ticket_urgency }}</p>
             <p><strong>Status:</strong> {{ ticket.ticket_status }}</p>
-            <p><strong>Ticket Content:</strong> {{ticket.ticket_message}}</p>
-            <p><strong>End User Replies:</strong> {{ticket.ticket_notes}}</p>
+            <p><strong>Ticket Body:</strong> {{ticket.ticket_body}}</p>
+            <p><strong>End User Replies:</strong> {{ticket.ticket_worknotes}}</p>
         </div>
 
         <button class="status-btn" onclick="updateTicketStatus('{{ ticket.ticket_number }}', 'In-Progress')">Mark In-Progress</button>

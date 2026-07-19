@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from flask import Flask, Response, render_template, request, redirect, url_for, session, jsonify, flash
-import json, threading, time, logging, requests, os
+import json, threading, time, logging, requests, os, uuid
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from functools import wraps
@@ -157,6 +157,7 @@ def generate_ticket_number():
     ticket_count = str(len(tickets) + 1).zfill(4)  # Zero-padded ticket count
     return f"TKT-{current_year}-{ticket_count}"  # Format: TKT-YYYY-XXXX
 
+# Generate a new change request number.
 def generate_change_request_number():
     tickets = load_tickets() # Read/Load the tickets-db into memory.
     current_year = datetime.now().year  # Get the current year dynamically
@@ -223,17 +224,25 @@ def home():
             ticket_number = generate_ticket_number()
             
             new_ticket = {
+                "uuid": str(uuid.uuid4()),
                 "ticket_number": ticket_number,
                 "requestor_name": request.form["requestor_name"],
                 "requestor_email": request.form["requestor_email"],
                 "ticket_subject": request.form["ticket_subject"],
-                "ticket_message": request.form["ticket_message"],
+                "ticket_body": request.form["ticket_body"],
                 "request_type": request.form["request_type"],
                 "ticket_impact": request.form["ticket_impact"],
                 "ticket_urgency": request.form["ticket_urgency"],
-                "ticket_status": "Open",
+                "ticket_status": "open",
                 "submission_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "ticket_notes": []
+                "ticket_acknowledged_timestamp": None,
+                "ticket_escalation_timestamp": None,
+                "ticket_resolved_timestamp": None,
+                "escalation_level": 0,
+                "ticket_overdue": False,
+                "ticket_source": "web",
+                "ticket_worknotes": [],
+                "ticket_resolution_notes": []
             }
 
             tickets = load_tickets()

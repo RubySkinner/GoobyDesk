@@ -2,31 +2,32 @@
     {
         "uuid": "6d779d6c-a34d-4679-b7f4-0bca8b64d72c",
         "customer_id": "CID-2026-0001",
-        "first_name": "John",
-        "last_name": "Doe",
-        "preferred_name": "John",
+        "first_name": "Gooby",
+        "last_name": "McGooberson",
+        "preferred_name": "Goobs",
 
         "company": null,
-        "email": "john@example.com",
+        "customer_email": "gooby@example.com",
         "phone": null,
 
-        "discord_username": "johndoe",
+        "discord_username": "notarealusername",
         "discord_user_id": "123456789012345678",
-        "minecraft_username": "JohnDoe",
+        "minecraft_username": "notarealusername_mc",
 
         "country": "US",
         "timezone": "America/Los_Angeles",
-        "created": "2026-04-01T18:45:12Z",
+        "created": "YYYY-MM-DD HH:MM",
         "last_seen": null,
         "last_login": null,
 
         "status": "active",
         "status_reason": null,
         "account_locked": false,
-        "email_verified": true,
+        "email_verified": false,
         "mfa_enabled": false,
 
         "vip": false,
+        "account_tier": "basic",
         "content_creator": false,
 
         "risk_level": "low",
@@ -34,9 +35,10 @@
         "billing_currency": "USD",
         "last_order": null,
         "last_payment": null,
+        "vat-taxid": "0123456789",
 
         "preferred_contact": "email",
-        "marketing_opt_in": true,
+        "marketing_opt_in": false,
         "maintenance_notifications": true,
         "assigned_account_manager": null,
         "services": [
@@ -45,14 +47,14 @@
         ],
         
         "account_tags": [
-            "beta",
-            "discord"
+            "example-tag1",
+            "example-tag2"
         ],
 
         "notes": [
             {
-                "date": "2026-05-15T22:31:14Z",
-                "author": "matt",
+                "date": "YYYY-MM-DD HH:MM",
+                "author": "MrTechnician",
                 "note": "Requested migration assistance."
             }
         ]
