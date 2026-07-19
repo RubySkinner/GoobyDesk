@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-"""Service/App ID dashboard blueprint."""
-
 import logging
 from functools import wraps
 
@@ -19,20 +17,15 @@ logging.basicConfig(filename=LOG_FILE, level=getattr(logging, LOG_LEVEL.upper(),
 
 serviceid_module_bp = Blueprint("serviceid_module", __name__, url_prefix="/serviceid")
 
-
 def technician_required(func):
-    """Require an authenticated technician session for a route."""
-
     @wraps(func)
     def wrapper(*args, **kwargs):
         if not session.get("technician"):
             return render_template("errors/403.html"), 403
         return func(*args, **kwargs)
-
     return wrapper
 
 def load_service_appids():
-    """Read/load service/app ID records into memory."""
     return service_appid_store.load_all()
 
 @serviceid_module_bp.route("/", methods=["GET"])

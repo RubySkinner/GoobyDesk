@@ -36,11 +36,7 @@
         <div>
             <input type="text" id="ticketIdInput" placeholder="Close Ticket Number">
             <button class="submit-btn" button onclick="closeTicket()">Close Ticket</button>
-        </div>
-        <br>
-        <form action="{{ url_for('serviceid_module.serviceid_dashboard') }}" method="GET">
-            <button type="submit" class="submit-btn">View Services/AppID Dashboard</button>
-        </form>
+        </div>>
         <br>
         <!-- Technician logout button -->
         <form action="{{ url_for('logout') }}" method="GET">
