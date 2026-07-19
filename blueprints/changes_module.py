@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
 import io
 import csv
-import json
 import logging
 from functools import wraps
 from flask import Blueprint, render_template, session, Response
 from local_handlers.local_config_loader import load_core_config
+from storage.ticket_store import TicketStore
 
 # CONFIG & LOGGING
 core_yaml_config = load_core_config()
 LOG_LEVEL = core_yaml_config["logging"]["level"]
 LOG_FILE = core_yaml_config["logging"]["file"]
-TICKETS_FILE = core_yaml_config["core"]["tickets_file"]
+
+ticket_store = TicketStore.from_config()
 
 logging.basicConfig(filename=LOG_FILE, level=getattr(logging, LOG_LEVEL.upper(), logging.INFO), format="%(asctime)s - %(levelname)s - %(message)s",)
 
@@ -31,13 +32,7 @@ def technician_required(func):
     return wrapper
 
 def load_tickets():
-    try:
-        with open(TICKETS_FILE, "r") as tkt_file:
-            return json.load(tkt_file)
-    except FileNotFoundError:
-        logging.critical("Ticket JSON Database file could not be located.")
-        exit(1)
-        return [] # represents an empty list.
+    return ticket_store.load_all()
 
 # Dashboard Route
 @changes_module_bp.route("/", methods=["GET"])

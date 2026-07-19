@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import io
 import csv
-import json
 import logging
 import uuid
 
@@ -10,12 +9,15 @@ from functools import wraps
 
 from flask import Blueprint, render_template, request, redirect, url_for, session, Response
 from local_handlers.local_config_loader import load_core_config
+from storage.crm_store import CrmStore
 
 core_yaml_config = load_core_config()
 LOG_LEVEL = core_yaml_config["logging"]["level"]
 LOG_FILE = core_yaml_config["logging"]["file"]
 CUSTOMERS_FILE = core_yaml_config["core"]["customers_file"]
 SERVICE_APPID_FILE = core_yaml_config["core"]["serviceid_appid_file"]
+
+crm_store = CrmStore(CUSTOMERS_FILE)
 
 logging.basicConfig(filename=LOG_FILE, level=getattr(logging, LOG_LEVEL.upper(), logging.INFO), format="%(asctime)s - %(levelname)s - %(message)s",)
 
@@ -34,21 +36,14 @@ def technician_required(func):
     return wrapper
 
 def load_customers_file():
-    try:
-        with open(CUSTOMERS_FILE, "r") as customer_file:
-            return json.load(customer_file)
-    except FileNotFoundError:
-        logging.critical("Customer JSON Database file could not be located.")
-        exit(1)
-        return [] # represents an empty list.
+    return crm_store.load_all()
 
 def save_customers_file(customers):
     """Write the given customers back to the customer JSON database.
     Args:
         customers (list[dict]): The full set of customer records to persist.
     """
-    with open(CUSTOMERS_FILE, "w") as customer_file_write_op:
-        json.dump(customers, customer_file_write_op, indent=4)
+    crm_store.save_all(customers)
     logging.debug("The Customer JSON Database file was modified.")
 
 def generate_customer_id(customers):
@@ -58,24 +53,14 @@ def generate_customer_id(customers):
     Returns:
         str: A new customer ID in the form CID-YYYY-NNNN.
     """
-    current_year = datetime.now(timezone.utc).year
-    year_prefix = f"CID-{current_year}-"
-    existing_ids = [c.get("customer_id", "") for c in customers if c.get("customer_id", "").startswith(year_prefix)]
-    next_sequence = len(existing_ids) + 1
-    return f"{year_prefix}{next_sequence:04d}"
+    return crm_store.next_customer_id(customers)
 
 # Dashboard Route
 @crm_module_bp.route("/", methods=["GET"])
 @technician_required
 def crm_dashboard():
     # Render the CRM dashboard with a list of customers
-    try:
-        with open(CUSTOMERS_FILE, "r") as customers_file:
-            customers = json.load(customers_file)
-    except FileNotFoundError:
-        logging.critical("Customer JSON Database file could not be located.")
-        exit(1)
-        return []  # represents an empty list.
+    customers = load_customers_file()
     total_customers = len(customers)
     active_customers_list = [customer for customer in customers if customer.get("status") == "active"]
     vip_customers = sum(1 for customer in customers if customer.get("vip") is True)

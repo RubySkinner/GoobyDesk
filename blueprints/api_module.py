@@ -7,6 +7,7 @@ from flask import Blueprint, request, jsonify
 
 import local_handlers.local_webhook_handler as local_webhook_handler
 from local_handlers.local_config_loader import load_core_config
+from storage.ticket_store import TicketStore
 
 core_yaml_config = load_core_config()
 LOG_LEVEL = core_yaml_config["logging"]["level"]
@@ -23,11 +24,7 @@ Error - Function failures
 Critical - Serious application failures
 """
 api_module_bp = Blueprint('api_module', __name__, url_prefix='/api')
-
-# Importing from APP to avoid circular imports. There might be a better way for this.
-def get_tickets_functions():
-    from app import load_tickets, save_tickets, generate_ticket_number
-    return load_tickets, save_tickets, generate_ticket_number
+ticket_store = TicketStore.from_config()
 
 # Status Endpoint at /api/status
 @api_module_bp.route("/status", methods=["GET"])
@@ -41,8 +38,6 @@ def api_status():
 
 @api_module_bp.route("/tailscale", methods=["POST"])
 def tailscale_webhook():
-    load_tickets, save_tickets, generate_ticket_number = get_tickets_functions()
-    
     try:
         payload = request.json
         if not payload:
@@ -58,7 +53,7 @@ def tailscale_webhook():
         ticket_impact = "Medium"
         ticket_urgency = "Medium"
         request_type = "Change"
-        ticket_number = generate_ticket_number()
+        ticket_number = ticket_store.next_ticket_number()
 
         new_ticket = {
             "ticket_number": ticket_number,
@@ -74,9 +69,7 @@ def tailscale_webhook():
             "ticket_notes": []
         }
 
-        tickets = load_tickets()
-        tickets.append(new_ticket)
-        save_tickets(tickets)
+        ticket_store.append(new_ticket)
         logging.info(f"Tailscale Notification — {ticket_number} created successfully.")
 
         try:
@@ -97,8 +90,6 @@ def tailscale_webhook():
 
 @api_module_bp.route("/uptime-kuma", methods=["POST"])
 def uptime_kuma_webhook():
-    load_tickets, save_tickets, generate_ticket_number = get_tickets_functions()
-    
     try:
         if not request.is_json:
             logging.warning("API INGEST -Uptime-Kuma webhook sent invalid content type.")
@@ -137,7 +128,7 @@ def uptime_kuma_webhook():
             request_type = "Incident"
 
         ticket_message = json.dumps(payload, indent=4)
-        ticket_number = generate_ticket_number()
+        ticket_number = ticket_store.next_ticket_number()
 
         new_ticket = {
             "ticket_number": ticket_number,
@@ -153,9 +144,7 @@ def uptime_kuma_webhook():
             "ticket_notes": []
         }
 
-        tickets = load_tickets()
-        tickets.append(new_ticket)
-        save_tickets(tickets)
+        ticket_store.append(new_ticket)
 
         logging.info(f"API INGEST -Uptime-Kuma Notification {ticket_number} created successfully (Status: {status_text}).")
 
@@ -202,8 +191,6 @@ def librenms_webhook():
         JSON confirmation with the created ticket number on success,
         an "ignored" status for untracked states, or 400/500 on failure.
     """
-    load_tickets, save_tickets, generate_ticket_number = get_tickets_functions()
-
     try:
         if not request.is_json:
             logging.warning("API INGEST - LibreNMS webhook sent invalid content type.")
@@ -230,7 +217,7 @@ def librenms_webhook():
             ticket_impact, ticket_urgency = "High", "High"
         ticket_subject = f"LibreNMS Alert - {hostname}: {title}"
         ticket_message = json.dumps(payload, indent=4)
-        ticket_number = generate_ticket_number()
+        ticket_number = ticket_store.next_ticket_number()
 
         new_ticket = {
             "ticket_number": ticket_number,
@@ -246,9 +233,7 @@ def librenms_webhook():
             "ticket_notes": []
         }
 
-        tickets = load_tickets()
-        tickets.append(new_ticket)
-        save_tickets(tickets)
+        ticket_store.append(new_ticket)
 
         logging.info(f"API INGEST - LibreNMS Notification {ticket_number} created successfully (Severity: {severity or 'unknown'}).")
 

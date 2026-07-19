@@ -7,7 +7,6 @@ import imaplib
 import email
 import re
 import logging
-import json
 
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -16,6 +15,7 @@ from dotenv import load_dotenv
 from datetime import datetime # Pending removal.
 
 from local_handlers.local_config_loader import load_core_config
+from storage.ticket_store import TicketStore
 
 load_dotenv(".env")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
@@ -23,6 +23,8 @@ EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 core_yaml_config = load_core_config()
 # Configuration variables from configuration.yml
 TICKETS_FILE = core_yaml_config["core"]["tickets_file"]
+
+ticket_store = TicketStore(TICKETS_FILE)
 
 EMAIL_ENABLED = core_yaml_config["email"]["enabled"]
 EMAIL_ACCOUNT = core_yaml_config["email"]["account"]
@@ -48,15 +50,10 @@ Critical - Serious application failures
 """
 # Helper functions below for loading and saving tickets.
 def load_tickets():
-    try:
-        with open(TICKETS_FILE, "r") as tkt_file:
-            return json.load(tkt_file)
-    except FileNotFoundError:
-        return []
+    return ticket_store.load_all()
 
 def save_tickets(tickets):
-    with open(TICKETS_FILE, "w") as f:
-        json.dump(tickets, f, indent=4)
+    ticket_store.save_all(tickets)
     logging.debug("EMAIL HANDLER - Ticket database was updated.")
 
 # Helpers functions above only! Core functions below.
@@ -152,6 +149,7 @@ def fetch_email_replies():
                 body = extract_email_body(msg)
                 for t in tickets:
                     if t["ticket_number"] == ticket_id:
+                        t.setdefault("ticket_notes", [])
                         t["ticket_notes"].append({"ticket_message": body})
                         save_tickets(tickets)
                         logging.info(f"EMAIL HANDLER - Email reply added to {ticket_id}.")

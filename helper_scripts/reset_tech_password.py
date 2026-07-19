@@ -1,26 +1,21 @@
 #!/usr/bin/env python3
 # Reset a technicians password using the legacy authentication method.
-import json
 import sys
 import getpass
-import local_config_loader
+
+from local_handlers.local_config_loader import load_core_config
+from storage.employee_store import EmployeeStore
+
+
+core_yaml_config = load_core_config()
+employee_store = EmployeeStore(core_yaml_config["core"]["employee_auth_file"])
 
 def load_employees():
-    core_yaml_config = local_config_loader.load_core_config()
-    EMPLOYEE_FILE = core_yaml_config["employee_file"]
-    try:
-        with open(EMPLOYEE_FILE, "r") as f:
-            return json.load(f), EMPLOYEE_FILE
-    except FileNotFoundError:
-        print(f"ERROR: Employee JSON Database not found: {EMPLOYEE_FILE}")
-        sys.exit(1)
-    except json.JSONDecodeError:
-        print(f"ERROR: Employee JSON Database is not valid JSON")
-        sys.exit(1)
+    return employee_store.load_all(), str(employee_store.store.path)
 
 def save_employees(employees, employee_file):
-    with open(employee_file, "w") as f:
-        json.dump(employees, f, indent=4)
+    _ = employee_file
+    employee_store.save_all(employees)
 
 def reset_password(username, new_password):
     employees, employee_file = load_employees()

@@ -5,7 +5,6 @@ Config is loaded locally in this blueprint (rather than relying on
 values set in app.py) to avoid the cross-module NameError pattern
 already fixed in itsm_module.
 """
-import json
 import logging
 from datetime import datetime, timedelta
 from functools import wraps
@@ -13,11 +12,14 @@ from functools import wraps
 from flask import Blueprint, render_template, session
 
 from local_handlers.local_config_loader import load_core_config
+from storage.hr_store import HrStore
 
 core_yaml_config = load_core_config()
 LOG_LEVEL = core_yaml_config["logging"]["level"]
 LOG_FILE = core_yaml_config["logging"]["file"]
 HR_FILE = core_yaml_config["core"]["hr_file"]
+
+hr_store = HrStore(HR_FILE)
 
 logging.basicConfig(filename=LOG_FILE, level=getattr(logging, LOG_LEVEL.upper(), logging.INFO), format="%(asctime)s - %(levelname)s - %(message)s",)
 
@@ -54,12 +56,7 @@ def load_hr_employees() -> list[dict]:
             mirrors the fail-fast behavior used for other core data
             files (e.g. ``load_tickets`` in app.py).
     """
-    try:
-        with open(HR_FILE, "r") as hr_file:
-            return json.load(hr_file)
-    except FileNotFoundError:
-        logging.critical("HR JSON Database file could not be located.")
-        exit(1)
+    return hr_store.load_all()
 
 def _is_cert_expiring(expires: str | None, within_days: int) -> bool:
     """Check whether a certification expiry date falls within a window.

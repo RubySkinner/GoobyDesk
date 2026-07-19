@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 from flask import Flask, Response, render_template, request, redirect, url_for, session, jsonify, flash
-import json, threading, time, logging, requests, os, uuid
+import threading, time, logging, requests, os, uuid
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
-from functools import wraps
 
 import local_handlers.local_authentication_handler as local_authentication_handler
 import local_handlers.local_config_loader as local_config_loader
@@ -16,6 +15,8 @@ from blueprints.changes_module import changes_module_bp
 from blueprints.itsm_module import itsm_module_bp
 from blueprints.hr_module import hr_module_bp
 from blueprints.crm_module import crm_module_bp
+from storage.employee_store import EmployeeStore
+from storage.ticket_store import TicketStore
 
 BUILDID=str("0.9.9-RC2")
 
@@ -33,10 +34,6 @@ CF_TURNSTILE_SECRET_KEY = os.getenv("CF_TURNSTILE_SECRET_KEY") # REQUIRED for CA
 core_yaml_config = local_config_loader.load_core_config()
 TICKETS_FILE = core_yaml_config["core"]["tickets_file"]
 EMPLOYEE_FILE = core_yaml_config["core"]["employee_auth_file"]
-CHANGES_FILE = core_yaml_config["core"]["changes_file"]
-CUSTOMERS_FILE = core_yaml_config["core"]["customers_file"]
-HR_FILE = core_yaml_config["core"]["hr_file"]
-SERVICE_APPID_FILE = core_yaml_config["core"]["serviceid_appid_file"]
 LOG_LEVEL = core_yaml_config["logging"]["level"]
 LOG_FILE = core_yaml_config["logging"]["file"]
 EMAIL_ENABLED = core_yaml_config["email"]["enabled"]
@@ -45,6 +42,10 @@ IMAP_SERVER = core_yaml_config["email"]["imap_server"]
 SMTP_SERVER = core_yaml_config["email"]["smtp_server"]
 SMTP_PORT = core_yaml_config["email"]["smtp_port"]
 TAILSCALE_NOTIFY_EMAIL = core_yaml_config["email"]["tailscale_notify_email"]
+
+ticket_store = TicketStore(TICKETS_FILE)
+employee_store = EmployeeStore(EMPLOYEE_FILE)
+
 # Flask App core setup and configuration.
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASKAPP_SECRET_KEY")
@@ -121,48 +122,29 @@ if not CF_TURNSTILE_SITE_KEY or not CF_TURNSTILE_SECRET_KEY:
 
 # Read/Loads the ticket file into memory. This is the original load_tickets function that works on Windows and Unix.
 def load_tickets():
-    try:
-        with open(TICKETS_FILE, "r") as tkt_file:
-            return json.load(tkt_file)
-    except FileNotFoundError:
-        logging.critical("Ticket JSON Database file could not be located.")
-        exit(1)
+    return ticket_store.load_all()
 
 # Writes to the ticket file database. Eventually needs file locking for Linux.
 def save_tickets(tickets):
-    with open(TICKETS_FILE, "w") as tkt_file_write_op:
-        json.dump(tickets, tkt_file_write_op, indent=4)
-        logging.debug("The Ticket JSON Database file was modified.")
+    ticket_store.save_all(tickets)
+    logging.debug("The Ticket JSON Database file was modified.")
 
 # Read/Loads the employee file into memory.
 def load_employees():
-    try:
-        with open(EMPLOYEE_FILE, "r") as tech_file_read_op:
-            return json.load(tech_file_read_op)
-    except FileNotFoundError:
-        logging.debug("Employee JSON Database file could not be located.")
-        exit(1)
-        return {} # represents an empty dictionary
+    return employee_store.load_all()
     
 # Helper script for secure password hasing auto-migration.
 def save_employees(employees):
-    with open(EMPLOYEE_FILE, "w") as emp_file_write_op:
-        json.dump(employees, emp_file_write_op, indent=4)
+    employee_store.save_all(employees)
     logging.debug("The Employee JSON Database file was modified.")
 
 # Generate a new ticket number.
 def generate_ticket_number():
-    tickets = load_tickets() # Read/Load the tickets-db into memory.
-    current_year = datetime.now().year  # Get the current year dynamically
-    ticket_count = str(len(tickets) + 1).zfill(4)  # Zero-padded ticket count
-    return f"TKT-{current_year}-{ticket_count}"  # Format: TKT-YYYY-XXXX
+    return ticket_store.next_ticket_number(datetime.now().year)
 
 # Generate a new change request number.
 def generate_change_request_number():
-    tickets = load_tickets() # Read/Load the tickets-db into memory.
-    current_year = datetime.now().year  # Get the current year dynamically
-    ticket_count = str(len(tickets) + 1).zfill(4)  # Zero-padded ticket count
-    return f"CHG-{current_year}-{ticket_count}"  # Format: CHG-YYYY-XXXX
+    return ticket_store.next_change_number(datetime.now().year)
 
 # Background email inbox monitoring process.
 def background_email_monitor():
@@ -241,13 +223,12 @@ def home():
                 "escalation_level": 0,
                 "ticket_overdue": False,
                 "ticket_source": "web",
+                "ticket_notes": [],
                 "ticket_worknotes": [],
                 "ticket_resolution_notes": []
             }
 
-            tickets = load_tickets()
-            tickets.append(new_ticket)
-            save_tickets(tickets)
+            ticket_store.append(new_ticket)
             logging.info(f"{ticket_number} has been created.")
 
             # Send confirmation email to the requestor

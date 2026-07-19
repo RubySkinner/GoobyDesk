@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import json
 import logging
 
 from datetime import datetime
@@ -9,11 +8,13 @@ from flask import Blueprint, render_template, request, jsonify, session
 
 import local_handlers.local_webhook_handler as local_webhook_handler
 from local_handlers.local_config_loader import load_core_config
+from storage.ticket_store import TicketStore
 
 core_yaml_config = load_core_config()
-TICKETS_FILE = core_yaml_config["core"]["tickets_file"]
 LOG_LEVEL = core_yaml_config["logging"]["level"]
 LOG_FILE = core_yaml_config["logging"]["file"]
+
+ticket_store = TicketStore.from_config()
 
 itsm_module_bp = Blueprint('itsm', __name__, url_prefix='/itsm')
 
@@ -36,20 +37,14 @@ def load_tickets():
     Raises:
         SystemExit: If the ticket database file cannot be located.
     """
-    try:
-        with open(TICKETS_FILE, "r") as tkt_file:
-            return json.load(tkt_file)
-    except FileNotFoundError:
-        logging.critical("Ticket JSON Database file could not be located.")
-        exit(1)
+    return ticket_store.load_all()
 
 def save_tickets(tickets):
     """Write the given tickets back to the ticket JSON database.
     Args:
         tickets (list[dict]): The full set of tickets to persist.
     """
-    with open(TICKETS_FILE, "w") as tkt_file_write_op:
-        json.dump(tickets, tkt_file_write_op, indent=4)
+    ticket_store.save_all(tickets)
     logging.debug("The Ticket JSON Database file was modified.")
 
 def technician_required(func):
@@ -150,6 +145,7 @@ def add_ticket_note(ticket_number):
 
     for ticket in tickets:
         if ticket["ticket_number"] == ticket_number:
+            ticket.setdefault("ticket_notes", [])
             ticket["ticket_notes"].append(new_tkt_note)
             save_tickets(tickets)
             logging.info(f"Note successfully appended to {ticket_number}.")
