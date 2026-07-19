@@ -17,7 +17,7 @@ from blueprints.itsm_module import itsm_module_bp
 from blueprints.hr_module import hr_module_bp
 from blueprints.crm_module import crm_module_bp
 
-BUILDID=str("0.9.9")
+BUILDID=str("0.9.9-RC1")
 
 """
 Rest in Peace Alex, July 2nd 2005 - December 14th 2024
