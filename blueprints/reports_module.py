@@ -58,9 +58,7 @@ def reports_home():
             status_counts[status] += 1
         
         try:
-            submitted_at = datetime.strptime(
-                ticket["submission_date"], "%Y-%m-%d %H:%M:%S"
-            )
+            submitted_at = datetime.strptime(ticket["submission_date"], "%Y-%m-%d %H:%M:%S")
             age = now - submitted_at
             
             if age <= timedelta(days=60):
