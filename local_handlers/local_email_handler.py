@@ -14,6 +14,8 @@ from email.header import decode_header
 from dotenv import load_dotenv
 from datetime import datetime # Pending removal.
 
+from local_handlers.utils import extract_email_body
+
 from local_handlers.local_config_loader import load_core_config
 from storage.ticket_store import TicketStore
 
@@ -86,28 +88,7 @@ def send_email(requestor_email, ticket_subject, ticket_message, html=True):
         logging.error(f"EMAIL HANDLER - Email sending failed: {e}")
         return False
 
-def extract_email_body(msg):
-    logging.debug("EMAIL HANDLER - Extracting email body.")
-    body = ""
-    if msg.is_multipart():
-        for part in msg.walk():
-            ctype = part.get_content_type()
-            cdisp = str(part.get("Content-Disposition"))
-            if "attachment" in cdisp:
-                continue
-            try:
-                if ctype == "text/plain":
-                    return part.get_payload(decode=True).decode(errors="ignore").strip()
-                elif ctype == "text/html" and not body:
-                    body = part.get_payload(decode=True).decode(errors="ignore").strip()
-            except Exception as e:
-                logging.warning(f"EMAIL HANDLER - Failed decoding email part: {e}")
-    else:
-        try:
-            body = msg.get_payload(decode=True).decode(errors="ignore").strip()
-        except Exception as e:
-            logging.error(f"EMAIL HANDLER - Failed decoding email: {e}")
-    return body
+# `extract_email_body` is provided by `local_handlers.utils` to avoid duplication.
 
 def fetch_email_replies():
     """Fetch unread IMAP emails and append them as ticket notes."""
