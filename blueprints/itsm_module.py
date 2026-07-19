@@ -2,8 +2,6 @@
 import logging
 
 from datetime import datetime
-from functools import wraps
-
 from flask import Blueprint, render_template, request, jsonify, session
 from local_handlers.auth_decorators import role_required, ROLE_ITSM_TECH
 
@@ -56,26 +54,12 @@ def load_service_appids():
     return service_appid_store.load_all()
 
 
-def technician_required(func):
-    """Require an authenticated technician session for a route.
-    Args:
-        func: The view function to wrap.
-    Returns:
-        The wrapped view function, which returns 403 if unauthenticated.
-    """
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        if not session.get("technician"):
-            return render_template("errors/403.html"), 403
-        return func(*args, **kwargs)
-    return wrapper
-
 @itsm_module_bp.route("/", methods=["GET"])
-#@technician_required
+@role_required(ROLE_ITSM_TECH)
 def dashboard():
     tickets = load_tickets()
     open_tickets = [t for t in tickets if t["ticket_status"].lower() != "closed"]
-    return render_template("itsm/dashboard.html", tickets=open_tickets, loggedInTech=session["technician"])
+    return render_template("itsm/dashboard.html", tickets=open_tickets, loggedInTech=session.get("technician"))
 
 @itsm_module_bp.route("/services-appid", methods=["GET"])
 @role_required(ROLE_ITSM_TECH)
@@ -114,7 +98,7 @@ def update_ticket_status(ticket_number, ticket_status):
     if ticket_status not in valid_statuses:
         return render_template("errors/400.html"), 400
 
-    logged_in_tech = session["technician"]
+    logged_in_tech = session.get("technician")
     tickets = load_tickets()
 
     for ticket in tickets:

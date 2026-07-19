@@ -60,8 +60,12 @@ def role_required(*required_roles: str, require_all: bool = False, redirect_to_l
 
             roles = get_current_roles()
 
+            # Admins and Managers bypass explicit role checks (global access)
+            if ROLE_ADMIN in roles or ROLE_MANAGER in roles:
+                logger.debug("RBAC bypass: user %s has elevated roles=%s; allowing access to %s", username, roles, getattr(func, '__name__', '<view>'))
+                allowed = True
             # Special-case: wildcard role '*' → allow any authenticated user
-            if required_roles == ("*",) or any(r == "*" for r in required_roles):
+            elif required_roles == ("*",) or any(r == "*" for r in required_roles):
                 allowed = True
             else:
                 if require_all:

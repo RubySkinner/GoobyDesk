@@ -33,7 +33,7 @@ def changes_home():
     # Filtering out tickets with the Closed Status on the main Dashboard.
     open_changes = [ticket for ticket in tickets if ticket["request_type"].lower() == "change" and ticket["ticket_status"].lower() != "closed"]
     return render_template("changes/changes_dashboard.html", changes=open_changes,
-    loggedInTech=session["technician"],
+    loggedInTech=session.get("technician"),
 )
 
 # Submit New Change Route

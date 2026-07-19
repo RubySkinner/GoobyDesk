@@ -108,7 +108,7 @@ def hr_dashboard():
         "hr/hr_dashboard.html",
         employees=employees,
         stats=stats,
-        loggedInTech=session["technician"],
+        loggedInTech=session.get("technician"),
     )
 
 # View Employee Details Route

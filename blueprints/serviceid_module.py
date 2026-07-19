@@ -27,7 +27,7 @@ def load_service_appids():
 @role_required(ROLE_ITSM_TECH)
 def serviceid_dashboard():
     services = load_service_appids()
-    return render_template("services-appid/dashboard.html", services=services, loggedInTech=session["technician"],)
+    return render_template("services-appid/dashboard.html", services=services, loggedInTech=session.get("technician"),)
 
 @serviceid_module_bp.route("/submit-new", methods=["GET"])
 @role_required(ROLE_ITSM_TECH)

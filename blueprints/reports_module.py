@@ -24,11 +24,6 @@ Critical - Serious application failures
 
 reports_module_bp = Blueprint('reports_module', __name__, url_prefix='/reports')
 
-# Importing from APP to avoid circular imports. There might be a better way for this.
-def get_app_functions():
-    from app import load_tickets, technician_required
-    return load_tickets, technician_required
-
 @reports_module_bp.route("/dashboard", methods=["GET"])
 @role_required("*")
 def reports_home():
@@ -81,7 +76,7 @@ def reports_home():
         last_30_days=time_buckets["last_30_days"],
         last_14_days=time_buckets["last_14_days"],
         last_7_days=time_buckets["last_7_days"],
-        loggedInTech=session["technician"],
+        loggedInTech=session.get("technician"),
         )
 
 @reports_module_bp.route("/export/csv", endpoint='export_tickets_csv')

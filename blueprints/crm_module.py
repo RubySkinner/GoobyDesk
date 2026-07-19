@@ -63,7 +63,7 @@ def crm_dashboard():
         "total_lifetime_value": total_lifetime_value
     }
     #return render_template("under_construction.html")
-    return render_template("crm/crm_dashboard.html", customers=active_customers_list, loggedInTech=session["technician"], stats=crm_base_stats)
+    return render_template("crm/crm_dashboard.html", customers=active_customers_list, loggedInTech=session.get("technician"), stats=crm_base_stats)
 
 # Create New Customer Route
 @crm_module_bp.route("/submit-new", methods=["GET", "POST"])
@@ -124,7 +124,7 @@ def new_customer():
         },
 
         "created": submission_timestamp,
-        "created_by": session["technician"],
+        "created_by": session.get("technician"),
 
         "last_seen": None,
         "last_login": None,
@@ -187,7 +187,7 @@ def new_customer():
         "audit": {
             "creation_source": "auth_web",
             "last_modified": submission_timestamp,
-            "last_modified_by": session["technician"]
+                "last_modified_by": session.get("technician")
         }
 }
 
@@ -195,13 +195,13 @@ def new_customer():
     if initial_note:
         new_customer_record["crm_worknotes"].append({
             "date": submission_timestamp,
-            "created_by": session["technician"],
+            "created_by": session.get("technician"),
             "note": initial_note,
         })
 
     customers.append(new_customer_record)
     save_customers_file(customers)
-    logging.info(f"CRM MODULE - Customer {new_customer_record['customer_id']} created by {session['technician']}.")
+    logging.info(f"CRM MODULE - Customer {new_customer_record['customer_id']} created by {session.get('technician') }.")
 
     return redirect(url_for("crm_module.customer_profile", uuid=new_customer_record["uuid"]))
 
@@ -213,7 +213,7 @@ def customer_profile(uuid):
     customer = next((c for c in customers if c["uuid"] == uuid), None)
     if not customer:
         return render_template("errors/404.html"), 404
-    return render_template("crm/profile.html", customer=customer, loggedInTech=session["technician"])
+    return render_template("crm/profile.html", customer=customer, loggedInTech=session.get("technician"))
 
 """
 # Edit Customer Details Route
