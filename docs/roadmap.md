@@ -26,4 +26,4 @@ save_customers_file(customers)
 
 ## 1.0.0
 
-Pending
+Consider a basic refactor to use `local_handlers/utils.py` as the authentication handler.

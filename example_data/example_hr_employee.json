@@ -38,8 +38,8 @@
             "assignment_queue": "support",
             "account_locked": false,
             "mfa_enabled": true,
-            "last_login": "2026-07-16T18:42:01Z",
-            "password_last_changed": "2026-06-01T12:00:00Z",
+            "last_login": "YYYY-DD-MM HH:MM:SS",
+            "password_last_changed": "YYYY-DD-MM HH:MM:SS",
             "failed_login_attempts": 0
         },
 
