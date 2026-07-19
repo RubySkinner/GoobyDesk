@@ -1,15 +1,25 @@
 [
     {
         "ticket_number": "TKT-2025-0001",
+        "uuid" : "uuid",
         "requestor_name": "Mom",
         "requestor_email": "mom@example.com",
         "ticket_subject": "First Ticket",
-        "ticket_message": "Can you help me with my computer issue?",
+        "ticket_body": "Can you help me with my computer issue?",
         "request_type": "Request",
-        "ticket_impact": "Low Impact",
-        "ticket_urgency": "Planning",
-        "ticket_status": "Open",
-        "submission_date": "2025-02-08 08:51:40",
-        "ticket_notes": [] 
+        "ticket_impact": "low",
+        "ticket_urgency": "low",
+        "ticket_status": "open",
+        "ticket_submission_date": "YYYY-MM-DD HH:MM:SS",
+        "ticket_acknowledged_timestamp": "YYYY-MM-DD HH:MM:SS",
+        "ticket_escalation_timestamp": "YYYY-MM-DD HH:MM:SS",
+        "ticket_resolved_timestamp": "YYYY-MM-DD HH:MM:SS",
+        "escalation_level": 0,
+        "assigned_queue": "support",
+        "assigned_technician": null,
+        "ticket_overdue": false,
+        "ticket_source": "web",
+        "ticket_worknotes": [],
+        "ticket_resolution_notes": []
     }
 ]

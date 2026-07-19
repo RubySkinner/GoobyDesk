@@ -25,7 +25,6 @@
     <!-- Local CSS and JavaScript Imports-->
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <script src="{{ url_for('static', filename='main.js') }}"></script>
-
     <title>Submit a Ticket - GoobyDesk</title>
 </head>
 <!-- Start of the displayed HTML -->
@@ -46,7 +45,7 @@
             <input type="text" id="subject" name="ticket_subject" placeholder="Replace Tires for Captain Slow" minlength="4" maxlength="48" required>
 
             <label for="message">Ticket Message:</label>
-            <textarea id="message" name="ticket_message" placeholder="Please provide some detail in order to submit your request." minlength="4" maxlength="512" required></textarea>
+            <textarea id="message" name="ticket_body" placeholder="Please provide some detail in order to submit your request." minlength="4" maxlength="512" required></textarea>
 
             <label for="ticket_impact">Ticket Impact:</label>
             <select id="type" name="ticket_impact" required>
