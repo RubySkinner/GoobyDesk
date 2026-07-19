@@ -16,29 +16,6 @@ def create_api_ticket(
 ):
 ```
 
-Implement Standardized JSON storage layer. **Generic Example:**
-
-```python3
-from pathlib import Path
-import json
-DATA_DIR = Path("data")
-class JsonStore:
-
-    def __init__(self, filename):
-        self.path = DATA_DIR / f"{filename}.json"
-
-    def read(self):
-        if not self.path.exists():
-            return []
-
-        with open(self.path, "r", encoding="utf-8") as fp:
-            return json.load(fp)
-
-    def write(self, data):
-        with open(self.path, "w", encoding="utf-8") as fp:
-            json.dump(data, fp, indent=4)
-```
-
 Build out the JSON storage layer to look like
 
 ```python3
@@ -61,6 +38,7 @@ def build_customer_record(form, technician, customers):
     ...
     return customer
 ```
+
 then something like
 
 ```python3

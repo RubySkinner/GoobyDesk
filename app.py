@@ -8,6 +8,7 @@ import local_handlers.local_authentication_handler as local_authentication_handl
 import local_handlers.local_config_loader as local_config_loader
 import local_handlers.local_email_handler as local_email_handler
 import local_handlers.local_webhook_handler as local_webhook_handler
+import local_handlers.ticket_builder as ticket_builder
 
 from blueprints.api_module import api_module_bp
 from blueprints.reports_module import reports_module_bp
@@ -206,29 +207,13 @@ def home():
 
             # Process ticket submission
             ticket_number = generate_ticket_number()
-            
-            new_ticket = {
-                "uuid": str(uuid.uuid4()),
-                "ticket_number": ticket_number,
-                "requestor_name": request.form["requestor_name"],
-                "requestor_email": request.form["requestor_email"],
-                "ticket_subject": request.form["ticket_subject"],
-                "ticket_body": request.form["ticket_body"],
-                "request_type": request.form["request_type"],
-                "ticket_impact": request.form["ticket_impact"],
-                "ticket_urgency": request.form["ticket_urgency"],
-                "ticket_status": "open",
-                "submission_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "ticket_acknowledged_timestamp": None,
-                "ticket_escalation_timestamp": None,
-                "ticket_resolved_timestamp": None,
-                "escalation_level": 0,
-                "ticket_overdue": False,
-                "ticket_source": "web",
-                "ticket_notes": [],
-                "ticket_worknotes": [],
-                "ticket_resolution_notes": []
-            }
+
+            new_ticket = ticket_builder.build_ticket_record(
+                request.form,
+                ticket_number,
+                source="web",
+                technician=session.get("technician"),
+            )
 
             ticket_store.append(new_ticket)
             logging.info(f"{ticket_number} has been created.")

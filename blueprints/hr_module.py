@@ -153,7 +153,7 @@ def employee_profile(uuid: str):
 
 
 # Create New Employee Route
-# TODO: implement new_employee() at POST /hr/employee/new, mirroring
+# TODO: implement new_employee() at POST /hr/employee/submit-new, mirroring
 # crm_module.new_customer. The dashboard's "+ New Employee" button
 # already points at this literal path ahead of the route existing.
 
