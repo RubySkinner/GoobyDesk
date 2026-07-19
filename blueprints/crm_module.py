@@ -215,11 +215,11 @@ def new_customer():
         }
 }
 
-    initial_note = request.form.get("notes", "").strip()
+    initial_note = request.form.get("crm_worknotes", "").strip()
     if initial_note:
-        new_customer_record["notes"].append({
+        new_customer_record["crm_worknotes"].append({
             "date": submission_timestamp,
-            "author": session["technician"],
+            "created_by": session["technician"],
             "note": initial_note,
         })
 
