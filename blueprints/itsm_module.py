@@ -8,6 +8,7 @@ from flask import Blueprint, render_template, request, jsonify, session
 
 import local_handlers.local_webhook_handler as local_webhook_handler
 from local_handlers.local_config_loader import load_core_config
+from storage.service_appid_store import ServiceAppIdStore
 from storage.ticket_store import TicketStore
 
 core_yaml_config = load_core_config()
@@ -15,6 +16,7 @@ LOG_LEVEL = core_yaml_config["logging"]["level"]
 LOG_FILE = core_yaml_config["logging"]["file"]
 
 ticket_store = TicketStore.from_config()
+service_appid_store = ServiceAppIdStore.from_config()
 
 itsm_module_bp = Blueprint('itsm', __name__, url_prefix='/itsm')
 
@@ -47,6 +49,12 @@ def save_tickets(tickets):
     ticket_store.save_all(tickets)
     logging.debug("The Ticket JSON Database file was modified.")
 
+
+def load_service_appids():
+    """Read/load service/app ID records into memory."""
+    return service_appid_store.load_all()
+
+
 def technician_required(func):
     """Require an authenticated technician session for a route.
     Args:
@@ -67,6 +75,17 @@ def dashboard():
     tickets = load_tickets()
     open_tickets = [t for t in tickets if t["ticket_status"].lower() != "closed"]
     return render_template("itsm/dashboard.html", tickets=open_tickets, loggedInTech=session["technician"])
+
+@itsm_module_bp.route("/services-appid", methods=["GET"])
+@technician_required
+def services_appid_dashboard():
+    services = load_service_appids()
+    return render_template(
+        "services-appid/dashboard.html",
+        services=services,
+        loggedInTech=session["technician"],
+    )
+
 
 @itsm_module_bp.route("/ticket/<ticket_number>")
 @technician_required

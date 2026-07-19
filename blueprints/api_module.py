@@ -12,8 +12,8 @@ from storage.ticket_store import TicketStore
 core_yaml_config = load_core_config()
 LOG_LEVEL = core_yaml_config["logging"]["level"]
 LOG_FILE = core_yaml_config["logging"]["file"]
-TAILSCALE_NOTIFY_EMAIL = core_yaml_config["email"]["tailscale_notify_email"]
-LIBRENMS_NOTIFY_EMAIL = core_yaml_config["email"]["librenms_notify_email"]
+TAILSCALE_NOTIFY_EMAIL = core_yaml_config["email"].get("tailscale_notify_email")
+LIBRENMS_NOTIFY_EMAIL = core_yaml_config["email"].get("librenms_notify_email")
 
 logging.basicConfig(filename=LOG_FILE,level=getattr(logging, LOG_LEVEL.upper(), logging.INFO),format="%(asctime)s - %(levelname)s - %(message)s",)
 """ Above is the default logging configuration.

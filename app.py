@@ -15,6 +15,7 @@ from blueprints.changes_module import changes_module_bp
 from blueprints.itsm_module import itsm_module_bp
 from blueprints.hr_module import hr_module_bp
 from blueprints.crm_module import crm_module_bp
+from blueprints.serviceid_module import serviceid_module_bp
 from storage.employee_store import EmployeeStore
 from storage.ticket_store import TicketStore
 
@@ -67,6 +68,7 @@ app.register_blueprint(reports_module_bp)
 app.register_blueprint(changes_module_bp)
 app.register_blueprint(hr_module_bp)
 app.register_blueprint(crm_module_bp)
+app.register_blueprint(serviceid_module_bp)
 
 # Security Headers for all responses.
 @app.after_request

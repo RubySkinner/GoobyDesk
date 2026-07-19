@@ -1,3 +1,55 @@
 <!DOCTYPE html>
-<html lang="en">
-    
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/x-icon" href="static/img/favicon.ico"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Matt Faulkner">
+    <meta name="description" content="GoobyDesk ITSM Services/AppID Dashboard">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="theme-color" content="#284389">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="preconnect" href="https://fonts.bunny.net/css">
+    <link rel="preconnect" href="https://fonts.bunny.net/css" crossorigin>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
+    <title>Services/AppID Dashboard - GoobyDesk</title>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <img src="static/img/logo_white.webp" alt="GoobyDesk Logo">
+        </div>
+        <h2>Services / APPID Dashboard</h2>
+        <p><strong>Total Services:</strong> {{ services|length }}</p>
+
+        {% if services %}
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 1rem;">
+                <thead>
+                    <tr>
+                        <th style="text-align: left; padding: 0.5rem; border-bottom: 1px solid #ddd;">APPID</th>
+                        <th style="text-align: left; padding: 0.5rem; border-bottom: 1px solid #ddd;">Service Name</th>
+                        <th style="text-align: left; padding: 0.5rem; border-bottom: 1px solid #ddd;">Provisioning Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for service in services %}
+                        <tr>
+                            <td style="padding: 0.5rem; border-bottom: 1px solid #eee;">{{ service.get('service_id') or service.get('app_id') or service.get('id') or 'N/A' }}</td>
+                            <td style="padding: 0.5rem; border-bottom: 1px solid #eee;">{{ service.get('service_name') or service.get('name') or 'N/A' }}</td>
+                            <td style="padding: 0.5rem; border-bottom: 1px solid #eee;">{{ service.get('provisioning_status') or service.get('status') or 'Unknown' }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No service/app ID records found.</p>
+        {% endif %}
+
+        <form action="{{ url_for('itsm.dashboard') }}" method="GET">
+            <button type="submit" class="submit-btn">Back to ITSM Dashboard</button>
+        </form>
+
+        <p class="footer-text">©2025 GoobyDesk, FOSS created by <a href="https://github.com/GoobyFRS">GoobyFRS</a> | <a href="{{ url_for('login') }}">Technician Login</a></p>
+    </div>
+</body>
+</html>    

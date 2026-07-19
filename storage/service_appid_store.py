@@ -23,7 +23,20 @@ class ServiceAppIdStore:
 
     def load_all(self) -> list[dict[str, Any]]:
         records = self.store.read(default=[])
-        return records if isinstance(records, list) else []
+        if isinstance(records, dict):
+            return [records]
+        if isinstance(records, list):
+            return [record for record in records if isinstance(record, dict)]
+        return []
 
     def save_all(self, records: list[dict[str, Any]]) -> None:
-        self.store.write(records)
+        normalized = self._normalize_records(records)
+        self.store.write(normalized)
+
+    @staticmethod
+    def _normalize_records(records: list[dict[str, Any]] | dict[str, Any]) -> list[dict[str, Any]]:
+        if isinstance(records, dict):
+            return [records]
+        if isinstance(records, list):
+            return [record for record in records if isinstance(record, dict)]
+        return []
