@@ -21,7 +21,7 @@ Error - Function failures
 Critical - Serious application failures
 """
 
-reports_module_bp = Blueprint('reports', __name__, url_prefix='/reports')
+reports_module_bp = Blueprint('reports_module', __name__, url_prefix='/reports')
 
 # Importing from APP to avoid circular imports. There might be a better way for this.
 def get_app_functions():
