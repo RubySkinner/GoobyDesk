@@ -36,6 +36,18 @@
             <p><strong>Ticket Body:</strong> {{ticket.ticket_body}}</p>
         </div>
 
+        <h2>Work Notes</h2>
+        <ul class="notes-list">
+            {% for note in ticket.ticket_worknotes %}
+            <li>
+                <div class="note-meta">Note {{ loop.index }}</div>
+                {{ note }}
+            </li>
+            {% else %}
+            <li class="text-muted">No work notes have been added yet.</li>
+            {% endfor %}
+        </ul>
+
         <button class="status-btn" onclick="updateTicketStatus('{{ ticket.ticket_number }}', 'In-Progress')">Mark In-Progress</button>
         <button class="close-tkt-btn" onclick="updateTicketStatus('{{ ticket.ticket_number }}', 'Closed')">Close Ticket</button>
         <br>

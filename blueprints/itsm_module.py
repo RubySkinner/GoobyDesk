@@ -149,8 +149,8 @@ def add_ticket_note(ticket_number):
 
     for ticket in tickets:
         if ticket["ticket_number"] == ticket_number:
-            ticket.setdefault("ticket_notes", [])
-            ticket["ticket_notes"].append(new_tkt_note)
+            ticket.setdefault("ticket_worknotes", [])
+            ticket["ticket_worknotes"].append(new_tkt_note)
             save_tickets(tickets)
             logging.info(f"Note successfully appended to {ticket_number}.")
             return jsonify({"message": "Note added successfully."}), 200
