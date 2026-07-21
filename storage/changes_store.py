@@ -53,15 +53,17 @@ class ChangesStore:
         _, deleted = self.store.delete(predicate)
         return deleted
 
-    def next_change_number(self, year: int | None = None) -> str:
-        current_year = year or datetime.now().year
+    def next_change_number(self, calendar_year: int | None = None) -> str:
+        current_year = calendar_year or datetime.now().year
         prefix = f"CHG-{current_year}-"
-        existing_numbers = [
-            int(record["change_number"].rsplit("-", 1)[-1])
-            for record in self.load_all()
-            if isinstance(record.get("change_number"), str)
-            and record["change_number"].startswith(prefix)
-            and record["change_number"].rsplit("-", 1)[-1].isdigit()
-        ]
+        existing_numbers = []
+        for record in self.load_all():
+            change_number = record.get("change_number")
+            if not isinstance(change_number, str) or not change_number.startswith(prefix):
+                continue
+
+            sequence_text = change_number.rsplit("-", 1)[-1]
+            if sequence_text.isdigit():
+                existing_numbers.append(int(sequence_text))
         next_sequence = max(existing_numbers, default=0) + 1
         return f"{prefix}{next_sequence:04d}"

@@ -2,13 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link rel="icon" type="image/x-icon" href="static/img/favicon.ico"/>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='img/favicon.ico') }}"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="author" content="Matt Faulkner">
     <meta name="description" content="GoobyDesk Change Dashboard">
     <meta name="robots" content="noindex, nofollow">
     <meta name="theme-color" content="#284389">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- Refresh every 5 minutes to keep the dashboard current. -->
     <meta http-equiv="refresh" content="300">
     <link rel="preconnect" href="https://fonts.bunny.net/css">
     <link rel="preconnect" href="https://fonts.bunny.net/css" crossorigin>

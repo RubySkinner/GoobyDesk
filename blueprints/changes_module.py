@@ -28,9 +28,19 @@ def load_changes():
     """Return change records sorted by newest first."""
     return sorted(
         change_store.load_all(),
-        key=lambda change: change.get("change_created_timestamp", ""),
+        key=_change_sort_key,
         reverse=True,
     )
+
+
+def _change_sort_key(change: dict[str, object]) -> datetime:
+    timestamp = change.get("change_created_timestamp")
+    if isinstance(timestamp, str):
+        try:
+            return datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            return datetime.min
+    return datetime.min
 
 
 def _parse_datetime_local(value: str) -> str | None:
@@ -44,7 +54,21 @@ def _parse_datetime_local(value: str) -> str | None:
         return None
 
 
+def _clean_optional_timestamp(form_data, field_name: str) -> str:
+    raw_value = form_data.get(field_name, "").strip()
+    parsed_value = _parse_datetime_local(raw_value)
+    return parsed_value or raw_value
+
+
 def _build_change_record(form_data) -> dict[str, object]:
+    """Build a normalized change record from submitted form data.
+
+    Args:
+        form_data: Request form payload containing change fields.
+
+    Returns:
+        A dictionary ready for persistence in the change store.
+    """
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     requestor = session.get("technician")
     return {
@@ -59,8 +83,8 @@ def _build_change_record(form_data) -> dict[str, object]:
         "implement_plan": form_data.get("implement_plan", "").strip(),
         "test_accept_plan": form_data.get("test_accept_plan", "").strip(),
         "rollback_plan": form_data.get("rollback_plan", "").strip(),
-        "planned_start_timestamp": _parse_datetime_local(form_data.get("planned_start_timestamp", "")) or form_data.get("planned_start_timestamp", "").strip(),
-        "planned_end_timestamp": _parse_datetime_local(form_data.get("planned_end_timestamp", "")) or form_data.get("planned_end_timestamp", "").strip(),
+        "planned_start_timestamp": _clean_optional_timestamp(form_data, "planned_start_timestamp"),
+        "planned_end_timestamp": _clean_optional_timestamp(form_data, "planned_end_timestamp"),
         "requestor_id": requestor,
         "requestor_uuid": None,
         "implementor_id": None,
