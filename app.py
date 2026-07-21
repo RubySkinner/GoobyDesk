@@ -18,6 +18,7 @@ from blueprints.hr_module import hr_module_bp
 from blueprints.crm_module import crm_module_bp
 from blueprints.serviceid_module import serviceid_module_bp
 from storage.employee_store import EmployeeStore
+from storage.changes_store import ChangesStore
 from storage.ticket_store import TicketStore
 
 BUILDID=str("0.9.9-RC2")
@@ -46,6 +47,7 @@ SMTP_PORT = core_yaml_config["email"]["smtp_port"]
 TAILSCALE_NOTIFY_EMAIL = core_yaml_config["email"]["tailscale_notify_email"]
 
 ticket_store = TicketStore(TICKETS_FILE)
+change_store = ChangesStore(core_yaml_config["core"]["changes_file"])
 employee_store = EmployeeStore(EMPLOYEE_FILE)
 
 # Flask App core setup and configuration.
@@ -173,7 +175,7 @@ def generate_ticket_number():
 
 # Generate a new change request number.
 def generate_change_request_number():
-    return ticket_store.next_change_number(datetime.now().year)
+    return change_store.next_change_number(datetime.now().year)
 
 # Background email inbox monitoring process.
 def background_email_monitor():
