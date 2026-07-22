@@ -6,15 +6,21 @@ from datetime import datetime
 from flask import Blueprint, request, jsonify
 
 import local_handlers.local_webhook_handler as local_webhook_handler
-from local_handlers.local_config_loader import load_core_config
+from flask import current_app
 from storage.ticket_store import TicketStore
 
-core_yaml_config = load_core_config()
-TAILSCALE_NOTIFY_EMAIL = core_yaml_config["email"].get("tailscale_notify_email")
-LIBRENMS_NOTIFY_EMAIL = core_yaml_config["email"].get("librenms_notify_email")
-
 api_module_bp = Blueprint('api_module', __name__, url_prefix='/api')
-ticket_store = TicketStore.from_config()
+
+def _get_config():
+    cfg = current_app.config.get("LOADED_CONFIG")
+    if cfg is None:
+        from local_handlers.local_config_loader import load_core_config
+        cfg = load_core_config()
+    return cfg
+
+def _get_ticket_store():
+    cfg = _get_config()
+    return TicketStore(cfg["core"]["tickets_file"])
 
 # Status Endpoint at /api/status
 @api_module_bp.route("/status", methods=["GET"])
@@ -37,12 +43,14 @@ def tailscale_webhook():
         formatted_ts_webhook_body = json.dumps(payload, indent=4)
 
         requestor_name = "Tailscale"
-        requestor_email = TAILSCALE_NOTIFY_EMAIL
+        cfg = _get_config()
+        requestor_email = cfg.get("email", {}).get("tailscale_notify_email")
         ticket_subject = "Tailscale Notification"
         ticket_message = formatted_ts_webhook_body
         ticket_impact = "Medium"
         ticket_urgency = "Medium"
         request_type = "Change"
+        ticket_store = _get_ticket_store()
         ticket_number = ticket_store.next_ticket_number()
 
         new_ticket = {
@@ -118,6 +126,7 @@ def uptime_kuma_webhook():
             request_type = "Incident"
 
         ticket_message = json.dumps(payload, indent=4)
+        ticket_store = _get_ticket_store()
         ticket_number = ticket_store.next_ticket_number()
 
         new_ticket = {
@@ -207,12 +216,13 @@ def librenms_webhook():
             ticket_impact, ticket_urgency = "High", "High"
         ticket_subject = f"LibreNMS Alert - {hostname}: {title}"
         ticket_message = json.dumps(payload, indent=4)
+        ticket_store = _get_ticket_store()
         ticket_number = ticket_store.next_ticket_number()
 
         new_ticket = {
             "ticket_number": ticket_number,
             "requestor_name": "LibreNMS",
-            "requestor_email": LIBRENMS_NOTIFY_EMAIL,
+            "requestor_email": _get_config().get("email", {}).get("librenms_notify_email"),
             "ticket_subject": ticket_subject,
             "ticket_message": ticket_message,
             "request_type": "Incident",

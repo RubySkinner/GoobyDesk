@@ -16,3 +16,49 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <!-- Performance Enhancements -->
     <title>Employee HR Profile - GoobyDesk</title>
+</head>
+<body>
+    <main class="container">
+        <h1>Employee Profile</h1>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                {% for category, msg in messages %}
+                    <div class="flash {{ category }}">{{ msg }}</div>
+                {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% if employee %}
+            <section class="employee-summary">
+                <dl>
+                    <dt>Username</dt><dd>{{ employee.tech_username or employee.username or '' }}</dd>
+                    <dt>Full name</dt><dd>{{ employee.get('first_name','') }} {{ employee.get('last_name','') }}</dd>
+                    <dt>Email</dt><dd>{{ employee.get('email','') }}</dd>
+                    <dt>Roles</dt><dd>{{ session.get('roles') }}</dd>
+                </dl>
+            </section>
+
+            {% if reset_password %}
+                <section class="one-time-password">
+                    <h2>One-time password (showing once)</h2>
+                    <p class="secret">{{ reset_password }}</p>
+                    <p class="muted">Copy this password now — it will not be shown again.</p>
+                </section>
+            {% endif %}
+
+            {% set roles = session.get('roles', []) %}
+            {% if 'admin' in roles or 'manager' in roles %}
+                <form method="post" action="{{ url_for('hr_module.reset_employee_password', uuid=employee.get('uuid')) }}">
+                    <button type="submit" class="btn btn-warning">Reset password</button>
+                </form>
+            {% endif %}
+
+        {% else %}
+            <p>No employee data available.</p>
+        {% endif %}
+    </main>
+</body>
+</html>

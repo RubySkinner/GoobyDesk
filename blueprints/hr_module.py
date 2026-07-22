@@ -12,17 +12,30 @@ from functools import wraps
 from flask import Blueprint, render_template, session
 
 from local_handlers.local_config_loader import load_core_config
+from flask import current_app
 from local_handlers.auth_decorators import role_required, ROLE_HR_TECH
 from storage.hr_store import HrStore
+from storage.employee_store import EmployeeStore
+from local_handlers.local_authentication_handler import hash_password
+import secrets
+from flask import flash, request
 
-core_yaml_config = load_core_config()
-LOG_LEVEL = core_yaml_config["logging"]["level"]
-LOG_FILE = core_yaml_config["logging"]["file"]
-HR_FILE = core_yaml_config["core"]["hr_file"]
+def _get_config():
+    cfg = current_app.config.get("LOADED_CONFIG")
+    if cfg is None:
+        cfg = load_core_config()
+    return cfg
 
-hr_store = HrStore(HR_FILE)
 
-logging.basicConfig(filename=LOG_FILE, level=getattr(logging, LOG_LEVEL.upper(), logging.INFO), format="%(asctime)s - %(levelname)s - %(message)s",)
+def _get_hr_store():
+    cfg = _get_config()
+    return HrStore(cfg["core"]["hr_file"])
+
+
+def _get_employee_store():
+    cfg = _get_config()
+    return EmployeeStore(cfg["core"]["employee_auth_file"])
+
 
 hr_module_bp = Blueprint("hr_module", __name__, url_prefix="/hr")
 
@@ -41,7 +54,8 @@ def load_hr_employees() -> list[dict]:
             mirrors the fail-fast behavior used for other core data
             files (e.g. ``load_tickets`` in app.py).
     """
-    return hr_store.load_all()
+    store = _get_hr_store()
+    return store.load_all()
 
 def _is_cert_expiring(expires: str | None, within_days: int) -> bool:
     """Check whether a certification expiry date falls within a window.
@@ -134,7 +148,41 @@ def employee_profile(uuid: str):
     employee = next((emp for emp in employees if emp.get("uuid") == uuid), None)
     if employee is None:
         return render_template("errors/404.html"), 404
-    return render_template("under_construction.html")
+    return render_template("hr/profile.html", employee=employee, loggedInTech=session.get("technician"))
+
+
+@hr_module_bp.route("/employee/<uuid>/reset-password", methods=["POST"])
+@role_required("admin")
+def reset_employee_password(uuid: str):
+    """Admin action: reset an employee's password and return the new password once."""
+    store = _get_employee_store()
+    employees = store.load_all()
+    employee = next((e for e in employees if e.get("uuid") == uuid), None)
+    if employee is None:
+        return render_template("errors/404.html"), 404
+
+    # Generate a short-lived one-time password to show to the admin
+    new_password = secrets.token_urlsafe(9)  # ~12 chars, URL-safe
+    # Hash the password for storage
+    hashed = hash_password(new_password)
+
+    # Update the employee record
+    employee["password_hash"] = hashed
+    if "tech_authcode" in employee:
+        del employee["tech_authcode"]
+    employee["password_reset_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    store.save_all(employees)
+    logging.warning(
+        "HR MODULE - Password reset performed by %s for account %s (uuid=%s)",
+        session.get("technician"),
+        employee.get("tech_username") or employee.get("username"),
+        employee.get("uuid"),
+    )
+
+    # Show password once to admin via template variable and flash
+    flash("Password reset successful — show it once below.", "success")
+    return render_template("hr/profile.html", employee=employee, reset_password=new_password, loggedInTech=session.get("technician"))
 
 
 # Create New Employee Route

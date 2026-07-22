@@ -6,37 +6,43 @@ from flask import Blueprint, render_template, request, jsonify, session
 from local_handlers.auth_decorators import role_required, ROLE_ITSM_TECH
 
 import local_handlers.local_webhook_handler as local_webhook_handler
-from local_handlers.local_config_loader import load_core_config
+from flask import current_app
 from storage.service_appid_store import ServiceAppIdStore
 from storage.ticket_store import TicketStore
 
-core_yaml_config = load_core_config()
+def _get_config():
+    cfg = current_app.config.get("LOADED_CONFIG")
+    if cfg is None:
+        from local_handlers.local_config_loader import load_core_config
+        cfg = load_core_config()
+    return cfg
 
-ticket_store = TicketStore.from_config()
-service_appid_store = ServiceAppIdStore.from_config()
+def _get_ticket_store():
+    cfg = _get_config()
+    return TicketStore(cfg["core"]["tickets_file"])
+
+def _get_service_appid_store():
+    cfg = _get_config()
+    return ServiceAppIdStore(cfg["core"]["serviceid_appid_file"])
+
 itsm_module_bp = Blueprint('itsm', __name__, url_prefix='/itsm')
 
 def load_tickets():
-    """Read/load the ticket JSON database into memory.
-    Returns:
-        list[dict]: All tickets currently on file.
-    Raises:
-        SystemExit: If the ticket database file cannot be located.
-    """
-    return ticket_store.load_all()
+    """Read/load the ticket JSON database into memory."""
+    store = _get_ticket_store()
+    return store.load_all()
 
 def save_tickets(tickets):
-    """Write the given tickets back to the ticket JSON database.
-    Args:
-        tickets (list[dict]): The full set of tickets to persist.
-    """
-    ticket_store.save_all(tickets)
+    """Write the given tickets back to the ticket JSON database."""
+    store = _get_ticket_store()
+    store.save_all(tickets)
     logging.debug("The Ticket JSON Database file was modified.")
 
 
 def load_service_appids():
     """Read/load service/app ID records into memory."""
-    return service_appid_store.load_all()
+    store = _get_service_appid_store()
+    return store.load_all()
 
 @itsm_module_bp.route("/", methods=["GET"])
 @role_required(ROLE_ITSM_TECH)

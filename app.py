@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from flask import Flask, Response, render_template, request, redirect, url_for, session, jsonify, flash
-import threading, time, logging, requests, os, uuid
+import threading, time, logging, logging.config, requests, os, uuid
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 
@@ -37,8 +37,8 @@ CF_TURNSTILE_SECRET_KEY = os.getenv("CF_TURNSTILE_SECRET_KEY") # REQUIRED for CA
 core_yaml_config = local_config_loader.load_core_config()
 TICKETS_FILE = core_yaml_config["core"]["tickets_file"]
 EMPLOYEE_FILE = core_yaml_config["core"]["employee_auth_file"]
-LOG_LEVEL = core_yaml_config["logging"]["level"]
-LOG_FILE = core_yaml_config["logging"]["file"]
+LOG_LEVEL = core_yaml_config.get("logging", {}).get("level", "INFO")
+LOG_FILE = core_yaml_config.get("logging", {}).get("file")
 EMAIL_ENABLED = core_yaml_config["email"]["enabled"]
 EMAIL_ACCOUNT = core_yaml_config["email"]["account"]
 IMAP_SERVER = core_yaml_config["email"]["imap_server"]
@@ -46,7 +46,29 @@ SMTP_SERVER = core_yaml_config["email"]["smtp_server"]
 SMTP_PORT = core_yaml_config["email"]["smtp_port"]
 TAILSCALE_NOTIFY_EMAIL = core_yaml_config["email"]["tailscale_notify_email"]
 
-logging.basicConfig(filename=LOG_FILE, level=getattr(logging, LOG_LEVEL.upper(), logging.INFO), format="%(asctime)s - %(levelname)s - %(message)s")
+# Centralized logging configuration
+LOG_CFG = core_yaml_config.get("logging_config")
+if not LOG_CFG:
+    # build a minimal dictConfig from basic fields
+    LOG_CFG = {
+        "version": 1,
+        "formatters": {
+            "default": {"format": "%(asctime)s - %(levelname)s - %(name)s - %(message)s"}
+        },
+        "handlers": {
+            "console": {"class": "logging.StreamHandler", "formatter": "default"}
+        },
+        "root": {"level": LOG_LEVEL.upper(), "handlers": ["console"]},
+    }
+    if LOG_FILE:
+        LOG_CFG["handlers"]["file"] = {
+            "class": "logging.FileHandler",
+            "filename": LOG_FILE,
+            "formatter": "default",
+        }
+        LOG_CFG["root"]["handlers"].append("file")
+
+logging.config.dictConfig(LOG_CFG)
 """ Above is the default logging configuration.
 Debug - Detailed information
 Info - Successes
@@ -72,6 +94,9 @@ app.config.update(
     SESSION_REFRESH_EACH_REQUEST=True,
     PERMANENT_SESSION_LIFETIME=timedelta(hours=12),
     MAX_CONTENT_LENGTH=16 * 1024 * 1024,)
+
+# Expose loaded core configuration for blueprints and handlers that use it at runtime
+app.config["LOADED_CONFIG"] = core_yaml_config
 
 #api_module_bp.config = {'TAILSCALE_NOTIFY_EMAIL': TAILSCALE_NOTIFY_EMAIL}
 app.register_blueprint(itsm_module_bp)

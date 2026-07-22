@@ -5,30 +5,30 @@ import logging
 import uuid
 from datetime import datetime
 
-from flask import Blueprint, Response, redirect, render_template, request, session, url_for
+from flask import Blueprint, Response, redirect, render_template, request, session, url_for, current_app
 from local_handlers.auth_decorators import role_required, ROLE_ITSM_TECH
-from local_handlers.local_config_loader import load_core_config
 from storage.changes_store import ChangesStore
 
-# CONFIG & LOGGING
-core_yaml_config = load_core_config()
-change_store = ChangesStore.from_config()
-
-# BLUEPRINT
+# Blueprint
 changes_module_bp = Blueprint("changes_module", __name__, url_prefix="/changes")
 
-# NOTE: use role_required(ROLE_ITSM_TECH) for protected routes
+def _get_config():
+    cfg = current_app.config.get("LOADED_CONFIG")
+    if cfg is None:
+        from local_handlers.local_config_loader import load_core_config
+        cfg = load_core_config()
+    return cfg
+
+def _get_changes_store():
+    cfg = _get_config()
+    return ChangesStore(cfg["core"]["changes_file"])
 
 def load_changes():
     """Return change records sorted by newest first."""
-    return sorted(
-        change_store.load_all(),
-        key=_change_sort_key,
-        reverse=True,
-    )
+    store = _get_changes_store()
+    return sorted(store.load_all(), key=_change_sort_key, reverse=True)
 
-
-def _change_sort_key(change: dict[str, object]) -> datetime:
+def _change_sort_key(change: dict) -> datetime:
     timestamp = change.get("change_created_timestamp")
     if isinstance(timestamp, str):
         try:
@@ -37,9 +37,8 @@ def _change_sort_key(change: dict[str, object]) -> datetime:
             return datetime.min
     return datetime.min
 
-
 def _parse_datetime_local(value: str) -> str | None:
-    value = value.strip()
+    value = (value or "").strip()
     if not value:
         return None
 
@@ -48,31 +47,20 @@ def _parse_datetime_local(value: str) -> str | None:
     except ValueError:
         return None
 
-
 def _clean_optional_timestamp(form_data, field_name: str) -> str:
     raw_value = form_data.get(field_name, "").strip()
     parsed_value = _parse_datetime_local(raw_value)
     return parsed_value or raw_value
 
-
-def _build_change_record(form_data) -> dict[str, object]:
-    """Build a normalized change record from submitted form data.
-
-    Args:
-        form_data: Request form payload containing change fields.
-
-    Returns:
-        A dictionary ready for persistence in the change store.
-    """
+def _build_change_record(form_data) -> dict:
+    """Build a normalized change record from submitted form data."""
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     requestor = session.get("technician")
-    return {
-        "uuid": str(uuid.uuid4()),
-        "change_number": change_store.next_change_number(),
-        "change_created_timestamp": now,
-        "change_updated_timestamp": now,
-        "change_status": "pending",
-        "change_risk": form_data.get("change_risk", "medium").strip() or "medium",
+
+    change_number = f"CHG-{datetime.now().year}-{uuid.uuid4().hex[:6].upper()}"
+
+    record = {
+        "change_number": change_number,
         "change_short_description": form_data.get("change_short_description", "").strip(),
         "change_description": form_data.get("change_description", "").strip(),
         "implement_plan": form_data.get("implement_plan", "").strip(),
@@ -86,7 +74,12 @@ def _build_change_record(form_data) -> dict[str, object]:
         "implementor_uuid": None,
         "impacted_service_id": None,
         "impacted_service_uuid": None,
+        "change_created_timestamp": now,
+        "change_updated_timestamp": now,
+        "change_status": "pending",
     }
+
+    return record
 
 # Dashboard Route
 @changes_module_bp.route("/", methods=["GET"])
@@ -99,6 +92,7 @@ def changes_home():
         changes=changes,
         loggedInTech=session.get("technician"),
     )
+
 
 # Submit New Change Route
 @changes_module_bp.route("/submit-new", methods=["GET", "POST"])
@@ -142,24 +136,14 @@ def submit_new() -> str:
         ), 400
 
     new_change = _build_change_record(request.form)
-    change_store.append(new_change)
+    store = _get_changes_store()
+    store.append(new_change)
     logging.info(
         "CHANGES MODULE - Created change %s for %s",
         new_change["change_number"],
         session.get("technician"),
     )
     return redirect(url_for("changes_module.changes_home"))
-
-# Edit Change Ticket Route
-@changes_module_bp.route("/changes/<change_number>/edit", methods=["POST"])
-@role_required(ROLE_ITSM_TECH)
-def edit_profile(change_number:str) -> str:
-    """Update change profile.
-    Args:
-        change_number: The change number (CHG-YYYY-NNNN).
-    Returns:
-        Redirect to profile page.
-    """
 
 # Export open change tickets as CSV.
 @changes_module_bp.route("/export/csv", methods=["GET"])

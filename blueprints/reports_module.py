@@ -4,8 +4,21 @@ from local_handlers.auth_decorators import role_required
 import io, csv, logging
 from datetime import datetime, timedelta
 from local_handlers.local_config_loader import load_core_config
+from flask import current_app
 
-core_yaml_config = load_core_config()
+def _get_config():
+    cfg = current_app.config.get("LOADED_CONFIG")
+    if cfg is None:
+        from local_handlers.local_config_loader import load_core_config
+        cfg = load_core_config()
+    return cfg
+
+
+def _get_reports_store():
+    cfg = _get_config()
+    return ChangesStore(cfg["core"]["reports_file"])
+
+
 reports_module_bp = Blueprint('reports_module', __name__, url_prefix='/reports')
 
 @reports_module_bp.route("/dashboard", methods=["GET"])

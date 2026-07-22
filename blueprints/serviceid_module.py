@@ -5,17 +5,29 @@ from functools import wraps
 from flask import Blueprint, redirect, render_template, request, session, url_for
 from local_handlers.auth_decorators import role_required, ROLE_ITSM_TECH
 
+from flask import current_app
 from local_handlers.local_config_loader import load_core_config
 from storage.service_appid_store import ServiceAppIdStore
 
-core_yaml_config = load_core_config()
 
-service_appid_store = ServiceAppIdStore.from_config()
+def _get_config():
+    cfg = current_app.config.get("LOADED_CONFIG")
+    if cfg is None:
+        cfg = load_core_config()
+    return cfg
+
+
+def _get_service_appid_store():
+    cfg = _get_config()
+    return ServiceAppIdStore(cfg["core"]["serviceid_appid_file"])
+
+
 serviceid_module_bp = Blueprint("serviceid_module", __name__, url_prefix="/serviceid")
 
 # use @role_required(ROLE_ITSM_TECH)
 def load_service_appids():
-    return service_appid_store.load_all()
+    store = _get_service_appid_store()
+    return store.load_all()
 
 @serviceid_module_bp.route("/", methods=["GET"])
 @role_required(ROLE_ITSM_TECH)

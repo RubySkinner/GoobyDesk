@@ -7,39 +7,45 @@ import uuid
 from datetime import datetime, timezone
 from functools import wraps
 
-from flask import Blueprint, render_template, request, redirect, url_for, session, Response
+from flask import Blueprint, render_template, request, redirect, url_for, session, Response, current_app
 from local_handlers.auth_decorators import role_required, ROLE_ITSM_TECH
-from local_handlers.local_config_loader import load_core_config
 from storage.crm_store import CrmStore
+from local_handlers.crm_helpers import build_customer_record
+from local_handlers.validation import require_fields, is_valid_email
 
-core_yaml_config = load_core_config()
-CUSTOMERS_FILE = core_yaml_config["core"]["customers_file"]
-SERVICE_APPID_FILE = core_yaml_config["core"]["serviceid_appid_file"]
-
-crm_store = CrmStore(CUSTOMERS_FILE)
 crm_module_bp = Blueprint('crm_module', __name__, url_prefix='/crm')
 
 # NOTE: use @role_required(ROLE_ITSM_TECH) on routes requiring ITSM technicians
 
+def _get_crm_store():
+    core_cfg = current_app.config.get("LOADED_CONFIG")
+    if core_cfg is None:
+        # fallback: try legacy loader
+        from local_handlers.local_config_loader import load_core_config
+        core_cfg = load_core_config()
+    customers_file = core_cfg["core"]["customers_file"]
+    return CrmStore(customers_file)
+
+
 def load_customers_file():
-    return crm_store.load_all()
+    store = _get_crm_store()
+    return store.load_all()
 
 def save_customers_file(customers):
     """Write the given customers back to the customer JSON database.
     Args:
         customers (list[dict]): The full set of customer records to persist.
     """
-    crm_store.save_all(customers)
+    store = _get_crm_store()
+    store.save_all(customers)
     logging.debug("The Customer JSON Database file was modified.")
 
 def generate_customer_id(customers):
     """Generate the next sequential CID for the current year.
-    Args:
-        customers (list[dict]): Existing customer records to scan.
-    Returns:
-        str: A new customer ID in the form CID-YYYY-NNNN.
+    Delegates to the store implementation which knows numbering rules.
     """
-    return crm_store.next_customer_id(customers)
+    store = _get_crm_store()
+    return store.next_customer_id(customers)
 
 # Dashboard Route
 @crm_module_bp.route("/", methods=["GET"])
@@ -67,126 +73,35 @@ def new_customer():
     if request.method == "GET":
         return render_template("crm/submit_new.html")
 
-    first_name = request.form.get("first_name", "").strip()
-    last_name = request.form.get("last_name", "").strip()
-    email = request.form.get("email", "").strip()
+    form = {k: v for k, v in request.form.items()}
 
-    if not first_name or not last_name or not email:
+    ok, missing = require_fields(form, ["first_name", "last_name", "email"])
+    if not ok or not is_valid_email(form.get("email")):
         return render_template(
             "crm/submit_new.html",
-            error="First Name, Last Name, and Email are required."
+            error="First Name, Last Name, and a valid Email are required."
         ), 400
 
     customers = load_customers_file()
     submission_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+    # Build base record from the form
+    base = build_customer_record(form)
+    # Enrich with persistence/audit fields
     new_customer_record = {
         "uuid": str(uuid.uuid4()),
         "customer_id": generate_customer_id(customers),
-
-        "first_name": first_name,
-        "last_name": last_name,
-        "preferred_name": request.form.get(
-            "preferred_name",
-            first_name
-        ).strip(),
-
-        "company": request.form.get("company") or None,
-        "job_title": request.form.get("job_title") or None,
-
-        "email": email,
-        "phone": request.form.get("phone") or None,
-
-        "address": {
-            "street": None,
-            "city": None,
-            "state": None,
-            "postal_code": None,
-            "country": request.form.get("country") or "US"
-        },
-
-        "timezone": request.form.get("timezone") or "UTC",
-        "language": "en-US",
-
-        "discord": {
-            "username": request.form.get("discord_username") or None,
-            "user_id": None
-            },
-
-        "minecraft": {
-            "username": request.form.get("minecraft_username") or None,
-            "uuid": None
-        },
-
+        **base,
         "created": submission_timestamp,
         "created_by": session.get("technician"),
-
-        "last_seen": None,
-        "last_login": None,
-
-        "status": request.form.get("status", "active"),
-        "status_reason": None,
-
-        "account_locked": False,
-        "email_verified": False,
-        "mfa_enabled": False,
-
-        "customer_type": request.form.get(
-            "customer_type",
-            "individual"
-        ),
-
-        "account_tier": request.form.get(
-            "account_tier",
-            "basic"
-        ),
-
-        "vip": "vip" in request.form,
-        "content_creator": "content_creator" in request.form,
-
-        "risk_level": "low",
-
-        "lifetime_value": 0.00,
-
-        "billing_currency": "USD",
-
-        "preferred_contact": request.form.get(
-            "preferred_contact",
-            "email"
-        ),
-
-        "marketing_opt_in": "marketing_opt_in" in request.form,
-
-        "maintenance_notifications":
-            "maintenance_notifications" in request.form,
-
-        "assigned_account_manager": None,
-
-        "services": [],
-        "licenses": [],
-        "domains": [],
-        "servers": [],
-
-        "support_contract": {
-            "enabled": False,
-            "sla": None,
-            "expires": None
-        },
-
-        "custom_fields": {},
-
-        "account_tags": [],
-
-        "crm_worknotes": [],
-
         "audit": {
             "creation_source": "auth_web",
             "last_modified": submission_timestamp,
-                "last_modified_by": session.get("technician")
-        }
-}
+            "last_modified_by": session.get("technician"),
+        },
+    }
 
-    initial_note = request.form.get("crm_worknotes", "").strip()
+    initial_note = form.get("crm_worknotes", "").strip()
     if initial_note:
         new_customer_record["crm_worknotes"].append({
             "date": submission_timestamp,
