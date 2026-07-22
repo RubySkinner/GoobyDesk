@@ -11,26 +11,11 @@ from storage.service_appid_store import ServiceAppIdStore
 from storage.ticket_store import TicketStore
 
 core_yaml_config = load_core_config()
-LOG_LEVEL = core_yaml_config["logging"]["level"]
-LOG_FILE = core_yaml_config["logging"]["file"]
 
 ticket_store = TicketStore.from_config()
 service_appid_store = ServiceAppIdStore.from_config()
-
 itsm_module_bp = Blueprint('itsm', __name__, url_prefix='/itsm')
 
-logging.basicConfig(
-    filename=LOG_FILE,
-    level=getattr(logging, LOG_LEVEL.upper(), logging.INFO),
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
-""" Above is the default logging configuration.
-Debug - Detailed information
-Info - Successes
-Warning - Unexpected events
-Error - Function failures
-Critical - Serious application failures
-"""
 def load_tickets():
     """Read/load the ticket JSON database into memory.
     Returns:
@@ -53,7 +38,6 @@ def load_service_appids():
     """Read/load service/app ID records into memory."""
     return service_appid_store.load_all()
 
-
 @itsm_module_bp.route("/", methods=["GET"])
 @role_required(ROLE_ITSM_TECH)
 def dashboard():
@@ -70,7 +54,6 @@ def services_appid_dashboard():
         services=services,
         loggedInTech=session["technician"],
     )
-
 
 @itsm_module_bp.route("/ticket/<ticket_number>")
 @role_required(ROLE_ITSM_TECH)

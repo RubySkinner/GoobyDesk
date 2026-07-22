@@ -12,12 +12,7 @@ from storage.changes_store import ChangesStore
 
 # CONFIG & LOGGING
 core_yaml_config = load_core_config()
-LOG_LEVEL = core_yaml_config["logging"]["level"]
-LOG_FILE = core_yaml_config["logging"]["file"]
-
 change_store = ChangesStore.from_config()
-
-logging.basicConfig(filename=LOG_FILE, level=getattr(logging, LOG_LEVEL.upper(), logging.INFO), format="%(asctime)s - %(levelname)s - %(message)s",)
 
 # BLUEPRINT
 changes_module_bp = Blueprint("changes_module", __name__, url_prefix="/changes")

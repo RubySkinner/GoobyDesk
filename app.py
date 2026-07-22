@@ -46,6 +46,15 @@ SMTP_SERVER = core_yaml_config["email"]["smtp_server"]
 SMTP_PORT = core_yaml_config["email"]["smtp_port"]
 TAILSCALE_NOTIFY_EMAIL = core_yaml_config["email"]["tailscale_notify_email"]
 
+logging.basicConfig(filename=LOG_FILE, level=getattr(logging, LOG_LEVEL.upper(), logging.INFO), format="%(asctime)s - %(levelname)s - %(message)s")
+""" Above is the default logging configuration.
+Debug - Detailed information
+Info - Successes
+Warning - Unexpected events
+Error - Function failures
+Critical - Serious application failures
+"""
+
 ticket_store = TicketStore(TICKETS_FILE)
 change_store = ChangesStore(core_yaml_config["core"]["changes_file"])
 employee_store = EmployeeStore(EMPLOYEE_FILE)
@@ -104,14 +113,6 @@ def set_security_headers(response):
     
     return response
 
-logging.basicConfig(filename=LOG_FILE, level=getattr(logging, LOG_LEVEL.upper(), logging.INFO), format="%(asctime)s - %(levelname)s - %(message)s")
-""" Above is the default logging configuration.
-Debug - Detailed information
-Info - Successes
-Warning - Unexpected events
-Error - Function failures
-Critical - Serious application failures
-"""
 # INITIAL ERROR CODES
 if not CF_TURNSTILE_SITE_KEY or not CF_TURNSTILE_SECRET_KEY:
     logging.critical("CF_TURNSTILE_SITE_KEY and CF_TURNSTILE_SECRET_KEY must be configured in the .env file. It is required for CAPTCHA functionality.")
