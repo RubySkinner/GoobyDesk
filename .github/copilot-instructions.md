@@ -1,6 +1,6 @@
 # AI Instructions
 
-You are assisting with GoobyDesk_Modern. An Open-Source, Cloud Native, Lightweight, Databaseless, Self-Hosted ITSM Service Desk.
+You are assisting with GoobyDesk. An Open-Source, Cloud Native, Lightweight, Databaseless, Self-Hosted ITSM Service Desk.
 
 **Entry Point:** `app.py`
 
@@ -34,12 +34,12 @@ Use async only when it materially improves concurrency, responsiveness, or I/O s
 ## Language Preference
 
 - **Primary language**: Python 3
-- **Secondary language**: vanilla JavaScript
+- **Secondary language**: vanilla HTML5/CSS3/JavaScript
 - **Compliance**: PEP8 compliant
 
 ### Imports
 
- Order imports in groups, separated by blank lines.
+Order imports in groups, separated by blank lines.
 
 1. Standard library
 2. Third-party packages
@@ -336,4 +336,117 @@ class ServerConfig:
 
 config = ServerConfig(database=DatabaseConfig(pool=PoolConfig(size=10)))
 print(config.database.pool.size)  # Clear, type-checked access
+
+## Repository File Tree
+
+```text
+.
+├── AGENTS.md
+├── app.py
+├── CHANGELOG
+├── LICENSE
+├── README.md
+├── requirements.txt
+├── .github/
+│   └── copilot-instructions.md
+├── blueprints/
+│   ├── __init__.py
+│   ├── api_module.py
+│   ├── changes_module.py
+│   ├── crm_module.py
+│   ├── hr_module.py
+│   ├── itsm_module.py
+│   ├── reports_module.py
+│   └── serviceid_module.py
+├── docs/
+│   ├── audit-2.md
+│   ├── audit-resolve.md
+│   ├── prop_config.yml
+│   └── roadmap.md
+├── example_data/
+│   ├── example_changes.json
+│   ├── example_customer.json
+│   ├── example_dotenv
+│   ├── example_employee_auth.json
+│   ├── example_employee.json
+│   ├── example_hr_employee.json
+│   ├── example_serviceid.json
+│   ├── example_tickets.json
+│   ├── future_ticket_schema.json
+│   ├── goobydesk.service
+│   ├── new_appid.json
+│   └── template_configuration.yml
+├── helper_scripts/
+│   ├── app_secret_maker.py
+│   ├── basic_version_upgrade.sh
+│   ├── first_time_setup.sh
+│   └── migrate_changes.py
+├── local_handlers/
+│   ├── __init__.py
+│   ├── auth_decorators.py
+│   ├── crm_helpers.py
+│   ├── local_config_loader.py
+│   ├── local_email_handler.py
+│   ├── local_webhook_handler.py
+│   ├── ticket_builder.py
+│   ├── utils.py
+│   └── validation.py
+├── prod_data/
+│   ├── changes.json
+│   ├── configuration.yml
+│   ├── customers.json
+│   ├── employee.json
+│   ├── hr_file.json
+│   ├── serviceid.json
+│   └── tickets.json
+├── static/
+│   ├── main.js
+│   ├── styles.css
+│   └── img/
+├── storage/
+│   ├── __init__.py
+│   ├── backup.py
+│   ├── changes_store.py
+│   ├── crm_store.py
+│   ├── employee_store.py
+│   ├── hr_store.py
+│   ├── json_store.py
+│   ├── service_appid_store.py
+│   ├── ticket_store.py
+│   └── validator.py
+├── templates/
+│   ├── new-ticket-email.html
+│   ├── under_construction.html
+│   ├── changes/
+│   │   ├── changes_dashboard.html
+│   │   └── submit_new.html
+│   ├── crm/
+│   │   ├── crm_dashboard.html
+│   │   ├── profile.html
+│   │   └── submit_new.html
+│   ├── errors/
+│   │   ├── 400.html
+│   │   ├── 403.html
+│   │   ├── 404.html
+│   │   └── 500.html
+│   ├── hr/
+│   │   ├── hr_dashboard.html
+│   │   ├── profile.html
+│   │   └── submit_new.html
+│   ├── itsm/
+│   │   ├── console.html
+│   │   ├── dashboard.html
+│   │   └── queue.html
+│   ├── public/
+│   │   ├── bouncer.html
+│   │   ├── index.html
+│   │   ├── login.html
+│   │   └── signup.html
+│   ├── reports/
+│   │   └── reports_dashboard.html
+│   └── services-appid/
+│       ├── dashboard.html
+│       ├── profile.html
+│       └── submit_new.html
+```
 ```
