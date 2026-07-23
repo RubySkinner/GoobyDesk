@@ -24,18 +24,28 @@ load_dotenv(".env")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 
 def _get_config():
+    """Return loaded core configuration, falling back to disk when needed.
+    Returns:
+        dict: Core configuration mapping.
+    """
     cfg = current_app.config.get("LOADED_CONFIG")
     if cfg is None:
         cfg = load_core_config()
     return cfg
 
-
 def _get_ticket_store():
+    """Instantiate and return a TicketStore from current config.
+    Returns:
+        storage.ticket_store.TicketStore: Ticket store instance.
+    """
     cfg = _get_config()
     return TicketStore(cfg["core"]["tickets_file"])
 
-
 def _get_email_settings():
+    """Return a normalized email settings dict from core config.
+    Returns:
+        dict: Keys: enabled, account, imap_server, smtp_server, smtp_port.
+    """
     cfg = _get_config()
     email_cfg = cfg.get("email", {})
     return {
@@ -48,10 +58,18 @@ def _get_email_settings():
 
 # Helper functions below for loading and saving tickets.
 def load_tickets():
+    """Load tickets using local ticket store helper.
+    Returns:
+        list[dict]: All ticket records.
+    """
     store = _get_ticket_store()
     return store.load_all()
 
 def save_tickets(tickets):
+    """Persist tickets via ticket store helper.
+    Args:
+        tickets (list[dict]): Tickets to persist.
+    """
     store = _get_ticket_store()
     store.save_all(tickets)
     logging.debug("EMAIL HANDLER - Ticket database was updated.")
@@ -59,6 +77,15 @@ def save_tickets(tickets):
 # Helpers functions above only! Core functions below.
 # Send an email if EMAIL_ENABLED is True.
 def send_email(requestor_email, ticket_subject, ticket_message, html=True):
+    """Send an email to requestor if email is enabled and configured.
+    Args:
+        requestor_email (str): Recipient email address.
+        ticket_subject (str): Email subject.
+        ticket_message (str): Email body.
+        html (bool): Send as HTML when True.
+    Returns:
+        bool: True on successful send, False otherwise.
+    """
     settings = _get_email_settings()
     if not settings.get("enabled"):
         logging.info("EMAIL HANDLER - Email skipped; EMAIL_ENABLED=False.")
@@ -91,10 +118,11 @@ def send_email(requestor_email, ticket_subject, ticket_message, html=True):
         logging.error(f"EMAIL HANDLER - Email sending failed: {e}")
         return False
 
-# `extract_email_body` is provided by `local_handlers.utils` to avoid duplication.
-
 def fetch_email_replies():
-    """Fetch unread IMAP emails and append them as ticket notes."""
+    """Fetch unread IMAP emails and append them as ticket notes.
+    Connects to IMAP, finds UNSEEN messages, and appends replies
+    matching ticket IDs into ticket notes.
+    """
     settings = _get_email_settings()
     if not settings.get("enabled"):
         logging.debug("EMAIL HANDLER - Skipping IMAP fetch; EMAIL_ENABLED=False.")

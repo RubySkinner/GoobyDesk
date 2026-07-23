@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """Centralized role-based auth decorators and helpers.
-
 Keep small, readable, and testable.
 """
 from functools import wraps
@@ -17,11 +16,9 @@ DEFAULT_ROLES = [ROLE_ITSM_TECH, ROLE_HR_TECH, ROLE_MANAGER, ROLE_ADMIN]
 
 logger = logging.getLogger(__name__)
 
-
 def get_current_user() -> str | None:
     """Return the currently authenticated username or None."""
     return session.get("technician") or session.get("user_id")
-
 
 def get_current_roles() -> list[str]:
     """Return a list of roles for the current session (never None)."""
@@ -30,19 +27,15 @@ def get_current_roles() -> list[str]:
         return []
     return roles
 
-
 def user_has_role(role: str) -> bool:
     """Check if current session has `role`."""
     return role in get_current_roles()
 
-
 def role_required(*required_roles: str, require_all: bool = False, redirect_to_login: bool = True):
     """Decorator factory to require one or more roles.
-
     Examples:
         @role_required(ROLE_ITSM_TECH)
         @role_required(ROLE_MANAGER, ROLE_ADMIN)
-
     Args:
         required_roles: one or more role strings.
         require_all: when True, user must have all roles; otherwise any role suffices.

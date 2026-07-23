@@ -1,5 +1,5 @@
+#!/usr/bin/env python3
 from typing import Dict, Any
-
 
 def build_customer_record(form: Dict[str, Any]) -> Dict[str, Any]:
     """Build a customer record from sanitized form data.
