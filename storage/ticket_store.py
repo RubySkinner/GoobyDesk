@@ -29,6 +29,36 @@ class TicketStore:
     def append(self, ticket: dict[str, Any]) -> None:
         self.store.append(self._normalize_ticket(ticket))
 
+    def update(
+        self,
+        predicate: callable,
+        updater: callable,
+    ) -> bool:
+        """Update first matching ticket using predicate and updater.
+
+        Updater receives a shallow-copied record and should return the
+        modified record (or None to leave unchanged). Returns True when
+        a record was changed.
+        """
+        def _updater(record: dict[str, Any]):
+            copy = dict(record)
+            replacement = updater(copy)
+            if replacement is None:
+                return record
+            return self._normalize_ticket(replacement)
+
+        _, changed = self.store.update(predicate, _updater)
+        return changed
+
+    def delete(self, predicate: callable) -> int:
+        """Delete tickets matching predicate. Returns number removed."""
+        _, removed = self.store.delete(predicate)
+        return removed
+
+    def update_by_number(self, ticket_number: str, updater: callable) -> bool:
+        """Convenience: update ticket by `ticket_number`. Returns True if changed."""
+        return self.update(lambda r: r.get("ticket_number") == ticket_number, updater)
+
     def next_ticket_number(self, year: int | None = None) -> str:
         current_year = year or datetime.now().year
         ticket_count = len(self.load_all()) + 1

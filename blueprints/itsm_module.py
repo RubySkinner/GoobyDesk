@@ -98,35 +98,38 @@ def update_ticket_status(ticket_number, ticket_status):
         return render_template("errors/400.html"), 400
 
     logged_in_tech = session.get("technician")
-    tickets = load_tickets()
+    store = _get_ticket_store()
 
-    for ticket in tickets:
-        if ticket["ticket_number"] != ticket_number:
-            continue
-
-        ticket_subject = ticket.get("ticket_subject", "No Subject Provided")
-        ticket["ticket_status"] = canonical_status
-
+    def _updater(record: dict):
+        record.setdefault("ticket_subject", "No Subject Provided")
+        record["ticket_status"] = canonical_status
         if canonical_status == "Closed":
-            ticket["closed_by"] = logged_in_tech
-            ticket["closure_date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            record["closed_by"] = logged_in_tech
+            record["closure_date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        return record
 
-        save_tickets(tickets)
-        logging.info(f"Ticket {ticket_number} status updated to {ticket_status} by {logged_in_tech}.")
+    changed = store.update(lambda r: r.get("ticket_number") == ticket_number, _updater)
+    if not changed:
+        return render_template("errors/404.html"), 404
 
-        try:
-            local_webhook_handler.notify_ticket_event(
-                ticket_number=ticket_number,
-                ticket_status=canonical_status,
-                ticket_subject=ticket_subject,
-            )
-            logging.info(f"Ticket {ticket_number} status update notifications sent successfully.")
-        except Exception as e:
-            logging.error(f"Failed to send ticket status update notifications for {ticket_number}: {str(e)}")
+    # Load updated ticket to get subject for notifications
+    tickets = load_tickets()
+    ticket = next((t for t in tickets if t.get("ticket_number") == ticket_number), None)
+    ticket_subject = ticket.get("ticket_subject", "No Subject Provided") if ticket else "No Subject Provided"
 
-        return jsonify({"message": f"Ticket {ticket_number} updated to {canonical_status}."})
+    logging.info(f"Ticket {ticket_number} status updated to {ticket_status} by {logged_in_tech}.")
 
-    return render_template("errors/404.html"), 404
+    try:
+        local_webhook_handler.notify_ticket_event(
+            ticket_number=ticket_number,
+            ticket_status=canonical_status,
+            ticket_subject=ticket_subject,
+        )
+        logging.info(f"Ticket {ticket_number} status update notifications sent successfully.")
+    except Exception as e:
+        logging.error(f"Failed to send ticket status update notifications for {ticket_number}: {str(e)}")
+
+    return jsonify({"message": f"Ticket {ticket_number} updated to {canonical_status}."})
 
 @itsm_module_bp.route("/ticket/<ticket_number>/append_note", methods=["POST"])
 @role_required(ROLE_ITSM_TECH)
@@ -146,18 +149,22 @@ def add_ticket_note(ticket_number):
         return jsonify({"message": "Note too long (max 8000 chars)."}), 400
 
     tickets = load_tickets()
+    store = _get_ticket_store()
 
-    for ticket in tickets:
-        if ticket.get("ticket_number") == ticket_number:
-            ticket.setdefault("ticket_worknotes", [])
-            note_record = {
-                "author": session.get("technician") or "unknown",
-                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "note": note_content,
-            }
-            ticket["ticket_worknotes"].append(note_record)
-            save_tickets(tickets)
-            logging.info("Note successfully appended to %s by %s.", ticket_number, note_record["author"])
-            return jsonify({"message": "Note added successfully.", "note": note_record}), 200
+    note_record = {
+        "author": session.get("technician") or "unknown",
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "note": note_content,
+    }
 
-    return jsonify({"message": "Ticket not found."}), 404
+    def _updater(record: dict):
+        record.setdefault("ticket_worknotes", [])
+        record["ticket_worknotes"].append(note_record)
+        return record
+
+    changed = store.update(lambda r: r.get("ticket_number") == ticket_number, _updater)
+    if not changed:
+        return jsonify({"message": "Ticket not found."}), 404
+
+    logging.info("Note successfully appended to %s by %s.", ticket_number, note_record["author"])
+    return jsonify({"message": "Note added successfully.", "note": note_record}), 200
