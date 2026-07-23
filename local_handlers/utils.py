@@ -1,40 +1,30 @@
 #!/usr/bin/env python3
 """Shared utility helpers for local handlers.
-
 Provides small, pure helpers for authentication and email parsing so
 duplicate implementations can be removed from individual modules.
 """
 from __future__ import annotations
-
 import logging
 import bcrypt
-
 from email import message_from_bytes
-
 
 __all__ = ["hash_password", "verify_password", "extract_email_body"]
 
-
 def hash_password(plain_password: str) -> str:
     """Hash a password using bcrypt and return the UTF-8 decoded hash.
-
     Args:
         plain_password: The plain text password to hash.
-
     Returns:
         The bcrypt hash as a string.
     """
     salt = bcrypt.gensalt(rounds=12)
     return bcrypt.hashpw(plain_password.encode("utf-8"), salt).decode("utf-8")
 
-
 def verify_password(plain_password: str, stored_hash: str) -> bool:
     """Verify a plain password against a stored bcrypt hash.
-
     Args:
         plain_password: The plain text password to verify.
         stored_hash: The stored bcrypt hash.
-
     Returns:
         True if the password matches, False otherwise.
     """
@@ -44,13 +34,10 @@ def verify_password(plain_password: str, stored_hash: str) -> bool:
         logging.exception("Password verification failed due to exception")
         return False
 
-
 def extract_email_body(msg) -> str:
     """Extract a best-effort email body (prefer plain text, fallback to html).
-
     Args:
         msg: An email.message.Message instance (or bytes that will be parsed by callers).
-
     Returns:
         A string with the extracted body (may be empty on failure).
     """
