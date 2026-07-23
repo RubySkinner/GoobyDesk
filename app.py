@@ -49,7 +49,6 @@ SMTP_PORT = core_yaml_config["email"]["smtp_port"]
 TAILSCALE_NOTIFY_EMAIL = core_yaml_config["email"]["tailscale_notify_email"]
 
 # Centralized logging configuration
-# Try to load a pre-defined logging configuration from YAML (`logging_config`).
 LOG_CFG = core_yaml_config.get("logging_config")
 if not LOG_CFG:
     # No YAML logging config found — construct a minimal `dictConfig` dict
@@ -125,6 +124,12 @@ app.register_blueprint(serviceid_module_bp)
 # Security Headers for all responses.
 @app.after_request
 def set_security_headers(response):
+    """Attach common security headers to every response.
+    Args:
+        response (flask.Response): Response object to modify.
+    Returns:
+        flask.Response: Modified response with security headers.
+    """
     # Prevent clickjacking attacks
     response.headers['X-Frame-Options'] = 'DENY'
     # Prevent MIME type sniffing
@@ -156,37 +161,45 @@ def set_security_headers(response):
 if not CAPTCHA_ENABLED:
     logging.critical("CF_TURNSTILE_SITE_KEY and/or CF_TURNSTILE_SECRET_KEY not set; CAPTCHA disabled.")
 
-#email_thread_enabler_check = os.getenv("EMAIL_ENABLED")
-#if email_thread_enabler_check is None:
-#    logging.info("EMAIL_ENABLED is not defined. Defaulting to False.")
-#    EMAIL_ENABLED = False
-#else:
-#    EMAIL_ENABLED = email_thread_enabler_check.lower() == "true"
-#    logging.info(f"EMAIL_ENABLED is set to {EMAIL_ENABLED}.")
-
 # Read/Loads the ticket file into memory. This is the original load_tickets function that works on Windows and Unix.
 def load_tickets():
+    """Load tickets from storage.
+    Returns:
+        list[dict]: All ticket records.
+    """
     return ticket_store.load_all()
 
 # Writes to the ticket file database. Eventually needs file locking for Linux.
 def save_tickets(tickets):
+    """Persist tickets to storage.
+    Args:
+        tickets (list[dict]): Tickets to save.
+    """
     ticket_store.save_all(tickets)
     logging.debug("The Ticket JSON Database file was modified.")
 
 # Read/Loads the employee file into memory.
 def load_employees():
+    """Load employee records from storage.
+    Returns:
+        list[dict]: Employee records.
+    """
     return employee_store.load_all()
     
 # Helper script for secure password hasing auto-migration.
 def save_employees(employees):
+    """Persist employee records to storage.
+    Args:
+        employees (list[dict]): Employee records to save.
+    """
     employee_store.save_all(employees)
     logging.debug("The Employee JSON Database file was modified.")
 
 def _assign_roles_to_session(employee: dict) -> None:
-    """Set `session['roles']` from employee record, with safe defaults and simple inference.
-
-    - Uses explicit `roles` list when present.
-    - Falls back to inferring from `tech_type` for backwards compatibility.
+    """Populate `session['roles']` from an employee record.
+    Prefers explicit `roles`; falls back to inferring from `tech_type`.
+    Args:
+        employee (dict): Employee record.
     """
     roles = employee.get("roles")
     if isinstance(roles, list):
@@ -209,14 +222,61 @@ def _assign_roles_to_session(employee: dict) -> None:
 
 # Generate a new ticket number.
 def generate_ticket_number():
+    """Generate next ticket number for current year.
+    Returns:
+        str: New ticket identifier.
+    """
     return ticket_store.next_ticket_number(datetime.now().year)
 
 # Generate a new change request number.
 def generate_change_request_number():
+    """Generate next change request number for current year.
+    Returns:
+        str: New change request identifier.
+    """
     return change_store.next_change_number(datetime.now().year)
+
+
+def _verify_turnstile():
+    """Validate Cloudflare Turnstile token when enabled.
+    Returns:
+        bool: True when CAPTCHA is disabled or verification succeeds.
+    """
+    if not CAPTCHA_ENABLED:
+        return True
+
+    turnstile_token = request.form.get("cf-turnstile-response")
+    if not turnstile_token:
+        logging.warning("Missing Turnstile token in form")
+        flash("CAPTCHA verification failed. Please try again.", "danger")
+        return False
+
+    url = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
+    data = {
+        "secret": CF_TURNSTILE_SECRET_KEY,
+        "response": turnstile_token,
+        "remoteip": request.remote_addr,
+    }
+    try:
+        resp = requests.post(url, data=data, timeout=5)
+        result = resp.json()
+    except Exception as e:
+        logging.error("Turnstile verification error: %s", str(e))
+        flash("Error verifying CAPTCHA. Please try again later.", "danger")
+        return False
+
+    if not result.get("success"):
+        logging.warning("Turnstile verification failed: %s", result)
+        flash("CAPTCHA verification failed. Please try again.", "danger")
+        return False
+
+    return True
 
 # Background email inbox monitoring process.
 def background_email_monitor():
+    """Background loop: poll mailbox for replies every 10 minutes.
+    Runs indefinitely; intended for a daemon thread.
+    """
     while True:
         local_email_handler.fetch_email_replies()
         time.sleep(600)  # Wait for emails every 10 minutes.
@@ -228,90 +288,28 @@ if EMAIL_ENABLED is True:
 else:
     logging.info("EMAIL_ENABLED is set to false. Skipping...")
 
-# Decorator to force authentication checking. Easy to append to routes.
-"""
-def technician_required(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        # Session-based auth check
-        if not session.get("technician"):
-            # Unauthorized access attempt
-            return render_template("errors/403.html"), 403
-        # Authorized technician → proceed to the route
-        return func(*args, **kwargs)
-    return wrapper
-    """
-
 @app.route("/", methods=["GET", "POST"])
 def home():
+    """Serve home page and handle ticket submissions.
+    POST: validate CAPTCHA, create ticket, trigger side-effects, redirect.
+    GET: render index template.
+    """
     if request.method == "POST":
+        # Verify CAPTCHA early and return on failure
+        if not _verify_turnstile():
+            return redirect(url_for("home"))
+
+        # Build and persist ticket; handle form problems separately from side-effects
         try:
-            # If CAPTCHA is enabled, validate the Turnstile token; otherwise skip.
-            if CAPTCHA_ENABLED:
-                turnstile_token = request.form.get("cf-turnstile-response")
-                if not turnstile_token:
-                    flash("CAPTCHA verification failed. Please try again.", "danger")
-                    return redirect(url_for("home"))
-
-                turnstile_url = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
-                turnstile_data = {
-                    "secret": CF_TURNSTILE_SECRET_KEY,
-                    "response": turnstile_token,
-                    "remoteip": request.remote_addr,
-                }
-
-                try:
-                    turnstile_response = requests.post(turnstile_url, data=turnstile_data)
-                    result = turnstile_response.json()
-                    if not result.get("success"):
-                        logging.warning("Turnstile verification failed: %s", result)
-                        flash("CAPTCHA verification failed. Please try again.", "danger")
-                        return redirect(url_for("home"))
-                except Exception as e:
-                    logging.error("Turnstile verification error: %s", str(e))
-                    flash("Error verifying CAPTCHA. Please try again later.", "danger")
-                    return redirect(url_for("home"))
-
-            # Process ticket submission
             ticket_number = generate_ticket_number()
-
             new_ticket = ticket_builder.build_ticket_record(
                 request.form,
                 ticket_number,
                 source="web",
-                technician=session.get("technician"),)
-            
+                technician=session.get("technician"),
+            )
             ticket_store.append(new_ticket)
             logging.info("%s has been created.", ticket_number)
-
-            # Send confirmation email to the requestor
-            if EMAIL_ENABLED:
-                try:
-                    email_body = render_template("new-ticket-email.html", ticket=new_ticket)
-                    local_email_handler.send_email(
-                        new_ticket["requestor_email"],
-                        f"{ticket_number} - {new_ticket['ticket_subject']}",
-                        email_body,
-                        html=True,
-                    )
-                    logging.info("Confirmation email for %s sent successfully.", ticket_number)
-                except Exception as e:
-                    logging.error("Failed to send email for %s: %s", ticket_number, str(e))
-            else:
-                logging.debug("EMAIL_ENABLED is false. Skipping email for %s.", ticket_number)
-
-            # Send webhook notifications
-            try:
-                local_webhook_handler.notify_ticket_event(
-                    ticket_number, new_ticket["ticket_subject"], "Open")
-                logging.info("Webhook notifications for %s sent successfully.", ticket_number)
-            except Exception as e:
-                logging.error("Failed to send webhook notifications for %s: %s", ticket_number, str(e))
-
-            # Prompt the user's web interface of a successful ticket submission
-            flash(f"Ticket {ticket_number} has been submitted successfully!", "success")
-            return redirect(url_for("home"))
-
         except KeyError as e:
             logging.error("Missing required form field: %s", str(e))
             flash("Please fill out all required fields.", "danger")
@@ -321,6 +319,31 @@ def home():
             flash("An error occurred while submitting your ticket. Please try again later.", "danger")
             return redirect(url_for("home"))
 
+        # Side-effects: email and webhooks — failures should not block user flow
+        if EMAIL_ENABLED:
+            try:
+                email_body = render_template("new-ticket-email.html", ticket=new_ticket)
+                local_email_handler.send_email(
+                    new_ticket.get("requestor_email"),
+                    f"{ticket_number} - {new_ticket.get('ticket_subject')}",
+                    email_body,
+                    html=True,
+                )
+                logging.info("Confirmation email for %s sent successfully.", ticket_number)
+            except Exception as e:
+                logging.error("Failed to send email for %s: %s", ticket_number, str(e))
+        else:
+            logging.debug("EMAIL_ENABLED is false. Skipping email for %s.", ticket_number)
+
+        try:
+            local_webhook_handler.notify_ticket_event(ticket_number, new_ticket.get("ticket_subject"), "Open")
+            logging.info("Webhook notifications for %s sent successfully.", ticket_number)
+        except Exception as e:
+            logging.error("Failed to send webhook notifications for %s: %s", ticket_number, str(e))
+
+        flash(f"Ticket {ticket_number} has been submitted successfully!", "success")
+        return redirect(url_for("home"))
+
     # Refresh and reload the Home/Index
     return render_template(
         "public/index.html", sitekey=(CF_TURNSTILE_SITE_KEY if CAPTCHA_ENABLED else None)
@@ -328,6 +351,10 @@ def home():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    """Handle technician login (legacy and hashed passwords supported).
+    POST: authenticate and set session.
+    GET: render login page.
+    """
     if request.method == "POST":
         username = request.form.get("tech_username_box", "").strip()
         password = request.form.get("tech_password_box", "")
@@ -368,6 +395,10 @@ def login():
 
 @app.route("/debug/routes")
 def debug_routes():
+    """Return a plain-text list of registered Flask routes for debugging.
+    Returns:
+        str: Preformatted routes list.
+    """
     routes = sorted(
         f"{rule.endpoint:35} {rule.rule}"
         for rule in app.url_map.iter_rules()
@@ -381,6 +412,10 @@ def debug_routes():
 
 @app.route("/logout")
 def logout():
+    """Clear session and remove session cookie, redirect to login.
+    Returns:
+        Response: Redirect to login page.
+    """
     session.clear()
     response = redirect(url_for("login"))
     response.delete_cookie("goobydesk_session_cookie")
@@ -389,17 +424,17 @@ def logout():
 # BELOW THIS LINE IS RESERVED FOR FLASK ERROR ROUTES. PUT ALL CORE APP FUNCTIONS ABOVE THIS LINE!
 # Handle 400 errors.
 @app.errorhandler(400)
-def bad_request(e):
+def bad_request():
     return render_template("errors/400.html"), 400
 
 # Handle 403 errors.
 @app.errorhandler(403)
-def forbidden(e):
+def forbidden():
     return render_template("errors/403.html"), 403
 
 # Handle 404 errors.
 @app.errorhandler(404)
-def page_not_found(e):
+def page_not_found():
     return render_template("errors/404.html"), 404
 
 # Handles 500 errors.
