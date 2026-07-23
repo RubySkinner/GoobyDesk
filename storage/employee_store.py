@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-# JSON Storage Wrapper for Employee Authentication records.
+"""Employee auth storage wrapper.
+
+Encapsulates storage concerns for employee authentication records
+used by the local authentication subsystem (passwords, authcodes).
+"""
 from __future__ import annotations
 from typing import Any
 from local_handlers.local_config_loader import load_core_config
@@ -17,6 +21,7 @@ class EmployeeStore:
         return cls(config["core"]["employee_auth_file"])
 
     def load_all(self) -> list[dict[str, Any]]:
+        # Return list of employee auth records; guard against malformed payloads.
         employees = self.store.read(default=[])
         return employees if isinstance(employees, list) else []
 

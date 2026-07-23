@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-# JSON Storage Wrapper for HR records.
+"""HR storage wrapper.
+
+Thin wrapper around JsonStore for HR employee data. Keeps file
+locations and validation centralized so callers can treat the
+store as a simple in-memory list API.
+"""
 from __future__ import annotations
 from typing import Any
 from local_handlers.local_config_loader import load_core_config
@@ -18,6 +23,7 @@ class HrStore:
         return cls(config["core"]["hr_file"])
 
     def load_all(self) -> list[dict[str, Any]]:
+        # Return normalized list of employee records.
         employees = self.store.read(default=[])
         return employees if isinstance(employees, list) else []
 

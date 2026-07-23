@@ -5,6 +5,7 @@ import io, csv, logging
 from datetime import datetime, timedelta
 from local_handlers.local_config_loader import load_core_config
 from flask import current_app
+from storage.ticket_store import TicketStore
 
 def _get_config():
     cfg = current_app.config.get("LOADED_CONFIG")
@@ -16,7 +17,7 @@ def _get_config():
 
 def _get_reports_store():
     cfg = _get_config()
-    return ChangesStore(cfg["core"]["reports_file"])
+    return TicketStore(cfg["core"]["tickets_file"])
 
 
 reports_module_bp = Blueprint('reports_module', __name__, url_prefix='/reports')

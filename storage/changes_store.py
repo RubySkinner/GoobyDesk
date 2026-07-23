@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-# JSON Storage Wrapper for change request records.
+"""Storage wrapper for change request records.
+
+Encapsulates persistence concerns for change requests so callers
+deal only with domain concepts (change numbers, records) rather
+than file I/O. Delegates atomic writes and validation to JsonStore.
+"""
 from __future__ import annotations
 
 from datetime import datetime
@@ -22,15 +27,19 @@ class ChangesStore:
         return cls(config["core"]["changes_file"])
 
     def load_all(self) -> list[dict[str, Any]]:
+        # Return only dict-shaped records; protects callers from
+        # accidental malformed entries in the JSON file.
         records = self.store.read(default=[])
         if not isinstance(records, list):
             return []
         return [record for record in records if isinstance(record, dict)]
 
     def save_all(self, records: list[dict[str, Any]]) -> None:
+        # Overwrite store atomically with provided records.
         self.store.write(records)
 
     def append(self, record: dict[str, Any]) -> None:
+        # Append new change record. JsonStore handles locking and atomic write.
         self.store.append(record)
 
     def get_by_change_number(self, change_number: str) -> dict[str, Any] | None:

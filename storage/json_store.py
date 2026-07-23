@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Generic JSON storage with atomic write support."""
+"""Generic JSON storage with atomic write support.
+
+Uses temp-file + rename plus optional directory fsync to avoid
+corruption on crashes; suitable for small JSON-backed databases.
+"""
 
 from __future__ import annotations
 

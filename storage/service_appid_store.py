@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-# JSON Storage Wrapper for service/app ID records.
+"""Service/App ID storage wrapper.
+
+Manages persistence and normalization for service-to-app-id mappings.
+Accepts either a single dict or a list of dicts and normalizes to a
+list of dicts for callers.
+"""
 from __future__ import annotations
 from typing import Any
 from local_handlers.local_config_loader import load_core_config
@@ -17,6 +22,9 @@ class ServiceAppIdStore:
         return cls(config["core"]["serviceid_appid_file"])
 
     def load_all(self) -> list[dict[str, Any]]:
+        # Normalize payload to a list of dicts so callers always receive
+        # an iterable collection even when the backing file contains a
+        # single dict (legacy formats) or a list.
         records = self.store.read(default=[])
         if isinstance(records, dict):
             return [records]

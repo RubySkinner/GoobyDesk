@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-# JSON Storage Wrapper for CRM records.
+"""CRM storage wrapper.
+
+Provides customer-specific helpers (ID generation, load/save) on top
+of JsonStore. Keeps customer numbering logic and persistence central.
+"""
 from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Any
@@ -17,10 +21,12 @@ class CrmStore:
         return cls(config["core"]["customers_file"])
 
     def load_all(self) -> list[dict[str, Any]]:
+        # Returns a list of customer dicts or an empty list when store is malformed.
         customers = self.store.read(default=[])
         return customers if isinstance(customers, list) else []
 
     def save_all(self, customers: list[dict[str, Any]]) -> None:
+        # Persist full customer list atomically.
         self.store.write(customers)
 
     def next_customer_id(self, customers: list[dict[str, Any]] | None = None) -> str:

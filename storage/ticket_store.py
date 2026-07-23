@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
-# JSON Storage Wrapper for ticket operations.
+"""Ticket storage wrapper.
+
+This module provides a thin domain-specific API on top of JsonStore
+for operations on ticket records. It normalizes ticket records to a
+predictable shape and exposes convenience methods used by the
+application (load/save/append/update/delete and ticket numbering).
+
+Why: keep business logic (numbering, normalization) out of callers
+and centralize JSON persistence concerns in one place.
+"""
 from __future__ import annotations
 from datetime import datetime
 from typing import Any
@@ -9,6 +18,9 @@ from storage.validator import is_list
 
 class TicketStore:
     def __init__(self, file_path: str) -> None:
+        # JsonStore provides atomic-write, locking, and validation.
+        # We ask for a list-backed store and a simple validator to
+        # ensure top-level payloads are lists of tickets.
         self.store = JsonStore(file_path=file_path, default_factory=list, validator=is_list)
 
     @classmethod
@@ -17,16 +29,19 @@ class TicketStore:
         return cls(config["core"]["tickets_file"])
 
     def load_all(self) -> list[dict[str, Any]]:
+        # Read and normalize every ticket for downstream consumers.
         tickets = self.store.read(default=[])
         if not isinstance(tickets, list):
             return []
         return [self._normalize_ticket(ticket) for ticket in tickets]
 
     def save_all(self, tickets: list[dict[str, Any]]) -> None:
+        # Normalize then overwrite the backing file atomically.
         normalized = [self._normalize_ticket(ticket) for ticket in tickets]
         self.store.write(normalized)
 
     def append(self, ticket: dict[str, Any]) -> None:
+        # Append a single ticket to the list-backed store.
         self.store.append(self._normalize_ticket(ticket))
 
     def update(
@@ -40,6 +55,7 @@ class TicketStore:
         modified record (or None to leave unchanged). Returns True when
         a record was changed.
         """
+        # Wrap the provided updater to ensure normalization before persisting.
         def _updater(record: dict[str, Any]):
             copy = dict(record)
             replacement = updater(copy)
@@ -60,6 +76,8 @@ class TicketStore:
         return self.update(lambda r: r.get("ticket_number") == ticket_number, updater)
 
     def next_ticket_number(self, year: int | None = None) -> str:
+        # Simple sequential numbering based on count of existing tickets.
+        # Deterministic and easy to reason about; fine for small, single-writer apps.
         current_year = year or datetime.now().year
         ticket_count = len(self.load_all()) + 1
         return f"TKT-{current_year}-{ticket_count:04d}"
