@@ -48,8 +48,10 @@ def load_service_appids():
 @role_required(ROLE_ITSM_TECH)
 def dashboard():
     tickets = load_tickets()
-    open_tickets = [t for t in tickets if t["ticket_status"].lower() != "closed"]
-    return render_template("itsm/dashboard.html", tickets=open_tickets, loggedInTech=session.get("technician"))
+    open_tickets = [t for t in tickets if (t.get("ticket_status", "") or "").lower() != "closed"]
+    return render_template(
+        "itsm/dashboard.html", tickets=open_tickets, loggedInTech=session.get("technician")
+    )
 
 @itsm_module_bp.route("/services-appid", methods=["GET"])
 @role_required(ROLE_ITSM_TECH)
@@ -58,7 +60,7 @@ def services_appid_dashboard():
     return render_template(
         "services-appid/dashboard.html",
         services=services,
-        loggedInTech=session["technician"],
+        loggedInTech=session.get("technician"),
     )
 
 @itsm_module_bp.route("/ticket/<ticket_number>")
@@ -67,7 +69,9 @@ def ticket_detail(ticket_number):
     tickets = load_tickets()
     ticket = next((t for t in tickets if t["ticket_number"] == ticket_number), None)
     if ticket:
-        return render_template("itsm/console.html", ticket=ticket, loggedInTech=session["technician"],)
+        return render_template(
+            "itsm/console.html", ticket=ticket, loggedInTech=session.get("technician")
+        )
     return render_template("errors/404.html"), 404
 
 @itsm_module_bp.route("/ticket/<ticket_number>/update_status/<ticket_status>", methods=["POST"])
@@ -84,7 +88,13 @@ def update_ticket_status(ticket_number, ticket_status):
     logging.info(f"{ticket_number} status has been changed to {ticket_status}.")
 
     valid_statuses = ["Open", "In-Progress", "Closed"]
-    if ticket_status not in valid_statuses:
+    # Normalize incoming status to a canonical value (case-insensitive match).
+    canonical_status = None
+    for s in valid_statuses:
+        if ticket_status.lower() == s.lower():
+            canonical_status = s
+            break
+    if not canonical_status:
         return render_template("errors/400.html"), 400
 
     logged_in_tech = session.get("technician")
@@ -95,9 +105,9 @@ def update_ticket_status(ticket_number, ticket_status):
             continue
 
         ticket_subject = ticket.get("ticket_subject", "No Subject Provided")
-        ticket["ticket_status"] = ticket_status
+        ticket["ticket_status"] = canonical_status
 
-        if ticket_status == "Closed":
+        if canonical_status == "Closed":
             ticket["closed_by"] = logged_in_tech
             ticket["closure_date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -107,14 +117,14 @@ def update_ticket_status(ticket_number, ticket_status):
         try:
             local_webhook_handler.notify_ticket_event(
                 ticket_number=ticket_number,
-                ticket_status=ticket_status,
+                ticket_status=canonical_status,
                 ticket_subject=ticket_subject,
             )
             logging.info(f"Ticket {ticket_number} status update notifications sent successfully.")
         except Exception as e:
             logging.error(f"Failed to send ticket status update notifications for {ticket_number}: {str(e)}")
 
-        return jsonify({"message": f"Ticket {ticket_number} updated to {ticket_status}."})
+        return jsonify({"message": f"Ticket {ticket_number} updated to {canonical_status}."})
 
     return render_template("errors/404.html"), 404
 
@@ -129,19 +139,25 @@ def add_ticket_note(ticket_number):
     Returns:
         JSON confirmation on success, or an error message on failure.
     """
-    new_tkt_note = request.form.get("note_content")
-
-    if not new_tkt_note:
-        return jsonify({"message": "Note Contents cannot be empty!"}), 400
+    note_content = (request.form.get("note_content") or "").strip()
+    if not note_content:
+        return jsonify({"message": "Note contents cannot be empty."}), 400
+    if len(note_content) > 8000:
+        return jsonify({"message": "Note too long (max 8000 chars)."}), 400
 
     tickets = load_tickets()
 
     for ticket in tickets:
-        if ticket["ticket_number"] == ticket_number:
+        if ticket.get("ticket_number") == ticket_number:
             ticket.setdefault("ticket_worknotes", [])
-            ticket["ticket_worknotes"].append(new_tkt_note)
+            note_record = {
+                "author": session.get("technician") or "unknown",
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "note": note_content,
+            }
+            ticket["ticket_worknotes"].append(note_record)
             save_tickets(tickets)
-            logging.info(f"Note successfully appended to {ticket_number}.")
-            return jsonify({"message": "Note added successfully."}), 200
-        
+            logging.info("Note successfully appended to %s by %s.", ticket_number, note_record["author"])
+            return jsonify({"message": "Note added successfully.", "note": note_record}), 200
+
     return jsonify({"message": "Ticket not found."}), 404

@@ -2,7 +2,6 @@
 import io
 import csv
 import logging
-import uuid
 from datetime import datetime
 
 from flask import Blueprint, Response, redirect, render_template, request, session, url_for, current_app
@@ -57,7 +56,9 @@ def _build_change_record(form_data) -> dict:
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     requestor = session.get("technician")
 
-    change_number = f"CHG-{datetime.now().year}-{uuid.uuid4().hex[:6].upper()}"
+    # Use store to generate a sequential change number
+    store = _get_changes_store()
+    change_number = store.next_change_number()
 
     record = {
         "change_number": change_number,

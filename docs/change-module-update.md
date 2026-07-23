@@ -66,6 +66,13 @@ Use a dedicated schema for change records with fields such as:
 - `rollback_plan`
 - `test_accept_plan`
 - `change_short_description`
+- `actual_start_timestamp`
+- `actual_end_timestamp`
+- `closure_code`
+- `change_source`
+- `cab_approval_required`
+- `approver_uuid`
+- `approval_timestamp`
 
 The initial implementation can store a minimal subset of these fields while preserving the full field list for future expansion.
 

@@ -30,8 +30,10 @@ Rest in Peace Dave, August 16th 1967 - December 19th 2025
 # Secrets loaded from .env file.
 load_dotenv(dotenv_path=".env")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD") # App Password from Gmail or relevant email provider.
-CF_TURNSTILE_SITE_KEY = os.getenv("CF_TURNSTILE_SITE_KEY") # REQUIRED for CAPTCHA functionality.
-CF_TURNSTILE_SECRET_KEY = os.getenv("CF_TURNSTILE_SECRET_KEY") # REQUIRED for CAPTCHA functionality.
+# Cloudflare Turnstile keys (optional). If missing, CAPTCHA is disabled.
+CF_TURNSTILE_SITE_KEY = os.getenv("CF_TURNSTILE_SITE_KEY")
+CF_TURNSTILE_SECRET_KEY = os.getenv("CF_TURNSTILE_SECRET_KEY")
+CAPTCHA_ENABLED = bool(CF_TURNSTILE_SITE_KEY and CF_TURNSTILE_SECRET_KEY)
 
 # Configuration non-secret data loaded from YAML.
 core_yaml_config = local_config_loader.load_core_config()
@@ -47,19 +49,26 @@ SMTP_PORT = core_yaml_config["email"]["smtp_port"]
 TAILSCALE_NOTIFY_EMAIL = core_yaml_config["email"]["tailscale_notify_email"]
 
 # Centralized logging configuration
+# Try to load a pre-defined logging configuration from YAML (`logging_config`).
 LOG_CFG = core_yaml_config.get("logging_config")
 if not LOG_CFG:
-    # build a minimal dictConfig from basic fields
+    # No YAML logging config found — construct a minimal `dictConfig` dict
+    # that provides reasonable defaults for formatting and handlers.
+    # `version` is required by logging.config.dictConfig.
+    # The `default` formatter includes timestamp, level, logger name, and message.
     LOG_CFG = {
         "version": 1,
         "formatters": {
             "default": {"format": "%(asctime)s - %(levelname)s - %(name)s - %(message)s"}
         },
+        # Console handler writes to stdout/stderr using the default formatter.
         "handlers": {
             "console": {"class": "logging.StreamHandler", "formatter": "default"}
         },
+        # Root logger uses configured `LOG_LEVEL` and the console handler by default.
         "root": {"level": LOG_LEVEL.upper(), "handlers": ["console"]},
     }
+    # If a log file path is configured, add a FileHandler and attach it to root.
     if LOG_FILE:
         LOG_CFG["handlers"]["file"] = {
             "class": "logging.FileHandler",
@@ -68,7 +77,13 @@ if not LOG_CFG:
         }
         LOG_CFG["root"]["handlers"].append("file")
 
-logging.config.dictConfig(LOG_CFG)
+try:
+    logging.config.dictConfig(LOG_CFG)
+except Exception:
+    # If dictConfig fails, fall back to a reasonable basicConfig so app still logs.
+    logging.exception("Failed to apply logging dictConfig; falling back to basicConfig.")
+    logging.basicConfig(level=LOG_LEVEL.upper())
+
 """ Above is the default logging configuration.
 Debug - Detailed information
 Info - Successes
@@ -127,8 +142,7 @@ def set_security_headers(response):
         "font-src 'self' data: https://fonts.bunny.net; "
         "connect-src 'self'; "
         "frame-src https://challenges.cloudflare.com; "
-        "frame-ancestors 'none'"
-    )
+        "frame-ancestors 'none'")
     # HTTP Strict Transport Security (forces HTTPS) set to 1 Day.
     if not app.debug:
         response.headers['Strict-Transport-Security'] = ('max-age=86400; includeSubDomains; preload')
@@ -139,9 +153,8 @@ def set_security_headers(response):
     return response
 
 # INITIAL ERROR CODES
-if not CF_TURNSTILE_SITE_KEY or not CF_TURNSTILE_SECRET_KEY:
-    logging.critical("CF_TURNSTILE_SITE_KEY and CF_TURNSTILE_SECRET_KEY must be configured in the .env file. It is required for CAPTCHA functionality.")
-    exit(1) 
+if not CAPTCHA_ENABLED:
+    logging.critical("CF_TURNSTILE_SITE_KEY and/or CF_TURNSTILE_SECRET_KEY not set; CAPTCHA disabled.")
 
 #email_thread_enabler_check = os.getenv("EMAIL_ENABLED")
 #if email_thread_enabler_check is None:
@@ -168,7 +181,6 @@ def load_employees():
 def save_employees(employees):
     employee_store.save_all(employees)
     logging.debug("The Employee JSON Database file was modified.")
-
 
 def _assign_roles_to_session(employee: dict) -> None:
     """Set `session['roles']` from employee record, with safe defaults and simple inference.
@@ -234,30 +246,31 @@ def technician_required(func):
 def home():
     if request.method == "POST":
         try:
-            # Cloudflare Turnstile CAPTCHA validation
-            turnstile_token = request.form.get("cf-turnstile-response")
-            if not turnstile_token:
-                flash("CAPTCHA verification failed. Please try again.", "danger")
-                return redirect(url_for("home"))
-
-            turnstile_url = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
-            turnstile_data = {
-                "secret": CF_TURNSTILE_SECRET_KEY,
-                "response": turnstile_token,
-                "remoteip": request.remote_addr
-            }
-
-            try:
-                turnstile_response = requests.post(turnstile_url, data=turnstile_data)
-                result = turnstile_response.json()
-                if not result.get("success"):
-                    logging.warning(f"Turnstile verification failed: {result}")
+            # If CAPTCHA is enabled, validate the Turnstile token; otherwise skip.
+            if CAPTCHA_ENABLED:
+                turnstile_token = request.form.get("cf-turnstile-response")
+                if not turnstile_token:
                     flash("CAPTCHA verification failed. Please try again.", "danger")
                     return redirect(url_for("home"))
-            except Exception as e:
-                logging.error(f"Turnstile verification error: {str(e)}")
-                flash("Error verifying CAPTCHA. Please try again later.", "danger")
-                return redirect(url_for("home"))
+
+                turnstile_url = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
+                turnstile_data = {
+                    "secret": CF_TURNSTILE_SECRET_KEY,
+                    "response": turnstile_token,
+                    "remoteip": request.remote_addr,
+                }
+
+                try:
+                    turnstile_response = requests.post(turnstile_url, data=turnstile_data)
+                    result = turnstile_response.json()
+                    if not result.get("success"):
+                        logging.warning("Turnstile verification failed: %s", result)
+                        flash("CAPTCHA verification failed. Please try again.", "danger")
+                        return redirect(url_for("home"))
+                except Exception as e:
+                    logging.error("Turnstile verification error: %s", str(e))
+                    flash("Error verifying CAPTCHA. Please try again later.", "danger")
+                    return redirect(url_for("home"))
 
             # Process ticket submission
             ticket_number = generate_ticket_number()
@@ -266,11 +279,10 @@ def home():
                 request.form,
                 ticket_number,
                 source="web",
-                technician=session.get("technician"),
-            )
-
+                technician=session.get("technician"),)
+            
             ticket_store.append(new_ticket)
-            logging.info(f"{ticket_number} has been created.")
+            logging.info("%s has been created.", ticket_number)
 
             # Send confirmation email to the requestor
             if EMAIL_ENABLED:
@@ -280,40 +292,39 @@ def home():
                         new_ticket["requestor_email"],
                         f"{ticket_number} - {new_ticket['ticket_subject']}",
                         email_body,
-                        html=True
+                        html=True,
                     )
-                    logging.info(f"Confirmation email for {ticket_number} sent successfully.")
+                    logging.info("Confirmation email for %s sent successfully.", ticket_number)
                 except Exception as e:
-                    logging.error(f"Failed to send email for {ticket_number}: {str(e)}")
+                    logging.error("Failed to send email for %s: %s", ticket_number, str(e))
             else:
-                logging.debug(f"EMAIL_ENABLED is false. Skipping email for {ticket_number}.")
+                logging.debug("EMAIL_ENABLED is false. Skipping email for %s.", ticket_number)
 
             # Send webhook notifications
             try:
                 local_webhook_handler.notify_ticket_event(
-                    ticket_number,
-                    new_ticket["ticket_subject"],
-                    "Open"
-                )
-                logging.info(f"Webhook notifications for {ticket_number} sent successfully.")
+                    ticket_number, new_ticket["ticket_subject"], "Open")
+                logging.info("Webhook notifications for %s sent successfully.", ticket_number)
             except Exception as e:
-                logging.error(f"Failed to send webhook notifications for {ticket_number}: {str(e)}")
+                logging.error("Failed to send webhook notifications for %s: %s", ticket_number, str(e))
 
             # Prompt the user's web interface of a successful ticket submission
             flash(f"Ticket {ticket_number} has been submitted successfully!", "success")
             return redirect(url_for("home"))
 
         except KeyError as e:
-            logging.error(f"Missing required form field: {str(e)}")
+            logging.error("Missing required form field: %s", str(e))
             flash("Please fill out all required fields.", "danger")
             return redirect(url_for("home"))
         except Exception as e:
-            logging.critical(f"Failed to process ticket submission: {str(e)}")
+            logging.critical("Failed to process ticket submission: %s", str(e))
             flash("An error occurred while submitting your ticket. Please try again later.", "danger")
             return redirect(url_for("home"))
 
     # Refresh and reload the Home/Index
-    return render_template("public/index.html", sitekey=CF_TURNSTILE_SITE_KEY)
+    return render_template(
+        "public/index.html", sitekey=(CF_TURNSTILE_SITE_KEY if CAPTCHA_ENABLED else None)
+    )
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -321,38 +332,36 @@ def login():
         username = request.form.get("tech_username_box", "").strip()
         password = request.form.get("tech_password_box", "")
         employees = load_employees()
-        for employee in employees:
-            if employee.get("tech_username") != username:
-                session.permanent = True # Make session permanent for 'x' time defined above in app.config.
-                session["technician"] = username # Define a session even if auth fails to prevent timing attacks.
-                continue
+        # Find user record first
+        user = next((e for e in employees if e.get("tech_username") == username), None)
+        if user is None:
+            logging.warning("Failed login attempt for username: %s (user not found)", username)
+            return render_template("public/login.html", error="Invalid credentials.")
 
-            # LEGACY PASSWORD AUTO-MIGRATION
-            if "tech_authcode" in employee:
-                if password == employee["tech_authcode"]:
-                    employee["password_hash"] = local_authentication_handler.hash_password(password)
-                    del employee["tech_authcode"]
-
-                    save_employees(employees)
-
-                    session["technician"] = username
-                    _assign_roles_to_session(employee)
-                    logging.info(f"{username} logged in using legacy password and was auto-migrated.")
-                    return redirect(url_for("itsm.dashboard"))
-                # Username matched, legacy password wrong -> stop checking
-                break
-            # MODERN HASHED PASSWORD CHECK
-            stored_hash = employee.get("password_hash")
-            if stored_hash and local_authentication_handler.verify_password(password, stored_hash):
+        # LEGACY PASSWORD AUTO-MIGRATION
+        if "tech_authcode" in user:
+            if password == user["tech_authcode"]:
+                user["password_hash"] = local_authentication_handler.hash_password(password)
+                del user["tech_authcode"]
+                save_employees(employees)
+                session.permanent = True
                 session["technician"] = username
-                _assign_roles_to_session(employee)
-                logging.info(f"{username} logged in successfully.")
+                _assign_roles_to_session(user)
+                logging.info("%s logged in using legacy password and was auto-migrated.", username)
                 return redirect(url_for("itsm.dashboard"))
-            # Username matched but password incorrect
-            break
+            logging.warning("Failed login for %s: legacy password mismatch.", username)
+            return render_template("public/login.html", error="Invalid credentials.")
 
-        # If we reach here -> authentication failed
-        logging.warning(f"Failed login attempt for username: {username}")
+        # MODERN HASHED PASSWORD CHECK
+        stored_hash = user.get("password_hash")
+        if stored_hash and local_authentication_handler.verify_password(password, stored_hash):
+            session.permanent = True
+            session["technician"] = username
+            _assign_roles_to_session(user)
+            logging.info("%s logged in successfully.", username)
+            return redirect(url_for("itsm.dashboard"))
+
+        logging.warning("Failed login attempt for username: %s (bad password)", username)
         return render_template("public/login.html", error="Invalid credentials.")
 
     return render_template("public/login.html", sitekey=CF_TURNSTILE_SITE_KEY)
