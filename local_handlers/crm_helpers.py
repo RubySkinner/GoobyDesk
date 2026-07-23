@@ -3,7 +3,6 @@ from typing import Dict, Any
 
 def build_customer_record(form: Dict[str, Any]) -> Dict[str, Any]:
     """Build a customer record from sanitized form data.
-
     This function does not set persistence-specific fields like `uuid` or
     `customer_id` - the caller should add those.
     """

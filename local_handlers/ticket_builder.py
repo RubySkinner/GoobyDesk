@@ -6,16 +6,13 @@ from datetime import datetime
 import uuid
 from typing import Any
 
-
 def build_ticket_record(form_or_payload: Any, ticket_number: str, source: str = "web", technician: str | None = None) -> dict[str, Any]:
     """Construct a normalized ticket dict from a request form or JSON payload.
-
     Args:
         form_or_payload: Mapping-like object with ticket fields (supports `.get`).
         ticket_number: Pre-generated ticket number string.
         source: Source string (e.g. "web" or "api").
         technician: Optional technician username creating the ticket.
-
     Returns:
         dict: Ticket ready to persist (not persisted by this function).
     """

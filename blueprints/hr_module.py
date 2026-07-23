@@ -16,7 +16,7 @@ from flask import current_app
 from local_handlers.auth_decorators import role_required, ROLE_HR_TECH
 from storage.hr_store import HrStore
 from storage.employee_store import EmployeeStore
-from local_handlers.local_authentication_handler import hash_password
+from local_handlers.utils import hash_password
 import secrets
 from flask import flash, request
 

@@ -4,7 +4,7 @@ import threading, time, logging, logging.config, requests, os, uuid
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 
-import local_handlers.local_authentication_handler as local_authentication_handler
+from local_handlers.utils import hash_password, verify_password
 import local_handlers.local_config_loader as local_config_loader
 import local_handlers.local_email_handler as local_email_handler
 import local_handlers.local_webhook_handler as local_webhook_handler
@@ -368,7 +368,7 @@ def login():
         # LEGACY PASSWORD AUTO-MIGRATION
         if "tech_authcode" in user:
             if password == user["tech_authcode"]:
-                user["password_hash"] = local_authentication_handler.hash_password(password)
+                user["password_hash"] = hash_password(password)
                 del user["tech_authcode"]
                 save_employees(employees)
                 session.permanent = True
@@ -381,7 +381,7 @@ def login():
 
         # MODERN HASHED PASSWORD CHECK
         stored_hash = user.get("password_hash")
-        if stored_hash and local_authentication_handler.verify_password(password, stored_hash):
+        if stored_hash and verify_password(password, stored_hash):
             session.permanent = True
             session["technician"] = username
             _assign_roles_to_session(user)
