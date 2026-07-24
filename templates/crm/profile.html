@@ -56,7 +56,8 @@
             </div>
             <div class="stat-card">
                 <div class="stat-card-title">Customer Since</div>
-                <div class="stat-card-value stat-card-value--compact">{{ customer.get('created', '—') }}</div>
+                {% set _created = customer.get('created') %}
+                <div class="stat-card-value stat-card-value--compact">{{ _created[:10] if _created else '—' }}</div>
             </div>
         </div>
 
