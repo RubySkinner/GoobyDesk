@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """HR storage wrapper.
-
 Thin wrapper around JsonStore for HR employee data. Keeps file
 locations and validation centralized so callers can treat the
 store as a simple in-memory list API.

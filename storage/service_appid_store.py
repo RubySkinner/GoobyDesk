@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """Service/App ID storage wrapper.
-
 Manages persistence and normalization for service-to-app-id mappings.
 Accepts either a single dict or a list of dicts and normalizes to a
 list of dicts for callers.

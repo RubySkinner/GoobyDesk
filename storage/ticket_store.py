@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """Ticket storage wrapper.
-
 This module provides a thin domain-specific API on top of JsonStore
 for operations on ticket records. It normalizes ticket records to a
 predictable shape and exposes convenience methods used by the

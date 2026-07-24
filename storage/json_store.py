@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """Generic JSON storage with atomic write support.
-
 Uses temp-file + rename plus optional directory fsync to avoid
 corruption on crashes; suitable for small JSON-backed databases.
 """
@@ -20,7 +19,6 @@ JsonValidator = Callable[[Any], bool]
 
 class JsonStore:
     """Generic JSON file store with atomic write semantics.
-
     Args:
         file_path: Path to the JSON file.
         default_factory: Factory returning default JSON object when file is
@@ -49,7 +47,6 @@ class JsonStore:
 
     def read(self, default: Any | None = None) -> Any:
         """Read JSON payload from disk.
-
         Returns default_factory output when file is missing or malformed.
         """
         fallback = self._make_default(default)
@@ -132,7 +129,6 @@ class JsonStore:
         updater: Callable[[Any], Any],
     ) -> tuple[list[Any], bool]:
         """Update the first list item matching predicate.
-
         Returns updated list and whether a record was changed.
         """
         with self._lock:
@@ -152,7 +148,6 @@ class JsonStore:
 
     def delete(self, predicate: Callable[[Any], bool]) -> tuple[list[Any], int]:
         """Delete all list items matching predicate.
-
         Returns updated list and number of deleted records.
         """
         with self._lock:
