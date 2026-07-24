@@ -43,6 +43,8 @@ Write production-quality code.
 
 Use async only when it materially improves concurrency, responsiveness, or I/O scalability. Avoid unnecessary async complexity.
 
+Comment out unused code. Do not delete it.
+
 ## Language Preference
 
 - **Primary language**: Python 3
