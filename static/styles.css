@@ -588,6 +588,23 @@ a:hover {
     margin-bottom: 4px;
 }
 
+/* Profile extras container: access actions, add note, notes */
+.profile-extras {
+    margin-top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.profile-extras .card {
+    padding: 0; /* keep card header/body spacing intact */
+}
+
+.profile-extras .card .card-body,
+.profile-extras .card .card-header {
+    padding: 1rem 1.5rem;
+}
+
 .ticket-details strong {
     color: white;
 }
