@@ -84,6 +84,7 @@
                 {% endif %}
             </div>
             <div class="page-header-actions">
+                <a href="{{ url_for('hr_module.edit_employee', uuid=employee.get('uuid')) }}" class="submit-btn">Edit Employee</a>
                 <a href="{{ url_for('hr_module.hr_dashboard') }}">&larr; Back to Dashboard</a>
             </div>
         </div>

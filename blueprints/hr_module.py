@@ -148,6 +148,61 @@ def _append_initial_compensation_history(employee_record: dict, form: dict, crea
             {"date": created_date, "note": initial_raise}
         )
 
+
+def _find_employee_by_uuid(employees: list[dict], employee_uuid: str) -> dict | None:
+    for employee in employees:
+        if employee.get("uuid") == employee_uuid:
+            return employee
+    return None
+
+
+def _clean_form_value(form: dict, field_name: str) -> str | None:
+    value = form.get(field_name)
+    if value is None:
+        return None
+    cleaned = value.strip()
+    return cleaned or None
+
+
+def _update_employee_record(employee: dict, form: dict) -> None:
+    now = _build_timestamp()
+    address = employee.setdefault("address", {})
+    employment = employee.setdefault("employment", {})
+
+    first_name = _clean_form_value(form, "first_name")
+    last_name = _clean_form_value(form, "last_name")
+    preferred_name = _clean_form_value(form, "preferred_name")
+    email = _clean_form_value(form, "email")
+
+    employee["first_name"] = first_name
+    employee["last_name"] = last_name
+    employee["preferred_name"] = preferred_name or first_name
+    employee["email"] = email
+    employee["date_of_birth"] = _clean_form_value(form, "date_of_birth")
+    employee["work_authorization"] = _clean_form_value(form, "work_authorization")
+    employee["phone"] = _clean_form_value(form, "phone")
+    employee["timezone"] = _clean_form_value(form, "timezone") or "UTC"
+
+    address["street"] = _clean_form_value(form, "street")
+    address["city"] = _clean_form_value(form, "city")
+    address["state"] = _clean_form_value(form, "state")
+    address["postal_code"] = _clean_form_value(form, "postal_code")
+    address["country"] = _clean_form_value(form, "country")
+
+    employment["title"] = _clean_form_value(form, "title") or ""
+    employment["business_unit"] = _clean_form_value(form, "business_unit") or ""
+    employment["department"] = _clean_form_value(form, "department") or ""
+    employment["employment_type"] = _clean_form_value(form, "employment_type") or "full_time"
+    employment["compensation_type"] = _clean_form_value(form, "compensation_type") or "salary"
+    employment["salary"] = _clean_form_value(form, "salary")
+    employment["hourly_rate"] = _clean_form_value(form, "hourly_rate")
+    employment["pay_frequency"] = _clean_form_value(form, "pay_frequency")
+    employment["direct_deposit_info"] = _clean_form_value(form, "direct_deposit_info")
+
+    equity_notes = _clean_form_value(form, "equity")
+    employment["equity"] = {"notes": equity_notes} if equity_notes else {}
+    employee["updated"] = now
+
 hr_module_bp = Blueprint("hr_module", __name__, url_prefix="/hr")
 
 CERT_EXPIRY_WARNING_DAYS = 90  # Certifications expiring within this window are flagged.
@@ -234,10 +289,39 @@ def employee_profile(uuid: str):
         that template exists.
     """
     employees = load_hr_employees()
-    employee = next((emp for emp in employees if emp.get("uuid") == uuid), None)
+    employee = _find_employee_by_uuid(employees, uuid)
     if employee is None:
         return render_template("errors/404.html"), 404
     return render_template("hr/profile.html", employee=employee, loggedInTech=session.get("technician"))
+
+
+@hr_module_bp.route("/employee/<uuid>/edit", methods=["GET", "POST"])
+@role_required(ROLE_HR_TECH)
+def edit_employee(uuid: str):
+    """Render and process edits for an existing employee record."""
+    store = _get_hr_store()
+    employees = store.load_all()
+    employee = _find_employee_by_uuid(employees, uuid)
+    if employee is None:
+        return render_template("errors/404.html"), 404
+
+    if request.method == "GET":
+        return render_template("hr/submit_new.html", employee=employee, loggedInTech=session.get("technician"))
+
+    form = {k: v for k, v in request.form.items()}
+    ok, _missing = require_fields(form, ["first_name", "last_name", "email"])
+    if not ok or not is_valid_email(form.get("email")):
+        return render_template(
+            "hr/submit_new.html",
+            employee=employee,
+            error="First Name, Last Name, and a valid Email are required.",
+            loggedInTech=session.get("technician"),
+        ), 400
+
+    _update_employee_record(employee, form)
+    store.save_all(employees)
+    flash(f"Employee {employee.get('employee_id', uuid)} updated.", "success")
+    return redirect(url_for("hr_module.employee_profile", uuid=employee["uuid"]))
 
 @hr_module_bp.route("/employee/<uuid>/reset-password", methods=["POST"])
 @role_required(ROLE_ADMIN)
@@ -270,7 +354,7 @@ def reset_employee_password(uuid: str):
     return render_template("hr/profile.html", employee=employee, reset_password=new_password, loggedInTech=session.get("technician"))
 
 # Create New Employee Route
-@hr_module_bp.route("/employee/new", methods=["GET", "POST"])
+@hr_module_bp.route("/employee/submit-new", methods=["GET", "POST"])
 @role_required(ROLE_HR_TECH)
 def new_employee():
     """Render form to create a new employee and handle submissions.
@@ -301,8 +385,7 @@ def new_employee():
     return redirect(url_for("hr_module.employee_profile", uuid=new_record["uuid"]))
 
 # Edit Employee Details Route
-# TODO: implement edit_employee(uuid), form pre-populated via
-# load_hr_employees() + a save_hr_employees() write-back helper.
+# Implemented via edit_employee(uuid) using HrStore load/save.
 
 # Export Employee Data Route
 # TODO: implement export_employees() (CSV/JSON), technician_required.
