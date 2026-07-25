@@ -204,6 +204,17 @@ def new_employee():
         "last_name": form.get("last_name"),
         "preferred_name": form.get("preferred_name") or form.get("first_name"),
         "email": form.get("email"),
+        "date_of_birth": form.get("date_of_birth"),
+        # US I-9 / work authorization status — keep as a restricted field (None by default)
+        "work_authorization": form.get("work_authorization"),
+        # Mailing address (kept minimal here)
+        "address": {
+            "street": form.get("street") or None,
+            "city": form.get("city") or None,
+            "state": form.get("state") or None,
+            "postal_code": form.get("postal_code") or None,
+            "country": form.get("country") or None,
+        },
         "phone": form.get("phone"),
         "timezone": form.get("timezone") or "UTC",
         "employment": {
@@ -212,12 +223,20 @@ def new_employee():
             "status": "active",
             "rehire_eligible": True,
             "title": form.get("title") or "",
-            "business_unit": form.get("business_unit") or "",
+                "business_unit": form.get("business_unit") or "",
+                # Optional department field; decide on multi-unit needs for small orgs
+                "department": form.get("department") or "",
             "reports_to": None,
             "employment_type": form.get("employment_type") or "full_time",
             "compensation_type": form.get("compensation_type") or "salary",
             "salary": None,
             "hourly_rate": None,
+                # Payroll/compensation metadata
+                "pay_frequency": form.get("pay_frequency") or None,
+                "direct_deposit_info": None,  # sensitive: recommend separate secure store
+                "equity": {},
+                "bonus_history": [],
+                "raise_history": [],
             "salary_exempt": True,
             "bonus_eligible": False,
             "bonus_rate": 0.0,
