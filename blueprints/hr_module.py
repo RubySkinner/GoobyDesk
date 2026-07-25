@@ -5,6 +5,8 @@ Provides the HR dashboard and its supporting employee-data helpers.
 import logging
 import secrets
 import uuid
+import hashlib
+import os
 from datetime import datetime, timedelta
 
 from flask import Blueprint, current_app, flash, redirect, render_template, request, session, url_for
@@ -221,7 +223,7 @@ def _is_cert_expiring(expires: str | None, within_days: int) -> bool:
     try:
         expiry_date = datetime.strptime(expires, "%Y-%m-%d")
     except ValueError:
-        logging.warning(f"Unparseable certification expiry date: {expires}")
+        logging.warning("Unparseable certification expiry date provided; parsing failed.")
         return False
     return datetime.now() <= expiry_date <= datetime.now() + timedelta(days=within_days)
 
@@ -245,6 +247,13 @@ def build_hr_stats(employees: list[dict]) -> dict:
         "expiring_certs": expiring_certs,
     }
 
+def _pseudonymize_actor(name: str) -> str:
+    """Create a short, stable actor id for logs instead of raw usernames."""
+    if not name:
+        return "actor_unknown"
+    salt = os.getenv("LOG_SALT", "")
+    h = hashlib.sha256((str(name) + salt).encode()).hexdigest()[:8]
+    return f"actor_{h}"
 # Dashboard Route
 @hr_module_bp.route("/", methods=["GET"])
 @role_required(ROLE_HR_TECH)
@@ -329,9 +338,11 @@ def reset_employee_password(uuid: str):
     employee["password_reset_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     store.save_all(employees)
+    actor = _pseudonymize_actor(session.get("technician"))
     logging.warning(
-        "HR MODULE - Password reset performed by %s for account %s (uuid=%s)",
-        session.get("technician"),  employee.get("tech_username") or employee.get("username"), employee.get("uuid"))
+        "HR MODULE - Password reset performed; actor=%s target_employee_id=%s",
+        actor, employee.get("employee_id")
+    )
 
     # Show password once to admin via template variable and flash
     flash("Password reset successful - show it once below.", "success")

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from flask import Flask, Response, render_template, request, redirect, url_for, session, jsonify, flash
-import threading, time, logging, logging.config, requests, os, uuid
+import threading, time, logging, logging.config, requests, os, uuid, hashlib
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 
@@ -22,6 +22,16 @@ from storage.changes_store import ChangesStore
 from storage.ticket_store import TicketStore
 
 BUILDID=str("0.9.9-RC2")
+
+def _pseudonymize_actor(name: str) -> str:
+    """Return a stable, opaque actor id for logging (no raw usernames).
+    Uses optional LOG_SALT env var to make hashes non-identical across deployments.
+    """
+    if not name:
+        return "actor_unknown"
+    salt = os.getenv("LOG_SALT", "")
+    h = hashlib.sha256((str(name) + salt).encode()).hexdigest()[:8]
+    return f"actor_{h}"
 
 """
 Rest in Peace Alex, July 2nd 2005 - December 14th 2024
@@ -358,7 +368,7 @@ def login():
         # Find user record first
         user = next((e for e in employees if e.get("tech_username") == username), None)
         if user is None:
-            logging.warning("Failed login attempt for username: %s (user not found)", username)
+            logging.warning("Failed login attempt (user not found) actor=%s", _pseudonymize_actor(username))
             return render_template("public/login.html", error="Invalid credentials.")
 
         # LEGACY PASSWORD AUTO-MIGRATION
@@ -370,9 +380,9 @@ def login():
                 session.permanent = True
                 session["technician"] = username
                 _assign_roles_to_session(user)
-                logging.info("%s logged in using legacy password and was auto-migrated.", username)
+                logging.info("Login via legacy password auto-migrated actor=%s", _pseudonymize_actor(username))
                 return redirect(url_for("itsm.dashboard"))
-            logging.warning("Failed login for %s: legacy password mismatch.", username)
+            logging.warning("Failed legacy login attempt actor=%s (password mismatch)", _pseudonymize_actor(username))
             return render_template("public/login.html", error="Invalid credentials.")
 
         # MODERN HASHED PASSWORD CHECK
@@ -381,10 +391,10 @@ def login():
             session.permanent = True
             session["technician"] = username
             _assign_roles_to_session(user)
-            logging.info("%s logged in successfully.", username)
+            logging.info("Login success actor=%s", _pseudonymize_actor(username))
             return redirect(url_for("itsm.dashboard"))
 
-        logging.warning("Failed login attempt for username: %s (bad password)", username)
+        logging.warning("Failed login attempt (bad password) actor=%s", _pseudonymize_actor(username))
         return render_template("public/login.html", error="Invalid credentials.")
 
     return render_template("public/login.html", sitekey=CF_TURNSTILE_SITE_KEY)
@@ -436,7 +446,9 @@ def page_not_found(e):
 # Handles 500 errors.
 @app.errorhandler(500)
 def internal_server_error(e):
-    logging.critical(f"Internal Server Error: {str(e)}")
+    correlation = uuid.uuid4().hex[:8]
+    logging.critical("Internal Server Error: correlation_id=%s", correlation)
+    logging.debug("Internal Server Error details for %s: %s", correlation, str(e))
     return render_template("errors/500.html"), 500
 
 if __name__ == "__main__":

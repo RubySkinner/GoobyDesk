@@ -8,7 +8,8 @@
 ### Small Fixes
 
 - ITSM Ticket Notes display long json
-- Head logos do not display
-- New Employee returns under_construction
 - No option to add a customer note on a customer profile page
-- ServiceID Module has not yet been enabled to pathing.
+- No option to add an employee note on an employee profile page.
+- ServiceID module has no function.
+- Change Managaement workflow does not exisit.
+- Employee Profile is very long vertically. Make it 3 clean cloumns.
