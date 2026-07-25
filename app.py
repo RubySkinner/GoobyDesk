@@ -305,9 +305,7 @@ def home():
             new_ticket = ticket_builder.build_ticket_record(
                 request.form,
                 ticket_number,
-                source="web",
-                technician=session.get("technician"),
-            )
+                source="web", technician=session.get("technician"))
             ticket_store.append(new_ticket)
             logging.info("%s has been created.", ticket_number)
         except KeyError as e:
@@ -345,9 +343,7 @@ def home():
         return redirect(url_for("home"))
 
     # Refresh and reload the Home/Index
-    return render_template(
-        "public/index.html", sitekey=(CF_TURNSTILE_SITE_KEY if CAPTCHA_ENABLED else None)
-    )
+    return render_template("public/index.html", sitekey=(CF_TURNSTILE_SITE_KEY if CAPTCHA_ENABLED else None))
 
 @app.route("/login", methods=["GET", "POST"])
 def login():

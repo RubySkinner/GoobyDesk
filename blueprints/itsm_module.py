@@ -7,7 +7,6 @@ from local_handlers.auth_decorators import role_required, ROLE_ITSM_TECH
 
 import local_handlers.local_webhook_handler as local_webhook_handler
 from flask import current_app
-#from storage.service_appid_store import ServiceAppIdStore
 from storage.ticket_store import TicketStore
 
 def _get_config():
@@ -21,12 +20,6 @@ def _get_ticket_store():
     cfg = _get_config()
     return TicketStore(cfg["core"]["tickets_file"])
 
-"""
-def _get_service_appid_store():
-    cfg = _get_config()
-    return ServiceAppIdStore(cfg["core"]["serviceid_appid_file"])
-"""
-
 itsm_module_bp = Blueprint('itsm', __name__, url_prefix='/itsm')
 
 def load_tickets():
@@ -39,13 +32,6 @@ def save_tickets(tickets):
     store = _get_ticket_store()
     store.save_all(tickets)
     logging.debug("The Ticket JSON Database file was modified.")
-
-"""
-def load_service_appids():
-    # Read/load service/app ID records into memory
-    store = _get_service_appid_store()
-    return store.load_all()
-"""
 
 @itsm_module_bp.route("/", methods=["GET"])
 @role_required(ROLE_ITSM_TECH)
