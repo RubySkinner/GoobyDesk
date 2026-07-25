@@ -52,6 +52,118 @@
                 </div>
             </div>
 
+            <div class="form-row">
+                <div>
+                    <label for="date_of_birth">Date of Birth</label>
+                    <input type="date" id="date_of_birth" name="date_of_birth">
+                </div>
+                <div>
+                    <label for="work_authorization">Work Authorization (I-9)</label>
+                    <select id="work_authorization" name="work_authorization">
+                        <option value="">Select...</option>
+                        <option value="citizen">US Citizen</option>
+                        <option value="perm_resident">Permanent Resident</option>
+                        <option value="work_visa">Work Visa</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="street">Street</label>
+                    <input type="text" id="street" name="street" placeholder="Mailing street address">
+                </div>
+                <div>
+                    <label for="city">City</label>
+                    <input type="text" id="city" name="city">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="state">State / Province</label>
+                    <input type="text" id="state" name="state">
+                </div>
+                <div>
+                    <label for="postal_code">Postal Code</label>
+                    <input type="text" id="postal_code" name="postal_code">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="country">Country</label>
+                    <input type="text" id="country" name="country" value="United States">
+                </div>
+                <div>
+                    <label for="department">Department</label>
+                    <input type="text" id="department" name="department" placeholder="e.g. Engineering">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="business_unit">Business Unit</label>
+                    <input type="text" id="business_unit" name="business_unit" placeholder="e.g. GR Host">
+                </div>
+                <div>
+                    <label for="title">Job Title</label>
+                    <input type="text" id="title" name="title" placeholder="e.g. Systems Administrator">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="compensation_type">Compensation Type</label>
+                    <select id="compensation_type" name="compensation_type">
+                        <option value="salary">Salary</option>
+                        <option value="hourly">Hourly</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="salary">Salary (annual)</label>
+                    <input type="number" step="0.01" id="salary" name="salary" placeholder="e.g. 65000.00">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="hourly_rate">Hourly Rate</label>
+                    <input type="number" step="0.01" id="hourly_rate" name="hourly_rate" placeholder="e.g. 25.00">
+                </div>
+                <div>
+                    <label for="pay_frequency">Pay Frequency</label>
+                    <select id="pay_frequency" name="pay_frequency">
+                        <option value="weekly">Weekly</option>
+                        <option value="biweekly">Biweekly</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="direct_deposit_info">Direct Deposit Info <span class="text-muted">(sensitive)</span></label>
+                    <input type="text" id="direct_deposit_info" name="direct_deposit_info" placeholder="Bank / Account (enter via secure HR only)">
+                </div>
+                <div>
+                    <label for="equity">Equity / Grants (notes)</label>
+                    <input type="text" id="equity" name="equity" placeholder="e.g. 0.25% RSU">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="initial_bonus">Initial Bonus (optional)</label>
+                    <input type="text" id="initial_bonus" name="initial_bonus" placeholder="amount or notes">
+                </div>
+                <div>
+                    <label for="initial_raise">Initial Raise (optional)</label>
+                    <input type="text" id="initial_raise" name="initial_raise" placeholder="amount or notes">
+                </div>
+            </div>
+
             <button type="submit" class="submit-btn">Create Employee</button>
             <a href="{{ url_for('crm_module.crm_dashboard') }}" class="form-link">Cancel</a>
 

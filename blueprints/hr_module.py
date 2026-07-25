@@ -6,20 +6,19 @@ values set in app.py) to avoid the cross-module NameError pattern
 already fixed in itsm_module.
 """
 import logging
-from datetime import datetime, timedelta
-from functools import wraps
-
-from flask import Blueprint, render_template, session
-from flask import request, redirect, url_for, flash
-
-from local_handlers.local_config_loader import load_core_config
-from flask import current_app
-from local_handlers.auth_decorators import role_required, ROLE_HR_TECH
-from storage.hr_store import HrStore
-from storage.employee_store import EmployeeStore
-from local_handlers.utils import hash_password
 import secrets
-from flask import flash, request
+import uuid
+from datetime import datetime, timedelta
+
+from flask import Blueprint, current_app, flash, redirect, render_template, request, session, url_for
+
+from local_handlers.auth_decorators import ROLE_ADMIN, ROLE_HR_TECH, role_required
+from local_handlers.local_config_loader import load_core_config
+from local_handlers.utils import hash_password
+from local_handlers.validation import is_valid_email, require_fields
+from storage.employee_store import EmployeeStore
+from storage.hr_store import HrStore
+
 
 def _get_config():
     cfg = current_app.config.get("LOADED_CONFIG")
@@ -27,13 +26,127 @@ def _get_config():
         cfg = load_core_config()
     return cfg
 
+
 def _get_hr_store():
     cfg = _get_config()
     return HrStore(cfg["core"]["hr_file"])
 
+
 def _get_employee_store():
     cfg = _get_config()
     return EmployeeStore(cfg["core"]["employee_auth_file"])
+
+
+def _build_timestamp() -> str:
+    return datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _next_employee_sequence(employees: list[dict], year: int) -> int:
+    existing_ids = [
+        employee.get("employee_id", "")
+        for employee in employees
+        if isinstance(employee.get("employee_id", ""), str)
+        and employee.get("employee_id", "").startswith(f"EMP-{year}-")
+    ]
+    sequence_numbers = []
+    for employee_id in existing_ids:
+        suffix = employee_id.rsplit("-", maxsplit=1)[-1]
+        if suffix.isdigit():
+            sequence_numbers.append(int(suffix))
+
+    if not sequence_numbers:
+        return 1
+    return max(sequence_numbers) + 1
+
+
+def _build_employment_details(form: dict, created_date: str) -> dict:
+    return {
+        "hire_date": created_date,
+        "termination_date": None,
+        "status": "active",
+        "rehire_eligible": True,
+        "title": form.get("title") or "",
+        "business_unit": form.get("business_unit") or "",
+        "department": form.get("department") or "",
+        "reports_to": None,
+        "employment_type": form.get("employment_type") or "full_time",
+        "compensation_type": form.get("compensation_type") or "salary",
+        "salary": form.get("salary") or None,
+        "hourly_rate": form.get("hourly_rate") or None,
+        "pay_frequency": form.get("pay_frequency") or None,
+        "direct_deposit_info": form.get("direct_deposit_info") or None,
+        "equity": {"notes": form.get("equity")} if form.get("equity") else {},
+        "bonus_history": [],
+        "raise_history": [],
+        "salary_exempt": True,
+        "bonus_eligible": False,
+        "bonus_rate": 0.0,
+        "pto_available_hours": 0,
+        "pto_used_hours": 0,
+    }
+
+
+def _build_employee_record(form: dict, employees: list[dict]) -> tuple[dict, str]:
+    now = _build_timestamp()
+    current_year = datetime.now().year
+    employee_sequence = _next_employee_sequence(employees, current_year)
+    employee_id = f"EMP-{current_year}-{employee_sequence:04d}"
+
+    new_record = {
+        "uuid": str(uuid.uuid4()),
+        "employee_id": employee_id,
+        "first_name": form.get("first_name"),
+        "last_name": form.get("last_name"),
+        "preferred_name": form.get("preferred_name") or form.get("first_name"),
+        "email": form.get("email"),
+        "date_of_birth": form.get("date_of_birth"),
+        "work_authorization": form.get("work_authorization"),
+        "address": {
+            "street": form.get("street") or None,
+            "city": form.get("city") or None,
+            "state": form.get("state") or None,
+            "postal_code": form.get("postal_code") or None,
+            "country": form.get("country") or None,
+        },
+        "phone": form.get("phone"),
+        "timezone": form.get("timezone") or "UTC",
+        "employment": _build_employment_details(form, now.split("T")[0]),
+        "access": {
+            "role": form.get("role") or "itsm_technician",
+            "assignment_queue": form.get("assignment_queue") or "support",
+            "account_locked": False,
+            "mfa_enabled": False,
+            "last_login": None,
+            "password_last_changed": None,
+            "failed_login_attempts": 0,
+        },
+        "applications": {},
+        "contact_preferences": {
+            "preferred_contact": "email",
+            "maintenance_notifications": True,
+        },
+        "emergency_contact": {"name": None, "relationship": None, "phone": None},
+        "certifications": [],
+        "skills": [],
+        "created": now,
+        "updated": now,
+    }
+    return new_record, employee_id
+
+
+def _append_initial_compensation_history(employee_record: dict, form: dict, created_at: str) -> None:
+    created_date = created_at.split("T")[0]
+    initial_bonus = form.get("initial_bonus")
+    if initial_bonus:
+        employee_record["employment"]["bonus_history"].append(
+            {"date": created_date, "note": initial_bonus}
+        )
+
+    initial_raise = form.get("initial_raise")
+    if initial_raise:
+        employee_record["employment"]["raise_history"].append(
+            {"date": created_date, "note": initial_raise}
+        )
 
 hr_module_bp = Blueprint("hr_module", __name__, url_prefix="/hr")
 
@@ -127,7 +240,7 @@ def employee_profile(uuid: str):
     return render_template("hr/profile.html", employee=employee, loggedInTech=session.get("technician"))
 
 @hr_module_bp.route("/employee/<uuid>/reset-password", methods=["POST"])
-@role_required("admin")
+@role_required(ROLE_ADMIN)
 def reset_employee_password(uuid: str):
     """Admin action: reset an employee's password and return the new password once."""
     store = _get_employee_store()
@@ -153,7 +266,7 @@ def reset_employee_password(uuid: str):
         session.get("technician"),  employee.get("tech_username") or employee.get("username"), employee.get("uuid"))
 
     # Show password once to admin via template variable and flash
-    flash("Password reset successful — show it once below.", "success")
+    flash("Password reset successful - show it once below.", "success")
     return render_template("hr/profile.html", employee=employee, reset_password=new_password, loggedInTech=session.get("technician"))
 
 # Create New Employee Route
@@ -168,105 +281,24 @@ def new_employee():
         return render_template("hr/submit_new.html")
 
     form = {k: v for k, v in request.form.items()}
-    from local_handlers.validation import require_fields, is_valid_email
-    import uuid as _uuid
-    from datetime import datetime as _dt
-
-    ok, missing = require_fields(form, ["first_name", "last_name", "email"])
+    ok, _missing = require_fields(form, ["first_name", "last_name", "email"])
     if not ok or not is_valid_email(form.get("email")):
-        return render_template("hr/submit_new.html",
-            error="First Name, Last Name, and a valid Email are required.", ), 400
+        return render_template(
+            "hr/submit_new.html",
+            error="First Name, Last Name, and a valid Email are required.",
+        ), 400
 
     employees = load_hr_employees()
-
-    # Generate a simple employee_id like EMP-<year>-0001
-    year = _dt.now().year
-    seq = 1
-    existing = [e.get("employee_id", "") for e in employees if isinstance(e.get("employee_id", ""), str) and e.get("employee_id", "").startswith(f"EMP-{year}-")]
-    if existing:
-        nums = []
-        for eid in existing:
-            try:
-                nums.append(int(eid.split("-")[-1]))
-            except Exception:
-                continue
-        if nums:
-            seq = max(nums) + 1
-
-    new_uuid = str(_uuid.uuid4())
-    employee_id = f"EMP-{year}-{seq:04d}"
-
-    now = _dt.now().strftime("%Y-%m-%dT%H:%M:%SZ")
-    new_record = {
-        "uuid": new_uuid,
-        "employee_id": employee_id,
-        "first_name": form.get("first_name"),
-        "last_name": form.get("last_name"),
-        "preferred_name": form.get("preferred_name") or form.get("first_name"),
-        "email": form.get("email"),
-        "date_of_birth": form.get("date_of_birth"),
-        # US I-9 / work authorization status — keep as a restricted field (None by default)
-        "work_authorization": form.get("work_authorization"),
-        # Mailing address (kept minimal here)
-        "address": {
-            "street": form.get("street") or None,
-            "city": form.get("city") or None,
-            "state": form.get("state") or None,
-            "postal_code": form.get("postal_code") or None,
-            "country": form.get("country") or None,
-        },
-        "phone": form.get("phone"),
-        "timezone": form.get("timezone") or "UTC",
-        "employment": {
-            "hire_date": now.split("T")[0],
-            "termination_date": None,
-            "status": "active",
-            "rehire_eligible": True,
-            "title": form.get("title") or "",
-                "business_unit": form.get("business_unit") or "",
-                # Optional department field; decide on multi-unit needs for small orgs
-                "department": form.get("department") or "",
-            "reports_to": None,
-            "employment_type": form.get("employment_type") or "full_time",
-            "compensation_type": form.get("compensation_type") or "salary",
-            "salary": None,
-            "hourly_rate": None,
-                # Payroll/compensation metadata
-                "pay_frequency": form.get("pay_frequency") or None,
-                "direct_deposit_info": None,  # sensitive: recommend separate secure store
-                "equity": {},
-                "bonus_history": [],
-                "raise_history": [],
-            "salary_exempt": True,
-            "bonus_eligible": False,
-            "bonus_rate": 0.0,
-            "pto_available_hours": 0,
-            "pto_used_hours": 0,
-        },
-        "access": {
-            "role": form.get("role") or "itsm_technician",
-            "assignment_queue": form.get("assignment_queue") or "support",
-            "account_locked": False,
-            "mfa_enabled": False,
-            "last_login": None,
-            "password_last_changed": None,
-            "failed_login_attempts": 0,
-        },
-        "applications": {},
-        "contact_preferences": {"preferred_contact": "email", "maintenance_notifications": True},
-        "emergency_contact": {"name": None, "relationship": None, "phone": None},
-        "certifications": [],
-        "skills": [],
-        "created": now,
-        "updated": now,
-    }
+    new_record, employee_id = _build_employee_record(form, employees)
 
     # Persist
     store = _get_hr_store()
     employees.append(new_record)
+    _append_initial_compensation_history(new_record, form, new_record["created"])
+
     store.save_all(employees)
     flash(f"Employee {employee_id} created.", "success")
-    return redirect(url_for("hr_module.employee_profile", uuid=new_uuid))
+    return redirect(url_for("hr_module.employee_profile", uuid=new_record["uuid"]))
 
 # Edit Employee Details Route
 # TODO: implement edit_employee(uuid), form pre-populated via
