@@ -40,8 +40,13 @@
         <ul class="notes-list">
             {% for note in ticket.ticket_worknotes %}
             <li>
-                <div class="note-meta">Note {{ loop.index }}</div>
-                {{ note }}
+                {% if note is mapping %}
+                    <div class="note-meta">{{ note.get('author', 'Unknown') }} &middot; {{ note.get('timestamp', '') }}</div>
+                    <div>{{ note.get('note', '') }}</div>
+                {% else %}
+                    <div class="note-meta">Note {{ loop.index }}</div>
+                    <div>{{ note }}</div>
+                {% endif %}
             </li>
             {% else %}
             <li class="text-muted">No work notes have been added yet.</li>
