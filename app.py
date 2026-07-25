@@ -420,17 +420,17 @@ def logout():
 # BELOW THIS LINE IS RESERVED FOR FLASK ERROR ROUTES. PUT ALL CORE APP FUNCTIONS ABOVE THIS LINE!
 # Handle 400 errors.
 @app.errorhandler(400)
-def bad_request():
+def bad_request(e):
     return render_template("errors/400.html"), 400
 
 # Handle 403 errors.
 @app.errorhandler(403)
-def forbidden():
+def forbidden(e):
     return render_template("errors/403.html"), 403
 
 # Handle 404 errors.
 @app.errorhandler(404)
-def page_not_found():
+def page_not_found(e):
     return render_template("errors/404.html"), 404
 
 # Handles 500 errors.
