@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from functools import wraps
 
 from flask import Blueprint, render_template, session
+from flask import request, redirect, url_for, flash
 
 from local_handlers.local_config_loader import load_core_config
 from flask import current_app
@@ -156,9 +157,97 @@ def reset_employee_password(uuid: str):
     return render_template("hr/profile.html", employee=employee, reset_password=new_password, loggedInTech=session.get("technician"))
 
 # Create New Employee Route
-# TODO: implement new_employee() at POST /hr/employee/submit-new, mirroring
-# crm_module.new_customer. The dashboard's "+ New Employee" button
-# already points at this literal path ahead of the route existing.
+@hr_module_bp.route("/employee/new", methods=["GET", "POST"])
+@role_required(ROLE_HR_TECH)
+def new_employee():
+    """Render form to create a new employee and handle submissions.
+    GET: render the `hr/submit_new.html` form.
+    POST: validate input, append record to HR store, redirect to profile.
+    """
+    if request.method == "GET":
+        return render_template("hr/submit_new.html")
+
+    form = {k: v for k, v in request.form.items()}
+    from local_handlers.validation import require_fields, is_valid_email
+    import uuid as _uuid
+    from datetime import datetime as _dt
+
+    ok, missing = require_fields(form, ["first_name", "last_name", "email"])
+    if not ok or not is_valid_email(form.get("email")):
+        return render_template("hr/submit_new.html",
+            error="First Name, Last Name, and a valid Email are required.", ), 400
+
+    employees = load_hr_employees()
+
+    # Generate a simple employee_id like EMP-<year>-0001
+    year = _dt.now().year
+    seq = 1
+    existing = [e.get("employee_id", "") for e in employees if isinstance(e.get("employee_id", ""), str) and e.get("employee_id", "").startswith(f"EMP-{year}-")]
+    if existing:
+        nums = []
+        for eid in existing:
+            try:
+                nums.append(int(eid.split("-")[-1]))
+            except Exception:
+                continue
+        if nums:
+            seq = max(nums) + 1
+
+    new_uuid = str(_uuid.uuid4())
+    employee_id = f"EMP-{year}-{seq:04d}"
+
+    now = _dt.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+    new_record = {
+        "uuid": new_uuid,
+        "employee_id": employee_id,
+        "first_name": form.get("first_name"),
+        "last_name": form.get("last_name"),
+        "preferred_name": form.get("preferred_name") or form.get("first_name"),
+        "email": form.get("email"),
+        "phone": form.get("phone"),
+        "timezone": form.get("timezone") or "UTC",
+        "employment": {
+            "hire_date": now.split("T")[0],
+            "termination_date": None,
+            "status": "active",
+            "rehire_eligible": True,
+            "title": form.get("title") or "",
+            "business_unit": form.get("business_unit") or "",
+            "reports_to": None,
+            "employment_type": form.get("employment_type") or "full_time",
+            "compensation_type": form.get("compensation_type") or "salary",
+            "salary": None,
+            "hourly_rate": None,
+            "salary_exempt": True,
+            "bonus_eligible": False,
+            "bonus_rate": 0.0,
+            "pto_available_hours": 0,
+            "pto_used_hours": 0,
+        },
+        "access": {
+            "role": form.get("role") or "itsm_technician",
+            "assignment_queue": form.get("assignment_queue") or "support",
+            "account_locked": False,
+            "mfa_enabled": False,
+            "last_login": None,
+            "password_last_changed": None,
+            "failed_login_attempts": 0,
+        },
+        "applications": {},
+        "contact_preferences": {"preferred_contact": "email", "maintenance_notifications": True},
+        "emergency_contact": {"name": None, "relationship": None, "phone": None},
+        "certifications": [],
+        "skills": [],
+        "created": now,
+        "updated": now,
+    }
+
+    # Persist
+    store = _get_hr_store()
+    employees.append(new_record)
+    store.save_all(employees)
+    flash(f"Employee {employee_id} created.", "success")
+    return redirect(url_for("hr_module.employee_profile", uuid=new_uuid))
 
 # Edit Employee Details Route
 # TODO: implement edit_employee(uuid), form pre-populated via
