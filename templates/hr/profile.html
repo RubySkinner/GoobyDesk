@@ -1,3 +1,38 @@
+{% macro format_label(value) -%}
+    {{ value | replace('_', ' ') | replace('-', ' ') | title }}
+{%- endmacro %}
+
+{% macro render_value(value) -%}
+    {% if value is mapping %}
+        <dl class="ticket-details">
+            {% for key, nested_value in value.items() %}
+                <dt><strong>{{ format_label(key) }}:</strong></dt>
+                <dd>{{ render_value(nested_value) }}</dd>
+            {% endfor %}
+        </dl>
+    {% elif value is sequence and value is not string %}
+        {% if value %}
+            <ul class="notes-list">
+                {% for item in value %}
+                    <li>{{ render_value(item) }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <span class="text-muted">None</span>
+        {% endif %}
+    {% elif value is sameas(true) %}
+        Yes
+    {% elif value is sameas(false) %}
+        No
+    {% elif value is none %}
+        <span class="text-muted">None</span>
+    {% elif value == '' %}
+        <span class="text-muted">Empty</span>
+    {% else %}
+        {{ value }}
+    {% endif %}
+{%- endmacro %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,11 +50,43 @@
     <script src="{{ url_for('static', filename='main.js') }}"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <!-- Performance Enhancements -->
-    <title>Employee HR Profile - GoobyDesk</title>
+    <title>
+        {% if employee %}
+            {{ employee.get('preferred_name') or employee.get('first_name') }} {{ employee.get('last_name', '') }} - GoobyDesk HR
+        {% else %}
+            Employee HR Profile - GoobyDesk
+        {% endif %}
+    </title>
 </head>
 <body>
-    <main class="container">
-        <h1>Employee Profile</h1>
+    <div class="container container--wide">
+        <div class="page-header">
+            <div>
+                <div class="profile-name">
+                    <h2 class="card-title">
+                        {% if employee %}
+                            {{ employee.get('preferred_name') or employee.get('first_name', 'Unknown') }} {{ employee.get('last_name', '') }}
+                        {% else %}
+                            Employee Profile
+                        {% endif %}
+                    </h2>
+                    {% if employee and employee.get('employment', {}).get('status') == 'active' %}
+                        <span class="badge badge-success">Active</span>
+                    {% elif employee and employee.get('employment', {}).get('status') %}
+                        <span class="badge badge-secondary">{{ employee.get('employment', {}).get('status') | capitalize }}</span>
+                    {% endif %}
+                    {% if employee and employee.get('access', {}).get('account_locked') %}
+                        <span class="badge badge-danger">Locked</span>
+                    {% endif %}
+                </div>
+                {% if employee %}
+                    <p class="text-muted">{{ employee.get('employee_id', employee.get('uuid', '')) }}</p>
+                {% endif %}
+            </div>
+            <div class="page-header-actions">
+                <a href="{{ url_for('hr_module.hr_dashboard') }}">&larr; Back to Dashboard</a>
+            </div>
+        </div>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -32,37 +99,65 @@
         {% endwith %}
 
         {% if employee %}
-            <section class="employee-summary">
-                <dl>
-                    <dt>Username</dt><dd>{{ employee.tech_username or employee.username or '' }}</dd>
-                    <dt>Full name</dt><dd>{{ employee.get('first_name','') }} {{ employee.get('last_name','') }}</dd>
-                    <dt>Email</dt><dd>{{ employee.get('email','') }}</dd>
-                    <dt>Roles</dt><dd>{{ session.get('roles') }}</dd>
-                </dl>
-            </section>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-card-title">Email</div>
+                    <div class="stat-card-value stat-card-value--compact">{{ employee.get('email') or 'None' }}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-title">Role</div>
+                    <div class="stat-card-value stat-card-value--compact">{{ employee.get('access', {}).get('role', 'None') | replace('_', ' ') | title }}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-title">Department</div>
+                    <div class="stat-card-value stat-card-value--compact">{{ employee.get('employment', {}).get('department') or 'None' }}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-title">Timezone</div>
+                    <div class="stat-card-value">{{ employee.get('timezone') or 'None' }}</div>
+                </div>
+            </div>
 
             {% if reset_password %}
-                <section class="one-time-password">
-                    <h2>One-time password (showing once)</h2>
-                    <p class="secret">{{ reset_password }}</p>
-                    <p class="muted">Copy this password now — it will not be shown again.</p>
-                </section>
+                <div class="card">
+                    <div class="card-header"><h3 class="card-title">One-time Password</h3></div>
+                    <div class="card-body ticket-details">
+                        <p><strong>Temporary Password:</strong> {{ reset_password }}</p>
+                        <p class="text-muted text-muted--flush">Copy this password now. It will not be shown again.</p>
+                    </div>
+                </div>
             {% endif %}
 
             {% set roles = session.get('roles', []) %}
             {% if 'admin' in roles or 'manager' in roles %}
-                <form method="post" action="{{ url_for('hr_module.reset_employee_password', uuid=employee.get('uuid')) }}">
-                    <button type="submit" class="btn btn-warning">Reset password</button>
-                </form>
+                <div class="card">
+                    <div class="card-header"><h3 class="card-title">Access Actions</h3></div>
+                    <div class="card-body">
+                        <form method="post" action="{{ url_for('hr_module.reset_employee_password', uuid=employee.get('uuid')) }}">
+                            <button type="submit" class="submit-btn">Reset Password</button>
+                        </form>
+                    </div>
+                </div>
             {% endif %}
 
+            <h3 class="section-title">Employee Record</h3>
+            <div class="card">
+                <div class="card-body">
+                    {{ render_value(employee) }}
+                </div>
+            </div>
         {% else %}
-            <p>No employee data available.</p>
+            <div class="card">
+                <div class="card-body">
+                    <p>No employee data available.</p>
+                </div>
+            </div>
         {% endif %}
-</main>
-    <p class="footer-text">©2025 GoobyDesk, FOSS created by GoobyFRS | Logged In as: {{ loggedInTech }} |
-        <br>
-        <a href="{{ url_for('itsm.dashboard') }}">Queues</a> | <a href="{{ url_for('changes_module.changes_home') }}">Changes</a> | <a href="{{ url_for('crm_module.crm_dashboard') }}">CRM</a> | <a href="{{ url_for('hr_module.hr_dashboard') }}">HR</a> | <a href="{{ url_for('serviceid_module.serviceid_dashboard') }}">ServiceID</a> | <a href="{{ url_for('reports_module.reports_home') }}">Reports</a>
-    </p>
+
+        <p class="footer-text">©2025 GoobyDesk, FOSS created by GoobyFRS | Logged In as: {{ loggedInTech }} |
+            <br>
+            <a href="{{ url_for('itsm.dashboard') }}">Queues</a> | <a href="{{ url_for('changes_module.changes_home') }}">Changes</a> | <a href="{{ url_for('crm_module.crm_dashboard') }}">CRM</a> | <a href="{{ url_for('hr_module.hr_dashboard') }}">HR</a> | <a href="{{ url_for('serviceid_module.serviceid_dashboard') }}">ServiceID</a> | <a href="{{ url_for('reports_module.reports_home') }}">Reports</a>
+        </p>
+    </div>
 </body>
 </html>
