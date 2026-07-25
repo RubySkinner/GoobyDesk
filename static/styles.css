@@ -409,6 +409,25 @@ textarea {
     resize: both;
 }
 
+.inline-form {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+
+.inline-form input {
+    flex: 1 1 220px;
+    margin-top: 0;
+}
+
+.inline-form .inline-btn {
+    width: auto;
+    margin-top: 0;
+    padding: 10px 18px;
+}
+
 /* ==========================================================
    Buttons
    ========================================================== */
