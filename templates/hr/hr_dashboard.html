@@ -26,9 +26,7 @@
                 <p class="text-muted">Welcome back, {{ loggedInTech }}</p>
             </div>
             <div class="page-header-actions">
-                <!-- /hr/employee/new isn't implemented yet, so this is a literal
-                     path rather than url_for() until that route exists. -->
-                <a href="/hr/employee/new" class="submit-btn">+ New Employee</a>
+                <a href="{{ url_for('hr_module.new_employee') }}" class="submit-btn">+ New Employee</a>
             </div>
         </div>
 
