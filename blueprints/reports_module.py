@@ -14,11 +14,9 @@ def _get_config():
         cfg = load_core_config()
     return cfg
 
-
 def _get_reports_store():
     cfg = _get_config()
     return TicketStore(cfg["core"]["tickets_file"])
-
 
 reports_module_bp = Blueprint('reports_module', __name__, url_prefix='/reports')
 
@@ -74,8 +72,7 @@ def reports_home():
         last_30_days=time_buckets["last_30_days"],
         last_14_days=time_buckets["last_14_days"],
         last_7_days=time_buckets["last_7_days"],
-        loggedInTech=session.get("technician"),
-        )
+        loggedInTech=session.get("technician"))
 
 @reports_module_bp.route("/export/csv", endpoint='export_tickets_csv')
 @role_required("*")

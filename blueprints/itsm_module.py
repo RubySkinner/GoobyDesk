@@ -7,7 +7,7 @@ from local_handlers.auth_decorators import role_required, ROLE_ITSM_TECH
 
 import local_handlers.local_webhook_handler as local_webhook_handler
 from flask import current_app
-from storage.service_appid_store import ServiceAppIdStore
+#from storage.service_appid_store import ServiceAppIdStore
 from storage.ticket_store import TicketStore
 
 def _get_config():
@@ -21,9 +21,11 @@ def _get_ticket_store():
     cfg = _get_config()
     return TicketStore(cfg["core"]["tickets_file"])
 
+"""
 def _get_service_appid_store():
     cfg = _get_config()
     return ServiceAppIdStore(cfg["core"]["serviceid_appid_file"])
+"""
 
 itsm_module_bp = Blueprint('itsm', __name__, url_prefix='/itsm')
 
@@ -38,30 +40,19 @@ def save_tickets(tickets):
     store.save_all(tickets)
     logging.debug("The Ticket JSON Database file was modified.")
 
-
+"""
 def load_service_appids():
-    """Read/load service/app ID records into memory."""
+    # Read/load service/app ID records into memory
     store = _get_service_appid_store()
     return store.load_all()
+"""
 
 @itsm_module_bp.route("/", methods=["GET"])
 @role_required(ROLE_ITSM_TECH)
 def dashboard():
     tickets = load_tickets()
     open_tickets = [t for t in tickets if (t.get("ticket_status", "") or "").lower() != "closed"]
-    return render_template(
-        "itsm/dashboard.html", tickets=open_tickets, loggedInTech=session.get("technician")
-    )
-
-@itsm_module_bp.route("/services-appid", methods=["GET"])
-@role_required(ROLE_ITSM_TECH)
-def services_appid_dashboard():
-    services = load_service_appids()
-    return render_template(
-        "services-appid/dashboard.html",
-        services=services,
-        loggedInTech=session.get("technician"),
-    )
+    return render_template("itsm/dashboard.html", tickets=open_tickets, loggedInTech=session.get("technician"))
 
 @itsm_module_bp.route("/ticket/<ticket_number>")
 @role_required(ROLE_ITSM_TECH)
@@ -69,9 +60,7 @@ def ticket_detail(ticket_number):
     tickets = load_tickets()
     ticket = next((t for t in tickets if t["ticket_number"] == ticket_number), None)
     if ticket:
-        return render_template(
-            "itsm/console.html", ticket=ticket, loggedInTech=session.get("technician")
-        )
+        return render_template("itsm/console.html", ticket=ticket, loggedInTech=session.get("technician"))
     return render_template("errors/404.html"), 404
 
 @itsm_module_bp.route("/ticket/<ticket_number>/update_status/<ticket_status>", methods=["POST"])
@@ -135,10 +124,8 @@ def update_ticket_status(ticket_number, ticket_status):
 @role_required(ROLE_ITSM_TECH)
 def add_ticket_note(ticket_number):
     """Append a technician note to a ticket.
-
     Args:
         ticket_number (str): The ticket number to annotate.
-
     Returns:
         JSON confirmation on success, or an error message on failure.
     """
@@ -148,14 +135,12 @@ def add_ticket_note(ticket_number):
     if len(note_content) > 8000:
         return jsonify({"message": "Note too long (max 8000 chars)."}), 400
 
-    tickets = load_tickets()
     store = _get_ticket_store()
 
     note_record = {
         "author": session.get("technician") or "unknown",
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "note": note_content,
-    }
+        "note": note_content,}
 
     def _updater(record: dict):
         record.setdefault("ticket_worknotes", [])

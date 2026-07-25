@@ -88,12 +88,7 @@ def _build_change_record(form_data) -> dict:
 def changes_home():
     """Render the change dashboard."""
     changes = load_changes()
-    return render_template(
-        "changes/changes_dashboard.html",
-        changes=changes,
-        loggedInTech=session.get("technician"),
-    )
-
+    return render_template("changes/changes_dashboard.html", changes=changes, loggedInTech=session.get("technician"))
 
 # Submit New Change Route
 @changes_module_bp.route("/submit-new", methods=["GET", "POST"])
@@ -130,8 +125,7 @@ def submit_new() -> str:
 
     if errors:
         return render_template(
-            "changes/submit_new.html",
-            error=" ".join(errors),
+            "changes/submit_new.html",error=" ".join(errors),
             loggedInTech=session.get("technician"),
             form_values=request.form,
         ), 400

@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
-import io
-import csv
 import logging
 import uuid
 
-from datetime import datetime, timezone
+from datetime import datetime
 from functools import wraps
 
 from flask import Blueprint, render_template, request, redirect, url_for, session, Response, current_app
@@ -25,7 +23,6 @@ def _get_crm_store():
         core_cfg = load_core_config()
     customers_file = core_cfg["core"]["customers_file"]
     return CrmStore(customers_file)
-
 
 def load_customers_file():
     store = _get_crm_store()
@@ -128,6 +125,5 @@ def customer_profile(uuid):
 """
 # Edit Customer Details Route
 @crm_module_bp.route("/profile/<uuid>/edit", methods=["POST"])
-@technician_required
 """
 # Export Customer Data Route
