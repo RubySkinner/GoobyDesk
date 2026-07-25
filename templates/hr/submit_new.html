@@ -83,6 +83,19 @@
 
             <div class="form-row">
                 <div>
+                    <label for="role">Access Role</label>
+                    <select id="role" name="role">
+                        <option value="itsm_technician" {% if not employee or employee.get('access', {}).get('role') == 'itsm_technician' %}selected{% endif %}>ITSM Technician</option>
+                        <option value="hr_technician" {% if employee and employee.get('access', {}).get('role') == 'hr_technician' %}selected{% endif %}>HR Technician</option>
+                        <option value="manager" {% if employee and employee.get('access', {}).get('role') == 'manager' %}selected{% endif %}>Manager</option>
+                        <option value="admin" {% if employee and employee.get('access', {}).get('role') == 'admin' %}selected{% endif %}>Administrator</option>
+                    </select>
+                </div>
+                <div></div>
+            </div>
+
+            <div class="form-row">
+                <div>
                     <label for="date_of_birth">Date of Birth</label>
                     <input type="date" id="date_of_birth" name="date_of_birth" value="{{ employee.get('date_of_birth', '') if employee else '' }}">
                 </div>
