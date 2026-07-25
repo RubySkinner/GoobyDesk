@@ -48,13 +48,16 @@
             {% endfor %}
         </ul>
 
-        <button class="status-btn" onclick="updateTicketStatus('{{ ticket.ticket_number }}', 'In-Progress')">Mark In-Progress</button>
-        <button class="close-tkt-btn" onclick="updateTicketStatus('{{ ticket.ticket_number }}', 'Closed')">Close Ticket</button>
-        <br>
         <textarea id="noteContent" placeholder="Append a ticket note...."></textarea>
-        <br>
-        <button class="addNote-btn" onclick="submitNote('{{ ticket.ticket_number }}')">Add Note</button>
-        <p class="footer-text">©2025 GoobyDesk, FOSS created by GoobyFRS | Logged In as: {{ loggedInTech }} | <a href="{{ url_for('itsm.dashboard') }}">Back to Dashboard</a></p>
+        <div class="button-row">
+            <button class="status-btn" onclick="updateTicketStatus('{{ ticket.ticket_number }}', 'In-Progress')">Mark In-Progress</button>
+            <button class="close-tkt-btn" onclick="updateTicketStatus('{{ ticket.ticket_number }}', 'Closed')">Close Ticket</button>
+            <button class="addNote-btn" onclick="submitNote('{{ ticket.ticket_number }}')">Add Note</button>
+        </div>
+        <p class="footer-text">©2025 GoobyDesk, FOSS created by GoobyFRS | Logged In as: {{ loggedInTech }} |
+            <br>
+            <a href="{{ url_for('itsm.dashboard') }}">Queues</a> | <a href="{{ url_for('changes_module.changes_home') }}">Changes</a> | <a href="{{ url_for('crm_module.crm_dashboard') }}">CRM</a> | <a href="{{ url_for('hr_module.hr_dashboard') }}">HR</a> | <a href="{{ url_for('serviceid_module.serviceid_dashboard') }}">ServiceID</a>
+        </p>
     </div>
 </body>
 </html>
