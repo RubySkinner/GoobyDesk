@@ -2,6 +2,8 @@
 import io
 import csv
 import logging
+import hashlib
+import os
 from datetime import datetime
 
 from flask import Blueprint, Response, redirect, render_template, request, session, url_for, current_app
@@ -35,6 +37,13 @@ def _change_sort_key(change: dict) -> datetime:
         except ValueError:
             return datetime.min
     return datetime.min
+
+def _pseudonymize_actor(name: str) -> str:
+    if not name:
+        return "actor_unknown"
+    salt = os.getenv("LOG_SALT", "")
+    h = hashlib.sha256((str(name) + salt).encode()).hexdigest()[:8]
+    return f"actor_{h}"
 
 def _parse_datetime_local(value: str) -> str | None:
     value = (value or "").strip()
@@ -133,10 +142,11 @@ def submit_new() -> str:
     new_change = _build_change_record(request.form)
     store = _get_changes_store()
     store.append(new_change)
+    actor = _pseudonymize_actor(session.get("technician"))
     logging.info(
-        "CHANGES MODULE - Created change %s for %s",
+        "CHANGES MODULE - Created change %s actor=%s",
         new_change["change_number"],
-        session.get("technician"),
+        actor,
     )
     return redirect(url_for("changes_module.changes_home"))
 
@@ -175,7 +185,8 @@ def export_changes_csv():
     output.seek(0)
 
     logging.info(
-        f"CHANGES MODULE - Exported {len(open_changes)} change tickets to CSV"
+        "CHANGES MODULE - Exported %s change tickets to CSV",
+        len(open_changes),
     )
 
     return Response(

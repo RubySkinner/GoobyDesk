@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import logging
 import uuid
+import hashlib
+import os
 
 from datetime import datetime
 from functools import wraps
@@ -36,6 +38,13 @@ def save_customers_file(customers):
     store = _get_crm_store()
     store.save_all(customers)
     logging.debug("The Customer JSON Database file was modified.")
+
+def _pseudonymize_actor(name: str) -> str:
+    if not name:
+        return "actor_unknown"
+    salt = os.getenv("LOG_SALT", "")
+    h = hashlib.sha256((str(name) + salt).encode()).hexdigest()[:8]
+    return f"actor_{h}"
 
 def generate_customer_id(customers):
     """Generate the next sequential CID for the current year.
@@ -108,7 +117,8 @@ def new_customer():
 
     customers.append(new_customer_record)
     save_customers_file(customers)
-    logging.info(f"CRM MODULE - Customer {new_customer_record['customer_id']} created by {session.get('technician') }.")
+    actor = _pseudonymize_actor(session.get('technician'))
+    logging.info("CRM MODULE - Customer %s created actor=%s", new_customer_record['customer_id'], actor)
 
     return redirect(url_for("crm_module.customer_profile", uuid=new_customer_record["uuid"]))
 

@@ -7,6 +7,7 @@ import imaplib
 import email
 import re
 import logging
+import hashlib
 
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -65,6 +66,13 @@ def load_tickets():
     store = _get_ticket_store()
     return store.load_all()
 
+def _redact_email(addr: str) -> str:
+    if not addr:
+        return "email_unknown"
+    salt = os.getenv("LOG_SALT", "")
+    h = hashlib.sha256((str(addr) + salt).encode()).hexdigest()[:8]
+    return f"email_{h}"
+
 def save_tickets(tickets):
     """Persist tickets via ticket store helper.
     Args:
@@ -111,11 +119,12 @@ def send_email(requestor_email, ticket_subject, ticket_message, html=True):
             server.login(EMAIL_ACCOUNT, EMAIL_PASSWORD)
             server.sendmail(EMAIL_ACCOUNT, requestor_email, msg.as_string())
 
-        logging.info(f"EMAIL HANDLER - Email sent to {requestor_email}")
+        logging.info("EMAIL HANDLER - Email sent to %s", _redact_email(requestor_email))
         return True
 
     except Exception as e:
-        logging.error(f"EMAIL HANDLER - Email sending failed: {e}")
+        logging.error("EMAIL HANDLER - Email sending failed")
+        logging.debug("EMAIL HANDLER - Email send exception for %s: %s", _redact_email(requestor_email), str(e))
         return False
 
 def fetch_email_replies():
@@ -167,9 +176,10 @@ def fetch_email_replies():
                         t.setdefault("ticket_notes", [])
                         t["ticket_notes"].append({"ticket_message": body})
                         save_tickets(tickets)
-                        logging.info(f"EMAIL HANDLER - Email reply added to {ticket_id}.")
+                        logging.info("EMAIL HANDLER - Email reply added to %s", ticket_id)
                         break
         mail.logout()
 
     except Exception as e:
-        logging.error(f"EMAIL HANDLER - IMAP error: {e}")
+        logging.error("EMAIL HANDLER - IMAP error interacting with server")
+        logging.debug("EMAIL HANDLER - IMAP exception: %s", str(e))

@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 import logging
+import hashlib
+import os
 
 from datetime import datetime
 from flask import Blueprint, render_template, request, jsonify, session
@@ -21,6 +23,13 @@ def _get_ticket_store():
     return TicketStore(cfg["core"]["tickets_file"])
 
 itsm_module_bp = Blueprint('itsm', __name__, url_prefix='/itsm')
+
+def _pseudonymize_actor(name: str) -> str:
+    if not name:
+        return "actor_unknown"
+    salt = os.getenv("LOG_SALT", "")
+    h = hashlib.sha256((str(name) + salt).encode()).hexdigest()[:8]
+    return f"actor_{h}"
 
 def load_tickets():
     """Read/load the ticket JSON database into memory."""
@@ -60,7 +69,7 @@ def update_ticket_status(ticket_number, ticket_status):
     Returns:
         JSON confirmation on success, or 400/404 on invalid input.
     """
-    logging.info(f"{ticket_number} status has been changed to {ticket_status}.")
+    logging.info("Ticket %s status change requested: %s", ticket_number, ticket_status)
 
     valid_statuses = ["Open", "In-Progress", "Closed"]
     # Normalize incoming status to a canonical value (case-insensitive match).
@@ -92,7 +101,7 @@ def update_ticket_status(ticket_number, ticket_status):
     ticket = next((t for t in tickets if t.get("ticket_number") == ticket_number), None)
     ticket_subject = ticket.get("ticket_subject", "No Subject Provided") if ticket else "No Subject Provided"
 
-    logging.info(f"Ticket {ticket_number} status updated to {ticket_status} by {logged_in_tech}.")
+    logging.info("Ticket %s status updated to %s by %s", ticket_number, ticket_status, _pseudonymize_actor(logged_in_tech))
 
     try:
         local_webhook_handler.notify_ticket_event(
@@ -102,7 +111,8 @@ def update_ticket_status(ticket_number, ticket_status):
         )
         logging.info(f"Ticket {ticket_number} status update notifications sent successfully.")
     except Exception as e:
-        logging.error(f"Failed to send ticket status update notifications for {ticket_number}: {str(e)}")
+        logging.error("Failed to send ticket status notifications for %s", ticket_number)
+        logging.debug("Ticket notification error for %s: %s", ticket_number, str(e))
 
     return jsonify({"message": f"Ticket {ticket_number} updated to {canonical_status}."})
 
@@ -137,5 +147,5 @@ def add_ticket_note(ticket_number):
     if not changed:
         return jsonify({"message": "Ticket not found."}), 404
 
-    logging.info("Note successfully appended to %s by %s.", ticket_number, note_record["author"])
+    logging.info("Note appended to %s by %s.", ticket_number, _pseudonymize_actor(note_record["author"]))
     return jsonify({"message": "Note added successfully.", "note": note_record}), 200

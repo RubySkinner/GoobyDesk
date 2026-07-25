@@ -271,7 +271,8 @@ def _verify_turnstile():
         resp = requests.post(url, data=data, timeout=5)
         result = resp.json()
     except Exception as e:
-        logging.error("Turnstile verification error: %s", str(e))
+        logging.error("Turnstile verification error while contacting provider")
+        logging.debug("Turnstile verification exception: %s", str(e))
         flash("Error verifying CAPTCHA. Please try again later.", "danger")
         return False
 
@@ -317,13 +318,16 @@ def home():
                 ticket_number,
                 source="web", technician=session.get("technician"))
             ticket_store.append(new_ticket)
-            logging.info("%s has been created.", ticket_number)
+            logging.info("Ticket %s created.", ticket_number)
         except KeyError as e:
-            logging.error("Missing required form field: %s", str(e))
+            logging.error("Missing required form field in ticket submission")
+            logging.debug("Ticket submission missing field: %s", str(e))
             flash("Please fill out all required fields.", "danger")
             return redirect(url_for("home"))
         except Exception as e:
-            logging.critical("Failed to process ticket submission: %s", str(e))
+            cid = uuid.uuid4().hex[:8]
+            logging.critical("Failed to process ticket submission; correlation_id=%s", cid)
+            logging.debug("Ticket submission exception %s: %s", cid, str(e))
             flash("An error occurred while submitting your ticket. Please try again later.", "danger")
             return redirect(url_for("home"))
 
@@ -337,9 +341,10 @@ def home():
                     email_body,
                     html=True,
                 )
-                logging.info("Confirmation email for %s sent successfully.", ticket_number)
+                logging.info("Confirmation email for %s sent.", ticket_number)
             except Exception as e:
-                logging.error("Failed to send email for %s: %s", ticket_number, str(e))
+                logging.error("Failed to send confirmation email for %s", ticket_number)
+                logging.debug("Email send exception for %s: %s", ticket_number, str(e))
         else:
             logging.debug("EMAIL_ENABLED is false. Skipping email for %s.", ticket_number)
 
@@ -347,7 +352,8 @@ def home():
             local_webhook_handler.notify_ticket_event(ticket_number, new_ticket.get("ticket_subject"), "Open")
             logging.info("Webhook notifications for %s sent successfully.", ticket_number)
         except Exception as e:
-            logging.error("Failed to send webhook notifications for %s: %s", ticket_number, str(e))
+            logging.error("Failed to send webhook notifications for %s", ticket_number)
+            logging.debug("Webhook notification exception for %s: %s", ticket_number, str(e))
 
         flash(f"Ticket {ticket_number} has been submitted successfully!", "success")
         return redirect(url_for("home"))
