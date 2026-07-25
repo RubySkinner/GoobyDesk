@@ -9,8 +9,7 @@
     <meta name="robots" content="noindex, nofollow">
     <meta name="theme-color" content="#284389">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <!-- Refresh every 5 minutes to keep the dashboard current. -->
-    <meta http-equiv="refresh" content="300">
+    <meta http-equiv="refresh" content="600"> <!-- Refresh every 10 minutes to keep the dashboard current. -->
     <link rel="preconnect" href="https://fonts.bunny.net/css">
     <link rel="preconnect" href="https://fonts.bunny.net/css" crossorigin>
     <script src="{{ url_for('static', filename='main.js') }}"></script>
@@ -25,7 +24,7 @@
                 <p class="text-muted">Welcome back, {{ loggedInTech }}</p>
             </div>
             <div class="page-header-actions">
-                <a href="{{ url_for('changes_module.submit_new') }}" class="submit-btn">+ Create New Change</a>
+                <a href="{{ url_for('changes_module.submit_new') }}" class="submit-btn">+ New Change</a>
             </div>
         </div>
 
