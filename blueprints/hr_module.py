@@ -103,6 +103,7 @@ def _build_employee_record(form: dict, employees: list[dict]) -> tuple[dict, str
         "phone": form.get("phone"),
         "timezone": form.get("timezone") or "UTC",
         "employment": _build_employment_details(form, now.split("T")[0]),
+        "hr_worknotes": [],
         "access": {
             "role": form.get("role") or "itsm_technician",
             "assignment_queue": form.get("assignment_queue") or "support",
@@ -347,6 +348,41 @@ def reset_employee_password(uuid: str):
     # Show password once to admin via template variable and flash
     flash("Password reset successful - show it once below.", "success")
     return render_template("hr/profile.html", employee=employee, reset_password=new_password, loggedInTech=session.get("technician"))
+
+
+@hr_module_bp.route("/employee/<uuid>/append_note", methods=["POST"])
+@role_required(ROLE_HR_TECH)
+def add_employee_note(uuid: str):
+    # Restrict: only HR technicians or Administrators may add HR notes.
+    roles = session.get("roles", [])
+    if not (ROLE_HR_TECH in roles or ROLE_ADMIN in roles):
+        return ("", 403)
+
+    note_content = (request.form.get("note_content") or "").strip()
+    if not note_content:
+        return ("", 400)
+
+    store = _get_hr_store()
+    employees = store.load_all()
+    found = False
+    note_record = {
+        "created_by": session.get("technician") or "unknown",
+        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "note": note_content,
+    }
+
+    for e in employees:
+        if e.get("uuid") == uuid:
+            e.setdefault("hr_worknotes", [])
+            e["hr_worknotes"].append(note_record)
+            found = True
+            break
+
+    if not found:
+        return ("Employee not found.", 404)
+
+    store.save_all(employees)
+    return ({"message": "Note added successfully.", "note": note_record}, 200)
 
 # Create New Employee Route
 @hr_module_bp.route("/employee/submit-new", methods=["GET", "POST"])

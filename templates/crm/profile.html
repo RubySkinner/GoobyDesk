@@ -160,6 +160,14 @@
 
         <h3 class="section-title">Notes</h3>
         <div class="card">
+            <div class="card-header"><h3 class="card-title">Add Note</h3></div>
+            <div class="card-body">
+                <textarea id="customer_note_content" placeholder="Add a note..."></textarea>
+                <button type="button" class="submit-btn" onclick="submitCustomerNote('{{ customer.uuid }}')">Add Note</button>
+            </div>
+        </div>
+
+        <div class="card">
             <div class="card-body">
                 {% if customer.get('crm_worknotes') %}
                     <ul class="notes-list">

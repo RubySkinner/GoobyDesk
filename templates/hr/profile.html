@@ -129,6 +129,41 @@
                 </div>
             {% endif %}
 
+            <h3 class="section-title">Notes</h3>
+            {% set roles = session.get('roles', []) %}
+            {% if 'hr_technician' in roles or 'admin' in roles %}
+                <div class="card">
+                    <div class="card-header"><h3 class="card-title">Add Note</h3></div>
+                    <div class="card-body">
+                        <textarea id="employee_note_content" placeholder="Add a confidential HR note..."></textarea>
+                        <button type="button" class="submit-btn" onclick="submitEmployeeNote('{{ employee.uuid }}')">Add Note</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-body ticket-details">
+                        {% if employee.get('hr_worknotes') %}
+                            <ul class="notes-list">
+                                {% for note in employee.hr_worknotes %}
+                                <li>
+                                    <div class="note-meta">{{ note.get('created_by', 'Unknown') }} &middot; {{ note.get('date', '') }}</div>
+                                    {{ note.get('note', '') }}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="text-muted text-muted--flush">No notes on file.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% else %}
+                <div class="card">
+                    <div class="card-body">
+                        <p class="text-muted">HR notes are restricted to HR staff and administrators.</p>
+                    </div>
+                </div>
+            {% endif %}
+
             {% set roles = session.get('roles', []) %}
             {% if 'admin' in roles or 'manager' in roles %}
                 <div class="card">

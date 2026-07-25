@@ -132,6 +132,35 @@ def customer_profile(uuid):
         return render_template("errors/404.html"), 404
     return render_template("crm/profile.html", customer=customer, loggedInTech=session.get("technician"))
 
+
+@crm_module_bp.route("/customer/<uuid>/append_note", methods=["POST"])
+@role_required(ROLE_ITSM_TECH)
+def add_customer_note(uuid):
+    note_content = (request.form.get("note_content") or "").strip()
+    if not note_content:
+        return ("", 400)
+
+    customers = load_customers_file()
+    found = False
+    note_record = {
+        "created_by": session.get("technician") or "unknown",
+        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "note": note_content,
+    }
+
+    for c in customers:
+        if c.get("uuid") == uuid:
+            c.setdefault("crm_worknotes", [])
+            c["crm_worknotes"].append(note_record)
+            found = True
+            break
+
+    if not found:
+        return ("Customer not found.", 404)
+
+    save_customers_file(customers)
+    return ({"message": "Note added successfully.", "note": note_record}, 200)
+
 """
 # Edit Customer Details Route
 @crm_module_bp.route("/profile/<uuid>/edit", methods=["POST"])

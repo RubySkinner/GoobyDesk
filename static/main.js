@@ -108,6 +108,60 @@ async function submitNote(ticketNumber) {
 }
 
 /**
+ * Submit a new note to a customer profile
+ * @param {string} customerUuid
+ */
+async function submitCustomerNote(customerUuid) {
+    let noteContent = document.getElementById("customer_note_content").value.trim();
+    if (!noteContent) {
+        alert("Note content cannot be empty.");
+        return;
+    }
+
+    try {
+        let response = await fetch(`/crm/customer/${customerUuid}/append_note`, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({ note_content: noteContent })
+        });
+        let data = await response.json();
+        if (!response.ok) throw new Error(data.message || "Unknown error");
+        alert(data.message);
+        location.reload();
+    } catch (error) {
+        console.error(error);
+        alert("Failed to add note. Please try again.");
+    }
+}
+
+/**
+ * Submit a new note to an employee profile
+ * @param {string} employeeUuid
+ */
+async function submitEmployeeNote(employeeUuid) {
+    let noteContent = document.getElementById("employee_note_content").value.trim();
+    if (!noteContent) {
+        alert("Note content cannot be empty.");
+        return;
+    }
+
+    try {
+        let response = await fetch(`/hr/employee/${employeeUuid}/append_note`, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({ note_content: noteContent })
+        });
+        let data = await response.json();
+        if (!response.ok) throw new Error(data.message || "Unknown error");
+        alert(data.message);
+        location.reload();
+    } catch (error) {
+        console.error(error);
+        alert("Failed to add note. Please try again.");
+    }
+}
+
+/**
  * GoobyDesk - Javascript Alerts and Pop-ups
  * Auto-hides dismissible .alert banners a few seconds after they appear.
  */
