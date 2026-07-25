@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 """HR module blueprint for GoobyDesk.
 Provides the HR dashboard and its supporting employee-data helpers.
-Config is loaded locally in this blueprint (rather than relying on
-values set in app.py) to avoid the cross-module NameError pattern
-already fixed in itsm_module.
 """
 import logging
 import secrets
@@ -19,27 +16,22 @@ from local_handlers.validation import is_valid_email, require_fields
 from storage.employee_store import EmployeeStore
 from storage.hr_store import HrStore
 
-
 def _get_config():
     cfg = current_app.config.get("LOADED_CONFIG")
     if cfg is None:
         cfg = load_core_config()
     return cfg
 
-
 def _get_hr_store():
     cfg = _get_config()
     return HrStore(cfg["core"]["hr_file"])
-
 
 def _get_employee_store():
     cfg = _get_config()
     return EmployeeStore(cfg["core"]["employee_auth_file"])
 
-
 def _build_timestamp() -> str:
     return datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
-
 
 def _next_employee_sequence(employees: list[dict], year: int) -> int:
     existing_ids = [
@@ -57,7 +49,6 @@ def _next_employee_sequence(employees: list[dict], year: int) -> int:
     if not sequence_numbers:
         return 1
     return max(sequence_numbers) + 1
-
 
 def _build_employment_details(form: dict, created_date: str) -> dict:
     return {
@@ -84,7 +75,6 @@ def _build_employment_details(form: dict, created_date: str) -> dict:
         "pto_available_hours": 0,
         "pto_used_hours": 0,
     }
-
 
 def _build_employee_record(form: dict, employees: list[dict]) -> tuple[dict, str]:
     now = _build_timestamp()
@@ -133,7 +123,6 @@ def _build_employee_record(form: dict, employees: list[dict]) -> tuple[dict, str
     }
     return new_record, employee_id
 
-
 def _append_initial_compensation_history(employee_record: dict, form: dict, created_at: str) -> None:
     created_date = created_at.split("T")[0]
     initial_bonus = form.get("initial_bonus")
@@ -145,9 +134,7 @@ def _append_initial_compensation_history(employee_record: dict, form: dict, crea
     initial_raise = form.get("initial_raise")
     if initial_raise:
         employee_record["employment"]["raise_history"].append(
-            {"date": created_date, "note": initial_raise}
-        )
-
+            {"date": created_date, "note": initial_raise})
 
 def _find_employee_by_uuid(employees: list[dict], employee_uuid: str) -> dict | None:
     for employee in employees:
@@ -155,14 +142,12 @@ def _find_employee_by_uuid(employees: list[dict], employee_uuid: str) -> dict | 
             return employee
     return None
 
-
 def _clean_form_value(form: dict, field_name: str) -> str | None:
     value = form.get(field_name)
     if value is None:
         return None
     cleaned = value.strip()
     return cleaned or None
-
 
 def _update_employee_record(employee: dict, form: dict) -> None:
     now = _build_timestamp()
@@ -294,7 +279,6 @@ def employee_profile(uuid: str):
         return render_template("errors/404.html"), 404
     return render_template("hr/profile.html", employee=employee, loggedInTech=session.get("technician"))
 
-
 @hr_module_bp.route("/employee/<uuid>/edit", methods=["GET", "POST"])
 @role_required(ROLE_HR_TECH)
 def edit_employee(uuid: str):
@@ -367,10 +351,8 @@ def new_employee():
     form = {k: v for k, v in request.form.items()}
     ok, _missing = require_fields(form, ["first_name", "last_name", "email"])
     if not ok or not is_valid_email(form.get("email")):
-        return render_template(
-            "hr/submit_new.html",
-            error="First Name, Last Name, and a valid Email are required.",
-        ), 400
+        return render_template("hr/submit_new.html",
+            error="First Name, Last Name, and a valid Email are required.",), 400
 
     employees = load_hr_employees()
     new_record, employee_id = _build_employee_record(form, employees)
