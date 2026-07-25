@@ -569,6 +569,25 @@ a:hover {
     line-height: 1.6;
 }
 
+/* Three-column record view for profiles */
+.three-col-record > .ticket-details {
+    column-count: 3;
+    column-gap: 1.5rem;
+}
+
+.three-col-record > .ticket-details dt,
+.three-col-record > .ticket-details dd {
+    display: block;
+    break-inside: avoid;
+    -webkit-column-break-inside: avoid;
+    page-break-inside: avoid;
+}
+
+.three-col-record > .ticket-details dt strong {
+    display: block;
+    margin-bottom: 4px;
+}
+
 .ticket-details strong {
     color: white;
 }

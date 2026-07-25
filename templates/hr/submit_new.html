@@ -61,7 +61,23 @@
                 </div>
                 <div>
                     <label for="timezone">Timezone</label>
-                    <input type="text" id="timezone" name="timezone" value="{{ employee.get('timezone', 'UTC') if employee else 'UTC' }}" placeholder="UTC">
+                    <select id="timezone" name="timezone">
+                        <optgroup label="US Timezones">
+                            <option value="PST" {% if employee and employee.get('timezone') == 'PST' %}selected{% endif %}>Pacific</option>
+                            <option value="MST" {% if employee and employee.get('timezone') == 'MST' %}selected{% endif %}>Mountain</option>
+                            <option value="CST" {% if employee and employee.get('timezone') == 'CST' %}selected{% endif %}>Central</option>
+                            <option value="EST" {% if employee and employee.get('timezone') == 'EST' %}selected{% endif %}>Eastern</option>
+                            <option value="AKST" {% if employee and employee.get('timezone') == 'AKST' %}selected{% endif %}>Alaskan</option>
+                            <option value="HST" {% if employee and employee.get('timezone') == 'HST' %}selected{% endif %}>Hawaiian</option>
+                        </optgroup>
+                        <optgroup label="Other Timezones">
+                            <option value="UTC" {% if not employee or employee.get('timezone') == 'UTC' %}selected{% endif %}>Standard/Zulu</option>
+                            <option value="CET" {% if employee and employee.get('timezone') == 'CET' %}selected{% endif %}>Central European Time</option>
+                            <option value="EET" {% if employee and employee.get('timezone') == 'EET' %}selected{% endif %}>Eastern European Time</option>
+                            <option value="IST" {% if employee and employee.get('timezone') == 'IST' %}selected{% endif %}>India Standard Time</option>
+                            <option value="JST" {% if employee and employee.get('timezone') == 'JST' %}selected{% endif %}>Japan Standard Time</option>
+                        </optgroup>
+                    </select>
                 </div>
             </div>
 
