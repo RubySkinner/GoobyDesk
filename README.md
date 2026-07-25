@@ -2,9 +2,9 @@
 
 The Ultimate Simple, Lightweight, Databaseless Service Desk for Home Labbers, Families, and One Man MSPs.
 
-**Current Version:**  v0.9.9-RC1
+**Current Version:**  v0.9.9-RC2
 
-**Revision Date:** 2026.07.18
+**Revision Date:** 2026.07.25
 
 [GoobyDesk Repo Wiki](https://github.com/GoobyFRS/GoobyDesk/wiki) & [Production Deployment Guide](https://github.com/GoobyFRS/GoobyDesk/wiki/Production-Deployment-Guide).
 
@@ -18,27 +18,19 @@ GoobyDesk is a Python3, Flask-based web application with simple YAML configurati
 
 ### Home/Index/Ticket Submission
 
-![Desktop_Index](https://github.com/user-attachments/assets/6b521ba8-e549-48b6-8ffb-3b1739397db3)
+![Desktop_Index](https://github.com/user-attachments/assets/afba3f0c-81ed-4c15-a02d-55d9a8a93a5e)
 
 ### Login Page
 
-![Desktop_Login](https://github.com/user-attachments/assets/9e48b04a-92c8-4692-8340-999ecd051ba7)
+![Desktop_Login](https://github.com/user-attachments/assets/dd5a7347-8870-447f-9306-2368e8ed0cbd)
 
 ### Dashboard
 
-![Desktop_Dashboard](https://github.com/user-attachments/assets/b7e9025f-bf48-4981-9870-b363e9dca36d)
+![Desktop_Dashboard](https://github.com/user-attachments/assets/1d66b9d9-ebe2-4aed-b6f7-eaaead88def4)
 
 ### Ticket Commander View
 
-![Desktop_Ticket_Commander](https://github.com/user-attachments/assets/9c204797-4984-44eb-b66e-c0428f83e1c5)
-
-### Reporting Module
-
-![Desktop_Reporting_Module](https://github.com/user-attachments/assets/82a579cb-c3fb-4349-a6dd-1b7744718f66)
-
-### Email Template
-
-![Email_Template](https://github.com/user-attachments/assets/70f4e4fa-dd39-45e5-bb15-7e71a298e773)
+![Desktop_Ticket_Commander](https://github.com/user-attachments/assets/e45dc286-7aa9-4fbd-b238-7e40ffef926b)
 
 ### Slack Alert
 

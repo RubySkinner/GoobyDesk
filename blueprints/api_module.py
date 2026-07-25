@@ -1,33 +1,37 @@
 #!/usr/bin/env python3
 import json
 import logging
+import hashlib
+import uuid
+import os
 
 from datetime import datetime
 from flask import Blueprint, request, jsonify
 
 import local_handlers.local_webhook_handler as local_webhook_handler
-from local_handlers.local_config_loader import load_core_config
+from flask import current_app
+from storage.ticket_store import TicketStore
 
-core_yaml_config = load_core_config()
-LOG_LEVEL = core_yaml_config["logging"]["level"]
-LOG_FILE = core_yaml_config["logging"]["file"]
-TAILSCALE_NOTIFY_EMAIL = core_yaml_config["email"]["tailscale_notify_email"]
-LIBRENMS_NOTIFY_EMAIL = core_yaml_config["email"]["librenms_notify_email"]
-
-logging.basicConfig(filename=LOG_FILE,level=getattr(logging, LOG_LEVEL.upper(), logging.INFO),format="%(asctime)s - %(levelname)s - %(message)s",)
-""" Above is the default logging configuration.
-Debug - Detailed information
-Info - Successes
-Warning - Unexpected events
-Error - Function failures
-Critical - Serious application failures
-"""
 api_module_bp = Blueprint('api_module', __name__, url_prefix='/api')
 
-# Importing from APP to avoid circular imports. There might be a better way for this.
-def get_tickets_functions():
-    from app import load_tickets, save_tickets, generate_ticket_number
-    return load_tickets, save_tickets, generate_ticket_number
+def _opaque_id(value: str, prefix: str = "id") -> str:
+    """Return a short opaque id for a value (redacts raw data in logs)."""
+    if not value:
+        return f"{prefix}_unknown"
+    salt = os.getenv("LOG_SALT", "")
+    h = hashlib.sha256((str(value) + salt).encode()).hexdigest()[:8]
+    return f"{prefix}_{h}"
+
+def _get_config():
+    cfg = current_app.config.get("LOADED_CONFIG")
+    if cfg is None:
+        from local_handlers.local_config_loader import load_core_config
+        cfg = load_core_config()
+    return cfg
+
+def _get_ticket_store():
+    cfg = _get_config()
+    return TicketStore(cfg["core"]["tickets_file"])
 
 # Status Endpoint at /api/status
 @api_module_bp.route("/status", methods=["GET"])
@@ -41,24 +45,25 @@ def api_status():
 
 @api_module_bp.route("/tailscale", methods=["POST"])
 def tailscale_webhook():
-    load_tickets, save_tickets, generate_ticket_number = get_tickets_functions()
-    
     try:
         payload = request.json
         if not payload:
             logging.warning("API INGEST - Tailscale webhook sent an empty payload.")
             return jsonify({"error": "Empty payload"}), 400
 
+        # Avoid logging raw webhook payloads; keep full body only in ticket message.
         formatted_ts_webhook_body = json.dumps(payload, indent=4)
 
         requestor_name = "Tailscale"
-        requestor_email = TAILSCALE_NOTIFY_EMAIL
+        cfg = _get_config()
+        requestor_email = cfg.get("email", {}).get("tailscale_notify_email")
         ticket_subject = "Tailscale Notification"
         ticket_message = formatted_ts_webhook_body
         ticket_impact = "Medium"
         ticket_urgency = "Medium"
         request_type = "Change"
-        ticket_number = generate_ticket_number()
+        ticket_store = _get_ticket_store()
+        ticket_number = ticket_store.next_ticket_number()
 
         new_ticket = {
             "ticket_number": ticket_number,
@@ -74,9 +79,7 @@ def tailscale_webhook():
             "ticket_notes": []
         }
 
-        tickets = load_tickets()
-        tickets.append(new_ticket)
-        save_tickets(tickets)
+        ticket_store.append(new_ticket)
         logging.info(f"Tailscale Notification — {ticket_number} created successfully.")
 
         try:
@@ -85,26 +88,27 @@ def tailscale_webhook():
                 ticket_status="Open",
                 ticket_subject=ticket_subject
                 )
-            logging.info(f"API INGEST - Ticket {ticket_number} status notifications sent successfully.")
+            logging.info("API INGEST - Ticket %s created and notifications sent.", ticket_number)
         except Exception as e:
-            logging.error(f"API INGEST - Failed to send ticket status update notifications for {ticket_number}: {str(e)}")
+            logging.error("API INGEST - Failed to send ticket status notifications for %s", ticket_number)
+            logging.debug("API INGEST - Notification error details for %s: %s", ticket_number, str(e))
 
         return jsonify({"status": "success", "ticket": ticket_number}), 200
 
     except Exception as e:
-        logging.critical(f"API INGEST - Tailscale webhook error: {str(e)}")
+        cid = uuid.uuid4().hex[:8]
+        logging.critical("API INGEST - Tailscale webhook error; correlation_id=%s", cid)
+        logging.debug("API INGEST - Tailscale webhook exception %s: %s", cid, str(e))
         return jsonify({"error": "Internal server error"}), 500
 
 @api_module_bp.route("/uptime-kuma", methods=["POST"])
 def uptime_kuma_webhook():
-    load_tickets, save_tickets, generate_ticket_number = get_tickets_functions()
-    
     try:
         if not request.is_json:
             logging.warning("API INGEST -Uptime-Kuma webhook sent invalid content type.")
             return jsonify({"error": "Invalid content type"}), 400
         payload = request.json
-        logging.info(f"API INGEST -Uptime Kuma payload received: {payload}")
+        logging.info("API INGEST - Uptime Kuma webhook received; source=%s", _opaque_id(payload.get("monitor", {}).get("name")))
 
         heartbeat = payload.get("heartbeat", {})
         monitor = payload.get("monitor", {})
@@ -122,7 +126,7 @@ def uptime_kuma_webhook():
         }.get(status, "UNKNOWN")
 
         if status not in [0, 2]:
-            logging.info(f"API INGEST - Skipping ticket creation for {monitor_name} (status={status_text}).")
+            logging.info("API INGEST - Skipping ticket creation for monitor=%s (status=%s)", _opaque_id(monitor_name, "monitor"), status_text)
             return jsonify({"status": "ignored", "reason": f"status {status_text} not tracked"}), 200
 
         if status == 0:
@@ -136,8 +140,10 @@ def uptime_kuma_webhook():
             ticket_urgency = "Medium"
             request_type = "Incident"
 
+        # Keep full payload in ticket body only; do not log it directly.
         ticket_message = json.dumps(payload, indent=4)
-        ticket_number = generate_ticket_number()
+        ticket_store = _get_ticket_store()
+        ticket_number = ticket_store.next_ticket_number()
 
         new_ticket = {
             "ticket_number": ticket_number,
@@ -153,11 +159,9 @@ def uptime_kuma_webhook():
             "ticket_notes": []
         }
 
-        tickets = load_tickets()
-        tickets.append(new_ticket)
-        save_tickets(tickets)
+        ticket_store.append(new_ticket)
 
-        logging.info(f"API INGEST -Uptime-Kuma Notification {ticket_number} created successfully (Status: {status_text}).")
+        logging.info("API INGEST - Uptime-Kuma Notification %s created (status=%s)", ticket_number, status_text)
 
         try:
             local_webhook_handler.notify_ticket_event(
@@ -165,14 +169,17 @@ def uptime_kuma_webhook():
                 ticket_status="Open",
                 ticket_subject=ticket_subject
             )
-            logging.info(f"API INGEST -Ticket {ticket_number} status update notifications sent successfully.")
+            logging.info("API INGEST - Ticket %s status notifications sent.", ticket_number)
         except Exception as e:
-            logging.error(f"API INGEST - Failed to send ticket status update notifications for {ticket_number}: {str(e)}")
+            logging.error("API INGEST - Failed to send ticket status notifications for %s", ticket_number)
+            logging.debug("API INGEST - Notification error details for %s: %s", ticket_number, str(e))
 
         return jsonify({"status": "success", "ticket": ticket_number}), 200
 
     except Exception as e:
-        logging.critical(f"API INGEST - Uptime Kuma webhook error: {str(e)}")
+        cid = uuid.uuid4().hex[:8]
+        logging.critical("API INGEST - Uptime Kuma webhook error; correlation_id=%s", cid)
+        logging.debug("API INGEST - Uptime Kuma exception %s: %s", cid, str(e))
         return jsonify({"error": "Internal server error"}), 500
 """
 @api_module_bp.route("/goobyddns", methods=["POST"])
@@ -202,8 +209,6 @@ def librenms_webhook():
         JSON confirmation with the created ticket number on success,
         an "ignored" status for untracked states, or 400/500 on failure.
     """
-    load_tickets, save_tickets, generate_ticket_number = get_tickets_functions()
-
     try:
         if not request.is_json:
             logging.warning("API INGEST - LibreNMS webhook sent invalid content type.")
@@ -214,7 +219,7 @@ def librenms_webhook():
             logging.warning("API INGEST - LibreNMS webhook sent an empty payload.")
             return jsonify({"error": "Empty payload"}), 400
 
-        logging.info(f"API INGEST - LibreNMS payload received: {payload}")
+        logging.info("API INGEST - LibreNMS webhook received; source=%s", _opaque_id(payload.get("hostname")))
 
         state = payload.get("state")
         hostname = payload.get("hostname", "Unknown Host")
@@ -222,20 +227,22 @@ def librenms_webhook():
         severity = str(payload.get("severity", "")).lower()
 
         if state != 1:
-            logging.info(f"API INGEST - Skipping ticket creation for {hostname} (state={state}).")
+            logging.info("API INGEST - Skipping ticket creation for host=%s (state=%s)", _opaque_id(hostname, "host"), state)
             return jsonify({"status": "ignored", "reason": f"state {state} not tracked"}), 200
 
         ticket_impact, ticket_urgency = "Medium", "Medium"
         if severity == "critical": 
             ticket_impact, ticket_urgency = "High", "High"
         ticket_subject = f"LibreNMS Alert - {hostname}: {title}"
+        # Keep full payload in ticket body only; do not log it directly.
         ticket_message = json.dumps(payload, indent=4)
-        ticket_number = generate_ticket_number()
+        ticket_store = _get_ticket_store()
+        ticket_number = ticket_store.next_ticket_number()
 
         new_ticket = {
             "ticket_number": ticket_number,
             "requestor_name": "LibreNMS",
-            "requestor_email": LIBRENMS_NOTIFY_EMAIL,
+            "requestor_email": _get_config().get("email", {}).get("librenms_notify_email"),
             "ticket_subject": ticket_subject,
             "ticket_message": ticket_message,
             "request_type": "Incident",
@@ -246,11 +253,9 @@ def librenms_webhook():
             "ticket_notes": []
         }
 
-        tickets = load_tickets()
-        tickets.append(new_ticket)
-        save_tickets(tickets)
+        ticket_store.append(new_ticket)
 
-        logging.info(f"API INGEST - LibreNMS Notification {ticket_number} created successfully (Severity: {severity or 'unknown'}).")
+        logging.info("API INGEST - LibreNMS Notification %s created (severity=%s)", ticket_number, severity or 'unknown')
 
         try:
             local_webhook_handler.notify_ticket_event(
@@ -258,12 +263,15 @@ def librenms_webhook():
                 ticket_status="Open",
                 ticket_subject=ticket_subject
             )
-            logging.info(f"API INGEST - Ticket {ticket_number} status update notifications sent successfully.")
+            logging.info("API INGEST - Ticket %s status notifications sent.", ticket_number)
         except Exception as e:
-            logging.error(f"API INGEST - Failed to send ticket status update notifications for {ticket_number}: {str(e)}")
+            logging.error("API INGEST - Failed to send ticket status notifications for %s", ticket_number)
+            logging.debug("API INGEST - Notification error details for %s: %s", ticket_number, str(e))
 
         return jsonify({"status": "success", "ticket": ticket_number}), 200
 
     except Exception as e:
-        logging.critical(f"API INGEST - LibreNMS webhook error: {str(e)}")
+        cid = uuid.uuid4().hex[:8]
+        logging.critical("API INGEST - LibreNMS webhook error; correlation_id=%s", cid)
+        logging.debug("API INGEST - LibreNMS exception %s: %s", cid, str(e))
         return jsonify({"error": "Internal server error"}), 500

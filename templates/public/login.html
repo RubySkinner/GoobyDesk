@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link rel="icon" type="image/x-icon" href="static/img/favicon.ico"/>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='img/favicon.ico') }}"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="author" content="Matt Faulkner">
     <meta name="description" content="GoobyDesk User Login">
@@ -32,7 +32,7 @@
 <body>
     <div class="container">
         <div class="logo">
-            <img src="static/img/logo_white.webp" alt="GoobyDesk Logo">
+            <img src="{{ url_for('static', filename='/img/logo_white.webp') }}" alt="GoobyDesk Logo">
         </div>
         <h2>Technician Login</h2>
         <form method="post">

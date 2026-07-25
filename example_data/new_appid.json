@@ -1,0 +1,39 @@
+[
+    {
+        "uuid": "f3e1c8d0-4b2a-4f5e-9c1a-2b6e5f8d9c3a",
+        "service_status": "active",
+        "serviceid": "SVC-YYYY-XXXX",
+        "customerid": "CUST-YYYY-XXXX",
+        "customer_uuid": "123e4567-e89b-12d3-a456-426614174000",
+        "sku": "SKU-XXXXXXXX",
+        "provisioning_status": "in-progress",
+        "provisioning_date": "YYYY-DD-MM HH:MM",
+        "created_by": "auth_web",
+        "requested_date": "YYYY-DD-MM HH:MM",
+        "last_updated_by": "TheTechnician",
+        "tags": ["alpha", "beta", "staging", "standard", "premium"],
+        "billing": {
+            "billing_status": "active",
+            "currency": "USD",
+            "billing_cycle": "monthly",
+            "auto_renew": true,
+            "customer_price": 0.00,
+            "cost_of_goods": 0.00,
+            "next_billing_date": "YYYY-DD-MM HH:MM",
+            "last_billing_date": "YYYY-DD-MM HH:MM"
+        },
+        "serviceid_details": {
+            "service_type": "Service Type",
+            "service_name": "Example Service Name",
+            "service_description": "This is an example service description.",
+            "service_version": "1.0.0",
+            "service_endpoint": "https://api.example.com",
+            "service_documentation": "Confluence",
+            "provider_name": "Linode",
+            "node_id": "NODE-YYYY-XXXX",
+            "cluster_id": "CLUSTER-YYYY-XXXX",
+            "ipv4_address": "0.0.0.0",
+            "ipv6_address": "2001:db8::10"
+        }
+    }
+]

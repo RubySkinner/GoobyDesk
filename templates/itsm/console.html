@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link rel="icon" type="image/x-icon" href="static/img/favicon.ico"/>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='img/favicon.ico') }}"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="author" content="Matt Faulkner">
     <meta name="description" content="GoobyDesk Ticket Console View">
@@ -22,7 +22,7 @@
 <body>
     <div class="container">
         <div class="logo">
-            <img src="static/img/logo_white.webp" alt="GoobyDesk Logo">
+            <img src="{{ url_for('static', filename='/img/logo_white.webp') }}" alt="GoobyDesk Logo">
         </div>
         <h2>Ticket Commander</h2>
 
@@ -33,18 +33,36 @@
             <p><strong>Type:</strong> {{ ticket.request_type }}</p>
             <p><strong>Impact:</strong> {{ ticket.ticket_impact }}</p>
             <p><strong>Urgency:</strong> {{ ticket.ticket_urgency }}</p>
-            <p><strong>Status:</strong> {{ ticket.ticket_status }}</p>
-            <p><strong>Ticket Content:</strong> {{ticket.ticket_message}}</p>
-            <p><strong>End User Replies:</strong> {{ticket.ticket_notes}}</p>
+            <p><strong>Ticket Body:</strong> {{ticket.ticket_body}}</p>
         </div>
 
-        <button class="status-btn" onclick="updateTicketStatus('{{ ticket.ticket_number }}', 'In-Progress')">Mark In-Progress</button>
-        <button class="close-tkt-btn" onclick="updateTicketStatus('{{ ticket.ticket_number }}', 'Closed')">Close Ticket</button>
-        <br>
+        <h2>Work Notes</h2>
+        <ul class="notes-list">
+            {% for note in ticket.ticket_worknotes %}
+            <li>
+                {% if note is mapping %}
+                    <div class="note-meta">{{ note.get('author', 'Unknown') }} &middot; {{ note.get('timestamp', '') }}</div>
+                    <div>{{ note.get('note', '') }}</div>
+                {% else %}
+                    <div class="note-meta">Note {{ loop.index }}</div>
+                    <div>{{ note }}</div>
+                {% endif %}
+            </li>
+            {% else %}
+            <li class="text-muted">No work notes have been added yet.</li>
+            {% endfor %}
+        </ul>
+
         <textarea id="noteContent" placeholder="Append a ticket note...."></textarea>
-        <br>
-        <button class="addNote-btn" onclick="submitNote('{{ ticket.ticket_number }}')">Add Note</button>
-        <p class="footer-text">©2025 GoobyDesk, FOSS created by GoobyFRS | Logged In as: {{ loggedInTech }} | <a href="{{ url_for('itsm.dashboard') }}">Back to Dashboard</a></p>
+        <div class="button-row">
+            <button class="status-btn" onclick="updateTicketStatus('{{ ticket.ticket_number }}', 'In-Progress')">Mark In-Progress</button>
+            <button class="close-tkt-btn" onclick="updateTicketStatus('{{ ticket.ticket_number }}', 'Closed')">Close Ticket</button>
+            <button class="addNote-btn" onclick="submitNote('{{ ticket.ticket_number }}')">Add Note</button>
+        </div>
+        <p class="footer-text">©2025 GoobyDesk, FOSS created by GoobyFRS | Logged In as: {{ loggedInTech }} |
+            <br>
+            <a href="{{ url_for('itsm.dashboard') }}">Queues</a> | <a href="{{ url_for('changes_module.changes_home') }}">Changes</a> | <a href="{{ url_for('crm_module.crm_dashboard') }}">CRM</a> | <a href="{{ url_for('hr_module.hr_dashboard') }}">HR</a> | <a href="{{ url_for('serviceid_module.serviceid_dashboard') }}">ServiceID</a> | <a href="{{ url_for('reports_module.reports_home') }}">Reports</a>
+        </p>
     </div>
 </body>
 </html>

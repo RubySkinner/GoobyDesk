@@ -4,20 +4,27 @@ __all__ = ["notify_ticket_event", "send_webhook"]
 import logging
 import requests
 
+from flask import current_app
 from local_handlers.local_config_loader import load_core_config
 
+
 # CONFIG HELPERS
-def load_webhook_config():
-    return load_core_config() or {}
+def _get_webhook_config():
+    cfg = current_app.config.get("LOADED_CONFIG")
+    if cfg is None:
+        cfg = load_core_config()
+    return cfg.get("webhooks", {})
+
 
 def is_enabled(service_name: str) -> bool:
-    webhook_service_status = load_webhook_config()
+    webhook_service_status = _get_webhook_config()
     webhook_service_cfg = webhook_service_status.get(service_name.lower(), {})
     return bool(webhook_service_cfg.get("enabled", False))
 
+
 def get_webhook_urls():
     # LOAD WEBHOOK URLS - Easy to add more services/platforms.
-    webhook_url_check = load_webhook_config()
+    webhook_url_check = _get_webhook_config()
     discord_url = webhook_url_check.get("discord", {}).get("webhook_url")
     slack_url = webhook_url_check.get("slack", {}).get("webhook_url")
     #teams_url = webhook_url_check.get("teams365", {}).get("webhook_url")

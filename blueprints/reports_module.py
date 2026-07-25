@@ -1,39 +1,29 @@
 #!/usr/bin/env python3
 from flask import Blueprint, render_template, session, Response
+from local_handlers.auth_decorators import role_required
 import io, csv, logging
 from datetime import datetime, timedelta
 from local_handlers.local_config_loader import load_core_config
+from flask import current_app
+from storage.ticket_store import TicketStore
 
-core_yaml_config = load_core_config()
-LOG_LEVEL = core_yaml_config["logging"]["level"]
-LOG_FILE = core_yaml_config["logging"]["file"]
+def _get_config():
+    cfg = current_app.config.get("LOADED_CONFIG")
+    if cfg is None:
+        from local_handlers.local_config_loader import load_core_config
+        cfg = load_core_config()
+    return cfg
 
-logging.basicConfig(
-    filename=LOG_FILE,
-    level=getattr(logging, LOG_LEVEL.upper(), logging.INFO),
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
-""" Above is the default logging configuration.
-Debug - Detailed information
-Info - Successes
-Warning - Unexpected events
-Error - Function failures
-Critical - Serious application failures
-"""
+def _get_reports_store():
+    cfg = _get_config()
+    return TicketStore(cfg["core"]["tickets_file"])
 
-reports_module_bp = Blueprint('reports', __name__, url_prefix='/reports')
-
-# Importing from APP to avoid circular imports. There might be a better way for this.
-def get_app_functions():
-    from app import load_tickets, technician_required
-    return load_tickets, technician_required
+reports_module_bp = Blueprint('reports_module', __name__, url_prefix='/reports')
 
 @reports_module_bp.route("/dashboard", methods=["GET"])
+@role_required("*")
 def reports_home():
     from app import load_tickets
-    
-    if not session.get("technician"):
-        return render_template("403.html"), 403
     
     tickets = load_tickets()
     now = datetime.now()
@@ -58,9 +48,7 @@ def reports_home():
             status_counts[status] += 1
         
         try:
-            submitted_at = datetime.strptime(
-                ticket["submission_date"], "%Y-%m-%d %H:%M:%S"
-            )
+            submitted_at = datetime.strptime(ticket["submission_date"], "%Y-%m-%d %H:%M:%S")
             age = now - submitted_at
             
             if age <= timedelta(days=60):
@@ -84,15 +72,12 @@ def reports_home():
         last_30_days=time_buckets["last_30_days"],
         last_14_days=time_buckets["last_14_days"],
         last_7_days=time_buckets["last_7_days"],
-        loggedInTech=session["technician"],
-        )
+        loggedInTech=session.get("technician"))
 
 @reports_module_bp.route("/export/csv", endpoint='export_tickets_csv')
+@role_required("*")
 def export_tickets_csv():
     from app import load_tickets
-    
-    if not session.get("technician"):
-        return render_template("403.html"), 403
     
     tickets = load_tickets()
     output = io.StringIO()

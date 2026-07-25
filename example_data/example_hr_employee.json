@@ -1,94 +1,53 @@
 [
     {
-        "uuid": "cb0a3d5f-02af-4939-8c39-bddaccc2e2c9",
+        "uuid": "75a18734-7deb-4490-8aed-05b9eb588c35",
         "employee_id": "EMP-2026-0001",
-        "first_name": "Archer",
-        "last_name": "Sterling",
-        "preferred_name": "Admin",
-        "date_of_birth": "1970-01-01",
-        "email": "admin@example.com",
-        "phone": "555-555-5555",
-        "timezone": "America/Chicago",
-
-        "discord_username": null,
-        "discord_user_id": null,
-        "minecraft_username": null,
-
+        "first_name": "Beano",
+        "last_name": "Doggo",
+        "preferred_name": "Beano",
+        "email": "bean@gmail.com",
+        "phone": null,
+        "timezone": "UTC",
         "employment": {
-            "hire_date": "2025-01-01",
+            "hire_date": "2026-07-24",
             "termination_date": null,
             "status": "active",
             "rehire_eligible": true,
-            "title": "ITSM Technician",
-            "business_unit": "Support",
+            "title": "",
+            "business_unit": "",
             "reports_to": null,
             "employment_type": "full_time",
             "compensation_type": "salary",
-            "salary": 50000.00,
+            "salary": null,
             "hourly_rate": null,
             "salary_exempt": true,
             "bonus_eligible": false,
             "bonus_rate": 0.0,
-            "pto_available_hours": 120,
-            "pto_used_hours": 24
+            "pto_available_hours": 0,
+            "pto_used_hours": 0
         },
-
         "access": {
             "role": "itsm_technician",
             "assignment_queue": "support",
             "account_locked": false,
-            "mfa_enabled": true,
-            "last_login": "2026-07-16T18:42:01Z",
-            "password_last_changed": "2026-06-01T12:00:00Z",
+            "mfa_enabled": false,
+            "last_login": null,
+            "password_last_changed": null,
             "failed_login_attempts": 0
         },
-
-        "applications": {
-            "goobydesk": true,
-            "gitea": false,
-            "nextcloud": false,
-            "tailscale": false,
-            "slack": false,
-            "discord": false,
-            "freshrss": false,
-            "jellyfin": false
-        },
-
+        "applications": {},
         "contact_preferences": {
             "preferred_contact": "email",
             "maintenance_notifications": true
         },
-
         "emergency_contact": {
             "name": null,
             "relationship": null,
             "phone": null
         },
-
-        "certifications": [
-            {
-                "name": "CompTIA Security+",
-                "issued": "2025-03-15",
-                "expires": "2028-03-15"
-            }
-        ],
-
-        "skills": [
-            "Linux",
-            "Python",
-            "Networking",
-            "Flask"
-        ],
-
-        "notes": [
-            {
-                "date": "2026-02-01T10:15:00Z",
-                "author": "goober",
-                "note": "Completed onboarding."
-            }
-        ],
-
-        "created": "2025-01-01T08:00:00Z",
-        "updated": "2026-07-16T18:42:01Z"
+        "certifications": [],
+        "skills": [],
+        "created": "2026-07-24T22:56:42Z",
+        "updated": "2026-07-24T22:56:42Z"
     }
 ]

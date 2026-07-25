@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link rel="icon" type="image/x-icon" href="static/img/favicon.ico"/>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='img/favicon.ico') }}"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="author" content="Matt Faulkner">
     <meta name="description" content="GoobyDesk HTTP 400">
@@ -20,7 +20,8 @@
 </head>
 <!-- Start of the displayed HTML -->
 <body class="error-page">
-    <center>HTTP Code 400 - The server cannot or will not process the request due to something that is perceived to be a client error. Examples include malformed request syntax, invalid request message framing, or deceptive request routing.
+    <center>HTTP Code 400 - The server cannot or will not process the request due to something that is perceived to be a client error. 
+        Examples include malformed request syntax, invalid request message framing, or deceptive request routing.
 <br>
 <p class="footer-text">©2025 GoobyDesk, FOSS created by <a href="https://github.com/goobyfrs">GoobyFRS</a></p>
 </center>

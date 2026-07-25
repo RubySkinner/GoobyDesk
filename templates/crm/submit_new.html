@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link rel="icon" type="image/x-icon" href="static/img/favicon.ico"/>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='img/favicon.ico') }}"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="author" content="Matt Faulkner">
     <meta name="robots" content="noindex, nofollow"> <!--Discourage Search Engine Indexing of this page-->
     <meta name="theme-color" content="#284389"> <!-- Mobile Browser stylized address bar.-->
     <meta http-equiv="X-UA-Compatible" content="IE=edge"> <!-- Force IE to use latest rendering engine available.-->
-    <meta http-equiv="refresh" content="300"> <!-- 5 Minute Page Refresh -->
+    <meta http-equiv="refresh" content="600"> <!-- 10 Minute Page Refresh -->
     <link rel="preconnect" href="https://fonts.bunny.net/css">
     <link rel="preconnect" href="https://fonts.bunny.net/css" crossorigin>
     <script src="{{ url_for('static', filename='main.js') }}"></script>
@@ -44,15 +44,11 @@
                 </div>
                 <div>
                     <label for="email">Email *</label>
-                    <input type="email" id="email" name="email" required>
+                    <input type="email" id="email" name="customer_email" placeholder="richard.hammond@example.com" minlength="6" maxlength="48" autocomplete="email" pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}" required>
                 </div>
             </div>
 
             <div class="form-row">
-                <div>
-                    <label for="company">Company</label>
-                    <input type="text" id="company" name="company">
-                </div>
                 <div>
                     <label for="phone">Phone</label>
                     <input type="tel" id="phone" name="phone">
@@ -77,7 +73,23 @@
                 </div>
                 <div>
                     <label for="timezone">Timezone</label>
-                    <input type="text" id="timezone" name="timezone" placeholder="America/Los_Angeles">
+                    <select id="timezone" name="timezone" required>
+                        <optgroup label="US Timezones">
+                            <option value="PST">Pacific</option>
+                            <option value="MST">Mountain</option>
+                            <option value="CST">Central</option>
+                            <option value="EST">Eastern</option>
+                            <option value="AKST">Alaskan</option>
+                            <option value="HST">Hawaiian</option>
+                        </optgroup>
+                        <optgroup label="Other Timezones">
+                            <option value="UTC">Standard/Zulu</option>
+                            <option value="CET">Central European Time</option>
+                            <option value="EET">Eastern European Time</option>
+                            <option value="IST">India Standard Time</option>
+                            <option value="JST">Japan Standard Time</option>
+                        </optgroup>
+                    </select>
                 </div>
             </div>
 
@@ -94,7 +106,7 @@
                     <label for="preferred_contact">Preferred Contact</label>
                     <select id="preferred_contact" name="preferred_contact">
                         <option value="email" selected>Email</option>
-                        <option value="phone">Phone</option>
+                        <option value="phone">Text Message</option>
                         <option value="discord">Discord</option>
                     </select>
                 </div>
@@ -114,7 +126,7 @@
             </div>
 
             <div class="checkbox-row">
-                <input type="checkbox" id="marketing_opt_in" name="marketing_opt_in" checked>
+                <input type="checkbox" id="marketing_opt_in" name="marketing_opt_in">
                 <label for="marketing_opt_in">Marketing Opt-In</label>
             </div>
 

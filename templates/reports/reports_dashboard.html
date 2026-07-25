@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link rel="icon" type="image/x-icon" href="static/img/favicon.ico"/>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='img/favicon.ico') }}"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="author" content="Matt Faulkner">
     <meta name="description" content="GoobyDesk Reports Home">
@@ -23,7 +23,7 @@
     <div class="container">
         <!-- Logo -->
         <div class="logo">
-            <img src="static/img/logo_color.webp" alt="GoobyDesk Logo">
+            <img src="{{ url_for('static', filename='/img/logo_white.webp') }}" alt="GoobyDesk Logo">
         </div>
         <!--
             Values below fall back to sample/placeholder numbers with the `default()` filter
@@ -84,7 +84,7 @@
                 <form action="{{ url_for('itsm.dashboard') }}" method="GET">
                     <button type="submit" class="submit-btn">Back to Dashboard</button>
                 </form>
-                <form action="{{ url_for('reports.export_tickets_csv') }}" method="GET">
+                <form action="{{ url_for('reports_module.export_tickets_csv') }}" method="GET">
                     <button type="submit" class="submit-btn">Export CSV Report</button>
                 </form>
                 <!--
@@ -441,9 +441,10 @@
                 </div>
             </div>
         </div>
-
-        <!-- Footer -->
-        <p class="footer-text">©2025 GoobyDesk, FOSS created by GoobyFRS | Logged In as: {{ loggedInTech }} | <a href="{{ url_for('itsm.dashboard') }}">Back to Dashboard</a></p>
-    </div>
+        <p class="footer-text">©2025 GoobyDesk, FOSS created by GoobyFRS | Logged In as: {{ loggedInTech }} |
+        <br>
+        <a href="{{ url_for('itsm.dashboard') }}">Queues</a> | <a href="{{ url_for('changes_module.changes_home') }}">Changes</a> | <a href="{{ url_for('crm_module.crm_dashboard') }}">CRM</a> | <a href="{{ url_for('hr_module.hr_dashboard') }}">HR</a> | <a href="{{ url_for('serviceid_module.serviceid_dashboard') }}">ServiceID</a> | <a href="{{ url_for('reports_module.reports_home') }}">Reports</a>
+        </p>
+    </div>     
 </body>
 </html>

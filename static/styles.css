@@ -409,6 +409,25 @@ textarea {
     resize: both;
 }
 
+.inline-form {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+
+.inline-form input {
+    flex: 1 1 220px;
+    margin-top: 0;
+}
+
+.inline-form .inline-btn {
+    width: auto;
+    margin-top: 0;
+    padding: 10px 18px;
+}
+
 /* ==========================================================
    Buttons
    ========================================================== */
@@ -550,6 +569,42 @@ a:hover {
     line-height: 1.6;
 }
 
+/* Three-column record view for profiles */
+.three-col-record > .ticket-details {
+    column-count: 3;
+    column-gap: 1.5rem;
+}
+
+.three-col-record > .ticket-details dt,
+.three-col-record > .ticket-details dd {
+    display: block;
+    break-inside: avoid;
+    -webkit-column-break-inside: avoid;
+    page-break-inside: avoid;
+}
+
+.three-col-record > .ticket-details dt strong {
+    display: block;
+    margin-bottom: 4px;
+}
+
+/* Profile extras container: access actions, add note, notes */
+.profile-extras {
+    margin-top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.profile-extras .card {
+    padding: 0; /* keep card header/body spacing intact */
+}
+
+.profile-extras .card .card-body,
+.profile-extras .card .card-header {
+    padding: 1rem 1.5rem;
+}
+
 .ticket-details strong {
     color: white;
 }
@@ -592,4 +647,21 @@ a:hover {
 
     font-size: 28px;
     font-weight: 700;
+}
+
+/* ==========================================================
+   Button Row
+   ========================================================== */
+
+.button-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    justify-content: center;
+}
+
+.button-row button {
+    flex: 1;
+    width: auto;
+    margin-top: 0;
 }

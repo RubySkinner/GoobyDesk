@@ -1,81 +1,64 @@
 #!/usr/bin/env python3
-import io
-import csv
-import json
 import logging
 import uuid
+import hashlib
+import os
 
-from datetime import datetime, timezone
+from datetime import datetime
 from functools import wraps
 
-from flask import Blueprint, render_template, request, redirect, url_for, session, Response
-from local_handlers.local_config_loader import load_core_config
-
-core_yaml_config = load_core_config()
-LOG_LEVEL = core_yaml_config["logging"]["level"]
-LOG_FILE = core_yaml_config["logging"]["file"]
-CUSTOMERS_FILE = core_yaml_config["core"]["customers_file"]
-SERVICE_APPID_FILE = core_yaml_config["core"]["serviceid_appid_file"]
-
-logging.basicConfig(filename=LOG_FILE, level=getattr(logging, LOG_LEVEL.upper(), logging.INFO), format="%(asctime)s - %(levelname)s - %(message)s",)
+from flask import Blueprint, render_template, request, redirect, url_for, session, Response, current_app
+from local_handlers.auth_decorators import role_required, ROLE_ITSM_TECH
+from storage.crm_store import CrmStore
+from local_handlers.crm_helpers import build_customer_record
+from local_handlers.validation import require_fields, is_valid_email
 
 crm_module_bp = Blueprint('crm_module', __name__, url_prefix='/crm')
 
-# Helpers
-def technician_required(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        # Session-based auth check
-        if not session.get("technician"):
-            # Unauthorized access attempt
-            return render_template("errors/403.html"), 403
-        # Authorized technician → proceed to the route
-        return func(*args, **kwargs)
-    return wrapper
+# NOTE: use @role_required(ROLE_ITSM_TECH) on routes requiring ITSM technicians
+
+def _get_crm_store():
+    core_cfg = current_app.config.get("LOADED_CONFIG")
+    if core_cfg is None:
+        # fallback: try legacy loader
+        from local_handlers.local_config_loader import load_core_config
+        core_cfg = load_core_config()
+    customers_file = core_cfg["core"]["customers_file"]
+    return CrmStore(customers_file)
 
 def load_customers_file():
-    try:
-        with open(CUSTOMERS_FILE, "r") as customer_file:
-            return json.load(customer_file)
-    except FileNotFoundError:
-        logging.critical("Customer JSON Database file could not be located.")
-        exit(1)
-        return [] # represents an empty list.
+    store = _get_crm_store()
+    return store.load_all()
 
 def save_customers_file(customers):
     """Write the given customers back to the customer JSON database.
     Args:
         customers (list[dict]): The full set of customer records to persist.
     """
-    with open(CUSTOMERS_FILE, "w") as customer_file_write_op:
-        json.dump(customers, customer_file_write_op, indent=4)
+    store = _get_crm_store()
+    store.save_all(customers)
     logging.debug("The Customer JSON Database file was modified.")
+
+def _pseudonymize_actor(name: str) -> str:
+    if not name:
+        return "actor_unknown"
+    salt = os.getenv("LOG_SALT", "")
+    h = hashlib.sha256((str(name) + salt).encode()).hexdigest()[:8]
+    return f"actor_{h}"
 
 def generate_customer_id(customers):
     """Generate the next sequential CID for the current year.
-    Args:
-        customers (list[dict]): Existing customer records to scan.
-    Returns:
-        str: A new customer ID in the form CID-YYYY-NNNN.
+    Delegates to the store implementation which knows numbering rules.
     """
-    current_year = datetime.now(timezone.utc).year
-    year_prefix = f"CID-{current_year}-"
-    existing_ids = [c.get("customer_id", "") for c in customers if c.get("customer_id", "").startswith(year_prefix)]
-    next_sequence = len(existing_ids) + 1
-    return f"{year_prefix}{next_sequence:04d}"
+    store = _get_crm_store()
+    return store.next_customer_id(customers)
 
 # Dashboard Route
 @crm_module_bp.route("/", methods=["GET"])
-@technician_required
+@role_required(ROLE_ITSM_TECH)
 def crm_dashboard():
     # Render the CRM dashboard with a list of customers
-    try:
-        with open(CUSTOMERS_FILE, "r") as customers_file:
-            customers = json.load(customers_file)
-    except FileNotFoundError:
-        logging.critical("Customer JSON Database file could not be located.")
-        exit(1)
-        return []  # represents an empty list.
+    customers = load_customers_file()
     total_customers = len(customers)
     active_customers_list = [customer for customer in customers if customer.get("status") == "active"]
     vip_customers = sum(1 for customer in customers if customer.get("vip") is True)
@@ -87,102 +70,99 @@ def crm_dashboard():
         "total_lifetime_value": total_lifetime_value
     }
     #return render_template("under_construction.html")
-    return render_template("crm/crm_dashboard.html", customers=active_customers_list, loggedInTech=session["technician"], stats=crm_base_stats)
+    return render_template("crm/crm_dashboard.html", customers=active_customers_list, loggedInTech=session.get("technician"), stats=crm_base_stats)
 
 # Create New Customer Route
 @crm_module_bp.route("/submit-new", methods=["GET", "POST"])
-@technician_required
+@role_required(ROLE_ITSM_TECH)
 def new_customer():
     if request.method == "GET":
         return render_template("crm/submit_new.html")
 
-    first_name = request.form.get("first_name", "").strip()
-    last_name = request.form.get("last_name", "").strip()
-    email = request.form.get("email", "").strip()
+    form = {k: v for k, v in request.form.items()}
 
-    if not first_name or not last_name or not email:
+    ok, missing = require_fields(form, ["first_name", "last_name", "email"])
+    if not ok or not is_valid_email(form.get("email")):
         return render_template(
             "crm/submit_new.html",
-            error="First Name, Last Name, and Email are required."
+            error="First Name, Last Name, and a valid Email are required."
         ), 400
 
     customers = load_customers_file()
-    submission_timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    submission_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+    # Build base record from the form
+    base = build_customer_record(form)
+    # Enrich with persistence/audit fields
     new_customer_record = {
         "uuid": str(uuid.uuid4()),
         "customer_id": generate_customer_id(customers),
-        "first_name": first_name,
-        "last_name": last_name,
-        "preferred_name": request.form.get("preferred_name", "").strip() or first_name,
-
-        "company": request.form.get("company", "").strip() or None,
-        "email": email,
-        "phone": request.form.get("phone", "").strip() or None,
-
-        "discord_username": request.form.get("discord_username", "").strip() or None,
-        "discord_user_id": None,
-        "minecraft_username": request.form.get("minecraft_username", "").strip() or None,
-
-        "country": request.form.get("country", "").strip() or None,
-        "timezone": request.form.get("timezone", "").strip() or None,
+        **base,
         "created": submission_timestamp,
-        "last_seen": None,
-        "last_login": None,
-
-        "status": request.form.get("status", "active"),
-        "status_reason": None,
-        "account_locked": False,
-        "email_verified": False,
-        "mfa_enabled": False,
-
-        "vip": request.form.get("vip") == "on",
-        "content_creator": request.form.get("content_creator") == "on",
-
-        "risk_level": "low",
-        "lifetime_value": 0.00,
-        "billing_currency": "USD",
-        "last_order": None,
-        "last_payment": None,
-
-        "preferred_contact": request.form.get("preferred_contact", "email"),
-        "marketing_opt_in": request.form.get("marketing_opt_in") == "on",
-        "maintenance_notifications": request.form.get("maintenance_notifications") == "on",
-        "assigned_account_manager": None,
-        "services": [],
-
-        "account_tags": [],
-
-        "notes": [],
+        "created_by": session.get("technician"),
+        "audit": {
+            "creation_source": "auth_web",
+            "last_modified": submission_timestamp,
+            "last_modified_by": session.get("technician"),
+        },
     }
 
-    initial_note = request.form.get("notes", "").strip()
+    initial_note = form.get("crm_worknotes", "").strip()
     if initial_note:
-        new_customer_record["notes"].append({
+        new_customer_record["crm_worknotes"].append({
             "date": submission_timestamp,
-            "author": session["technician"],
+            "created_by": session.get("technician"),
             "note": initial_note,
         })
 
     customers.append(new_customer_record)
     save_customers_file(customers)
-    logging.info(f"CRM MODULE - Customer {new_customer_record['customer_id']} created by {session['technician']}.")
+    actor = _pseudonymize_actor(session.get('technician'))
+    logging.info("CRM MODULE - Customer %s created actor=%s", new_customer_record['customer_id'], actor)
 
     return redirect(url_for("crm_module.customer_profile", uuid=new_customer_record["uuid"]))
 
 # View Customer Details Route
 @crm_module_bp.route("/profile/<uuid>", methods=["GET"])
-@technician_required
+@role_required(ROLE_ITSM_TECH)
 def customer_profile(uuid):
     customers = load_customers_file()
     customer = next((c for c in customers if c["uuid"] == uuid), None)
     if not customer:
         return render_template("errors/404.html"), 404
-    return render_template("crm/profile.html", customer=customer, loggedInTech=session["technician"])
+    return render_template("crm/profile.html", customer=customer, loggedInTech=session.get("technician"))
+
+
+@crm_module_bp.route("/customer/<uuid>/append_note", methods=["POST"])
+@role_required(ROLE_ITSM_TECH)
+def add_customer_note(uuid):
+    note_content = (request.form.get("note_content") or "").strip()
+    if not note_content:
+        return ("", 400)
+
+    customers = load_customers_file()
+    found = False
+    note_record = {
+        "created_by": session.get("technician") or "unknown",
+        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "note": note_content,
+    }
+
+    for c in customers:
+        if c.get("uuid") == uuid:
+            c.setdefault("crm_worknotes", [])
+            c["crm_worknotes"].append(note_record)
+            found = True
+            break
+
+    if not found:
+        return ("Customer not found.", 404)
+
+    save_customers_file(customers)
+    return ({"message": "Note added successfully.", "note": note_record}, 200)
 
 """
 # Edit Customer Details Route
 @crm_module_bp.route("/profile/<uuid>/edit", methods=["POST"])
-@technician_required
 """
 # Export Customer Data Route

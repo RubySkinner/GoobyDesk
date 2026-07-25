@@ -1,8 +1,43 @@
+{% macro format_label(value) -%}
+    {{ value | replace('_', ' ') | replace('-', ' ') | title }}
+{%- endmacro %}
+
+{% macro render_value(value) -%}
+    {% if value is mapping %}
+        <dl class="ticket-details">
+            {% for key, nested_value in value.items() %}
+                <dt><strong>{{ format_label(key) }}:</strong></dt>
+                <dd>{{ render_value(nested_value) }}</dd>
+            {% endfor %}
+        </dl>
+    {% elif value is sequence and value is not string %}
+        {% if value %}
+            <ul class="notes-list">
+                {% for item in value %}
+                    <li>{{ render_value(item) }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <span class="text-muted">None</span>
+        {% endif %}
+    {% elif value is sameas(true) %}
+        Yes
+    {% elif value is sameas(false) %}
+        No
+    {% elif value is none %}
+        <span class="text-muted">None</span>
+    {% elif value == '' %}
+        <span class="text-muted">Empty</span>
+    {% else %}
+        {{ value }}
+    {% endif %}
+{%- endmacro %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link rel="icon" type="image/x-icon" href="static/img/favicon.ico"/>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='img/favicon.ico') }}"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="author" content="Matt Faulkner">
     <meta name="description" content="Customer Profile">
@@ -56,7 +91,8 @@
             </div>
             <div class="stat-card">
                 <div class="stat-card-title">Customer Since</div>
-                <div class="stat-card-value stat-card-value--compact">{{ customer.get('created', '—') }}</div>
+                {% set _created = customer.get('created') %}
+                <div class="stat-card-value stat-card-value--compact">{{ _created[:10] if _created else '—' }}</div>
             </div>
         </div>
 
@@ -80,8 +116,8 @@
             <div class="card">
                 <div class="card-header"><h3 class="card-title">Accounts & Access</h3></div>
                 <div class="card-body ticket-details">
-                    <p><strong>Discord:</strong> {{ customer.get('discord_username') or '—' }}</p>
-                    <p><strong>Minecraft:</strong> {{ customer.get('minecraft_username') or '—' }}</p>
+                    <p><strong>Discord:</strong> {{ customer.get('discord', {}).get('username') or '—' }}</p>
+                    <p><strong>Minecraft:</strong> {{ customer.get('minecraft', {}).get('username') or '—' }}</p>
                     <p><strong>Account Locked:</strong> {{ 'Yes' if customer.get('account_locked') else 'No' }}</p>
                     <p><strong>MFA Enabled:</strong> {{ 'Yes' if customer.get('mfa_enabled') else 'No' }}</p>
                     <p><strong>Assigned Account Manager:</strong> {{ customer.get('assigned_account_manager') or 'Unassigned' }}</p>
@@ -122,24 +158,44 @@
             </div>
         </div>
 
-        <h3 class="section-title">Notes</h3>
+        <h3 class="section-title">Customer Record</h3>
         <div class="card">
             <div class="card-body">
-                {% if customer.get('notes') %}
-                    <ul class="notes-list">
-                        {% for note in customer.notes %}
-                        <li>
-                            <div class="note-meta">{{ note.get('author', 'Unknown') }} &middot; {{ note.get('date', '') }}</div>
-                            {{ note.get('note', '') }}
-                        </li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p class="text-muted text-muted--flush">No notes on file.</p>
-                {% endif %}
+                <div class="three-col-record">{{ render_value(customer) }}</div>
             </div>
         </div>
 
-    </div>
+        <div class="profile-extras">
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">Add Note</h3></div>
+                <div class="card-body">
+                    <textarea id="customer_note_content" placeholder="Add a note..."></textarea>
+                    <button type="button" class="submit-btn" onclick="submitCustomerNote('{{ customer.uuid }}')">Add Note</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body">
+                    {% if customer.get('crm_worknotes') %}
+                        <ul class="notes-list">
+                            {% for note in customer.crm_worknotes %}
+                            <li>
+                                <div class="note-meta">{{ note.get('created_by', 'Unknown') }} &middot; {{ note.get('date', '') }}</div>
+                                {{ note.get('note', '') }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted text-muted--flush">No notes on file.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <p class="footer-text">©2025 GoobyDesk, FOSS created by GoobyFRS | Logged In as: {{ loggedInTech }} |
+            <br>
+            <a href="{{ url_for('itsm.dashboard') }}">Queues</a> | <a href="{{ url_for('changes_module.changes_home') }}">Changes</a> | <a href="{{ url_for('crm_module.crm_dashboard') }}">CRM</a> | <a href="{{ url_for('hr_module.hr_dashboard') }}">HR</a> | <a href="{{ url_for('serviceid_module.serviceid_dashboard') }}">ServiceID</a> | <a href="{{ url_for('reports_module.reports_home') }}">Reports</a>
+        </p>
+</div>
 </body>
 </html>

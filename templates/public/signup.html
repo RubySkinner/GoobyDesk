@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <link rel="icon" type="image/x-icon" href="static/img/favicon.ico"/>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='img/favicon.ico') }}"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="author" content="Matt Faulkner">
     <meta name="description" content="GoobyDesk New User Signup">
@@ -22,7 +22,7 @@
 <body>
     <main class="container">
         <div class="logo">
-            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="GoobyDesk logo">
+            <img src="{{ url_for('static', filename='/img/logo_color.webp') }}" alt="GoobyDesk Logo">
         </div>
 
         <h2>Create your account</h2>
@@ -65,37 +65,16 @@
                 aria-required="true">
 
             <label for="email">Email address</label>
-            <input
-                type="email"
-                id="email"
-                name="email"
-                autocomplete="email"
-                required
-                aria-required="true">
+            <input type="email" id="email" name="requestor_email" placeholder="richard.hammond@example.com" title="" minlength="6" maxlength="48" autocomplete="email" pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}" required>
 
             <label for="password">Password</label>
-            <input
-                type="password"
-                id="password"
-                name="password"
-                autocomplete="new-password"
-                minlength="8"
-                required
-                aria-required="true"
-                aria-describedby="password_help">
+            <input type="password" id="password" name="password" autocomplete="new-password" minlength="8" required aria-required="true" aria-describedby="password_help">
             <span id="password_help" class="footer-text form-help">
                 At least 8 characters.
             </span>
 
             <label for="confirm_password">Confirm password</label>
-            <input
-                type="password"
-                id="confirm_password"
-                name="confirm_password"
-                autocomplete="new-password"
-                minlength="8"
-                required
-                aria-required="true">
+            <input type="password" id="confirm_password" name="confirm_password" autocomplete="new-password" minlength="8" required aria-required="true">
 
             {% if sitekey %}
             <div class="cf-turnstile" data-sitekey="{{ sitekey }}"></div>
@@ -105,7 +84,7 @@
         </form>
 
         <p class="footer-text">
-            Already have an account? <a href="{{ url_for('login') }}">Log in</a>
+            Already have an account? <a href="{{ url_for('login') }}">Login</a>
         </p>
     </main>
 
