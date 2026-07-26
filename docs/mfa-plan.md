@@ -12,7 +12,7 @@ Recommended first implementation: app-based TOTP plus one-time recovery codes.
 - Works with the current JSON-file storage model.
 - Can be implemented with Python standard library helpers plus existing bcrypt password hashing.
 - Authenticator apps are common and easy for small teams to adopt.
-- Better security than email-only codes because email compromise should not also bypass login MFA.
+- Better security than email-only codes because a mailbox compromise alone does not also bypass login MFA.
 
 ## Why not start with other options
 
@@ -265,7 +265,9 @@ Because this secret is sensitive:
 - ensure deployment guidance uses restrictive filesystem permissions
 - never log the secret or recovery codes
 
-If deployment-side encryption exists first, that can reduce exposure, but app-level secret encryption is still the better target because it keeps a leaked JSON file from becoming an MFA bypass artifact.
+Deployment-side encryption can reduce exposure.
+
+However, app-level secret encryption is still the better target because it keeps a leaked JSON file from becoming an MFA bypass artifact.
 
 ### Recovery codes
 
