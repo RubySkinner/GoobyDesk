@@ -288,12 +288,9 @@ def edit_customer(uuid):
     form = {key: value for key, value in request.form.items()}
     ok, _missing = require_fields(form, ["first_name", "last_name", "email"])
     if not ok or not is_valid_email(form.get("email")):
-        return render_template(
-            "crm/submit_new.html",
-            customer=customer,
+        return render_template("crm/submit_new.html",customer=customer,
             error="First Name, Last Name, and a valid Email are required.",
-            loggedInTech=resolve_preferred_name(session.get("technician")),
-        ), 400
+            loggedInTech=resolve_preferred_name(session.get("technician")),), 400
 
     # Apply updates
     _update_customer_record(customer, form)

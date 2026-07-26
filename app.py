@@ -354,6 +354,9 @@ def login():
     GET: render login page.
     """
     if request.method == "POST":
+        # Verify CAPTCHA early and block login attempts when it fails
+        if not _verify_turnstile():
+            return render_template("public/login.html", sitekey=CF_TURNSTILE_SITE_KEY)
         username = request.form.get("tech_username_box", "").strip()
         password = request.form.get("tech_password_box", "")
         employees = load_employees()
