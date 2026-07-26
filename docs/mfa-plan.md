@@ -72,7 +72,7 @@ This means MFA can fit the current model cleanly.
 
 ### Important gap already visible
 
-`templates/public/login.html` renders a Cloudflare Turnstile widget, but the `/login` POST handler in `app.py` does not currently call `_verify_turnstile()`.
+`templates/public/login.html` renders a Cloudflare Turnstile widget, but the `/login` POST handler in `app.py` does not currently call the existing `_verify_turnstile()` helper from that same file.
 
 That is separate from MFA, but it should be fixed while implementing the login flow changes because the UI already implies CAPTCHA protection.
 
@@ -103,7 +103,7 @@ Prefer the auth JSON record as the source of truth.
 Suggested new fields in the auth record:
 
 - `mfa_enabled`: boolean
-- `mfa_secret_encrypted`: encrypted TOTP secret
+- `mfa_secret_encrypted`: encrypted TOTP secret stored at rest in encrypted form; see the security section below
 - `mfa_enrolled_at`: timestamp
 - `mfa_recovery_codes`: list of objects containing a bcrypt hash plus `used_at`
 - `mfa_last_used_at`: timestamp or null
@@ -265,9 +265,9 @@ Because this secret is sensitive:
 - ensure deployment guidance uses restrictive filesystem permissions
 - never log the secret or recovery codes
 
-Deployment-side encryption can reduce exposure.
+App-level secret encryption should be the implemented approach for the MFA seed.
 
-However, app-level secret encryption is still the better target because it keeps a leaked JSON file from becoming an MFA bypass artifact.
+Deployment-side encryption should be treated as additional hardening, not a replacement, because a leaked JSON file should not by itself become an MFA bypass artifact.
 
 ### Recovery codes
 
