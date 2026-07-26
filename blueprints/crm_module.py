@@ -8,6 +8,7 @@ from datetime import datetime
 from functools import wraps
 
 from flask import Blueprint, render_template, request, redirect, url_for, session, Response, current_app, flash
+from markupsafe import escape
 from local_handlers.utils import resolve_preferred_name
 from local_handlers.auth_decorators import role_required, ROLE_ITSM_TECH
 from storage.crm_store import CrmStore
@@ -267,7 +268,10 @@ def add_customer_note(uuid):
         return ("Customer not found.", 404)
 
     save_customers_file(customers)
-    return ({"message": "Note added successfully.", "note": note_record}, 200)
+    # Return an escaped copy of the note to avoid reflecting raw user input
+    response_note = dict(note_record)
+    response_note["note"] = escape(response_note.get("note", ""))
+    return ({"message": "Note added successfully.", "note": response_note}, 200)
 
 @crm_module_bp.route("/customer/<uuid>/edit", methods=["GET", "POST"])
 @role_required(ROLE_ITSM_TECH)
