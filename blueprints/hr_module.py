@@ -550,11 +550,14 @@ def new_employee():
             hr_store.save_all(employees)
             return render_template("hr/submit_new.html", error="Employee created, but login provisioning failed.", loggedInTech=resolve_preferred_name(session.get("technician"))), 500
 
-    flash(f"Employee {employee_id} created.", "success")
+    if temporary_password is not None:
+        flash(f"Temporary password: {temporary_password}", "success")
+    else:
+        flash(f"Employee {employee_id} created.", "success")
+
     return render_template(
         "hr/profile.html",
         employee=new_record,
-        reset_password=temporary_password,
         loggedInTech=resolve_preferred_name(session.get("technician")),
     )
 

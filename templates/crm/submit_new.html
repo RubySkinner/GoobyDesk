@@ -235,23 +235,31 @@
             <textarea id="crm_worknotes" name="crm_worknotes" placeholder="Optional note about this customer..."></textarea>
 
             <div class="checkbox-row">
-                <input type="checkbox" id="vip" name="vip" {% if customer and customer.get('vip') %}checked{% endif %}>
-                <label for="vip">VIP Customer</label>
+                <label class="checkbox-label" for="vip">
+                    <input type="checkbox" id="vip" name="vip" {% if customer and customer.get('vip') %}checked{% endif %}>
+                    VIP Customer
+                </label>
             </div>
 
             <div class="checkbox-row">
-                <input type="checkbox" id="content_creator" name="content_creator" {% if customer and customer.get('content_creator') %}checked{% endif %}>
-                <label for="content_creator">Content Creator</label>
+                <label class="checkbox-label" for="content_creator">
+                    <input type="checkbox" id="content_creator" name="content_creator" {% if customer and customer.get('content_creator') %}checked{% endif %}>
+                    Content Creator
+                </label>
             </div>
 
             <div class="checkbox-row">
-                <input type="checkbox" id="marketing_opt_in" name="marketing_opt_in" {% if customer and customer.get('marketing_opt_in') %}checked{% endif %}>
-                <label for="marketing_opt_in">Marketing Opt-In</label>
+                <label class="checkbox-label" for="marketing_opt_in">
+                    <input type="checkbox" id="marketing_opt_in" name="marketing_opt_in" {% if customer and customer.get('marketing_opt_in') %}checked{% endif %}>
+                    Marketing Opt-In
+                </label>
             </div>
 
             <div class="checkbox-row">
-                <input type="checkbox" id="maintenance_notifications" name="maintenance_notifications" {% if not customer or customer.get('maintenance_notifications') %}checked{% endif %}>
-                <label for="maintenance_notifications">Maintenance Notifications</label>
+                <label class="checkbox-label" for="maintenance_notifications">
+                    <input type="checkbox" id="maintenance_notifications" name="maintenance_notifications" {% if not customer or customer.get('maintenance_notifications') %}checked{% endif %}>
+                    Maintenance Notifications
+                </label>
             </div>
 
             <button type="submit" class="submit-btn">{% if customer %}Save Changes{% else %}Create Customer{% endif %}</button>
