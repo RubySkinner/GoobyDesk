@@ -1,5 +1,5 @@
 {% macro format_label(value) -%}
-    {%- set raw = value | replace('_', ' ') | replace('-', ' ') -%}
+    {%- set raw = value | replace('_', ' ') | replace('-', ' ') | trim -%}
     {%- set upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' -%}
     {%- set lower = 'abcdefghijklmnopqrstuvwxyz' -%}
     {%- set normalized = '' -%}
@@ -12,7 +12,21 @@
         {%- endif -%}
         {%- set previous = ch -%}
     {%- endfor -%}
-    {%- set words = normalized | trim | split(' ') -%}
+    {%- set words = [] -%}
+    {%- set current = '' -%}
+    {%- for ch in normalized -%}
+        {%- if ch == ' ' -%}
+            {%- if current -%}
+                {%- set words = words + [current] -%}
+                {%- set current = '' -%}
+            {%- endif -%}
+        {%- else -%}
+            {%- set current = current + ch -%}
+        {%- endif -%}
+    {%- endfor -%}
+    {%- if current -%}
+        {%- set words = words + [current] -%}
+    {%- endif -%}
     {%- for w in words -%}
         {%- set lw = w.lower() -%}
         {%- if lw in ['mfa', 'hr', 'ip', 'api', 'crm', 'id', 'pto'] -%}
