@@ -72,9 +72,10 @@
                 <option value="Access">Access</option>
             </select>
             <br><br>
-            <div class="cf-turnstile" data-sitekey="{{ sitekey }}" data-theme="light"></div>
-
-            <button type="submit" class="submit-btn">Submit Ticket</button>
+            <div class="index-actions">
+              <div class="cf-turnstile" data-sitekey="{{ sitekey }}" data-theme="light"></div>
+              <button type="submit" class="submit-btn index-btn">Submit Ticket</button>
+            </div>
         </form>
         {% with messages = get_flashed_messages(with_categories=True) %}
           {% if messages %}
