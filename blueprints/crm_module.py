@@ -51,14 +51,12 @@ def generate_customer_id(customers):
     store = _get_crm_store()
     return store.next_customer_id(customers)
 
-
 def _find_customer_by_uuid(customers: list, customer_uuid: str):
     """Find a customer by `uuid` in the provided list, or None."""
     for cust in customers:
         if cust.get("uuid") == customer_uuid:
             return cust
     return None
-
 
 def _clean_form_value(form: dict, field_name: str):
     """Trim and return a form value, or None if empty/missing."""
@@ -67,7 +65,6 @@ def _clean_form_value(form: dict, field_name: str):
         return None
     cleaned = raw_value.strip()
     return cleaned or None
-
 
 def _update_customer_record(customer: dict, form: dict) -> None:
     """Apply cleaned form values onto an existing customer record in-place."""
@@ -102,6 +99,54 @@ def _update_customer_record(customer: dict, form: dict) -> None:
     audit["last_modified"] = now
     audit["last_modified_by"] = session.get("technician")
     customer["updated"] = now
+
+    # Optional advanced fields
+    # Company / Job title
+    customer["company"] = _clean_form_value(form, "company") or customer.get("company")
+    customer["job_title"] = _clean_form_value(form, "job_title") or customer.get("job_title")
+
+    # Address fields
+    address = customer.setdefault("address", {})
+    address["street"] = _clean_form_value(form, "street") or address.get("street")
+    address["city"] = _clean_form_value(form, "city") or address.get("city")
+    address["state"] = _clean_form_value(form, "state") or address.get("state")
+    address["postal_code"] = _clean_form_value(form, "postal_code") or address.get("postal_code")
+
+    # Account flags
+    customer["email_verified"] = True if form.get("email_verified") else False
+    customer["account_locked"] = True if form.get("account_locked") else False
+    customer["mfa_enabled"] = True if form.get("mfa_enabled") else False
+
+    # Financial / billing
+    lv = _clean_form_value(form, "lifetime_value")
+    try:
+        customer["lifetime_value"] = float(lv) if lv is not None else customer.get("lifetime_value", 0.0)
+    except ValueError:
+        # keep existing on parse error
+        pass
+    customer["billing_currency"] = _clean_form_value(form, "billing_currency") or customer.get("billing_currency")
+
+    # Assigned manager
+    customer["assigned_account_manager"] = _clean_form_value(form, "assigned_account_manager") or customer.get("assigned_account_manager")
+
+    # Lists: services and account tags (comma-separated input)
+    services_val = _clean_form_value(form, "services")
+    if services_val is not None:
+        customer["services"] = [s.strip() for s in services_val.split(",") if s.strip()]
+
+    tags_val = _clean_form_value(form, "account_tags")
+    if tags_val is not None:
+        customer["account_tags"] = [t.strip() for t in tags_val.split(",") if t.strip()]
+
+    # Support contract
+    support_enabled = True if form.get("support_enabled") else False
+    support_sla = _clean_form_value(form, "support_sla")
+    support_expires = _clean_form_value(form, "support_expires")
+    customer["support_contract"] = {
+        "enabled": support_enabled,
+        "sla": support_sla or customer.get("support_contract", {}).get("sla"),
+        "expires": support_expires or customer.get("support_contract", {}).get("expires"),
+    }
 
 # Dashboard Route
 @crm_module_bp.route("/", methods=["GET"])
@@ -158,6 +203,9 @@ def new_customer():
         },
     }
 
+    # Apply any additional fields present on the creation form
+    _update_customer_record(new_customer_record, form)
+
     initial_note = form.get("crm_worknotes", "").strip()
     if initial_note:
         new_customer_record["crm_worknotes"].append({
@@ -183,7 +231,6 @@ def customer_profile(uuid):
     if not customer:
         return render_template("errors/404.html"), 404
     return render_template("crm/profile.html", customer=customer, loggedInTech=session.get("technician"))
-
 
 @crm_module_bp.route("/customer/<uuid>/append_note", methods=["POST"])
 @role_required(ROLE_ITSM_TECH)
@@ -213,7 +260,6 @@ def add_customer_note(uuid):
 
     save_customers_file(customers)
     return ({"message": "Note added successfully.", "note": note_record}, 200)
-
 
 @crm_module_bp.route("/customer/<uuid>/edit", methods=["GET", "POST"])
 @role_required(ROLE_ITSM_TECH)

@@ -50,6 +50,17 @@
 
             <div class="form-row">
                 <div>
+                    <label for="company">Company</label>
+                    <input type="text" id="company" name="company" value="{{ customer.get('company','') if customer else '' }}">
+                </div>
+                <div>
+                    <label for="job_title">Job Title</label>
+                    <input type="text" id="job_title" name="job_title" value="{{ customer.get('job_title','') if customer else '' }}">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
                     <label for="phone">Phone</label>
                     <input type="tel" id="phone" name="phone" value="{{ customer.get('phone','') if customer else '' }}">
                 </div>
@@ -109,6 +120,99 @@
                         <option value="phone" {% if customer and customer.get('preferred_contact') == 'phone' %}selected{% endif %}>Text Message</option>
                         <option value="discord" {% if customer and customer.get('preferred_contact') == 'discord' %}selected{% endif %}>Discord</option>
                     </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="street">Street</label>
+                    <input type="text" id="street" name="street" value="{{ customer.get('address', {}).get('street','') if customer else '' }}">
+                </div>
+                <div>
+                    <label for="city">City</label>
+                    <input type="text" id="city" name="city" value="{{ customer.get('address', {}).get('city','') if customer else '' }}">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="state">State / Province</label>
+                    <input type="text" id="state" name="state" value="{{ customer.get('address', {}).get('state','') if customer else '' }}">
+                </div>
+                <div>
+                    <label for="postal_code">Postal Code</label>
+                    <input type="text" id="postal_code" name="postal_code" value="{{ customer.get('address', {}).get('postal_code','') if customer else '' }}">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="assigned_account_manager">Assigned Manager</label>
+                    <input type="text" id="assigned_account_manager" name="assigned_account_manager" value="{{ customer.get('assigned_account_manager','') if customer else '' }}">
+                </div>
+                <div>
+                    <label for="billing_currency">Billing Currency</label>
+                    <input type="text" id="billing_currency" name="billing_currency" value="{{ customer.get('billing_currency','USD') if customer else 'USD' }}">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="lifetime_value">Lifetime Value</label>
+                    <input type="number" step="0.01" id="lifetime_value" name="lifetime_value" value="{{ customer.get('lifetime_value','') if customer else '' }}">
+                </div>
+                <div>
+                    <label for="account_tier">Account Tier</label>
+                    <input type="text" id="account_tier" name="account_tier" value="{{ customer.get('account_tier','basic') if customer else 'basic' }}">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="customer_type">Customer Type</label>
+                    <input type="text" id="customer_type" name="customer_type" value="{{ customer.get('customer_type','individual') if customer else 'individual' }}">
+                </div>
+                <div>
+                    <label for="risk_level">Risk Level</label>
+                    <select id="risk_level" name="risk_level">
+                        <option value="low" {% if not customer or customer.get('risk_level') == 'low' %}selected{% endif %}>Low</option>
+                        <option value="medium" {% if customer and customer.get('risk_level') == 'medium' %}selected{% endif %}>Medium</option>
+                        <option value="high" {% if customer and customer.get('risk_level') == 'high' %}selected{% endif %}>High</option>
+                        <option value="none" {% if customer and customer.get('risk_level') == 'none' %}selected{% endif %}>None</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="services">Services (comma-separated)</label>
+                    <input type="text" id="services" name="services" value="{{ customer.get('services') | join(', ') if customer and customer.get('services') else '' }}">
+                </div>
+                <div>
+                    <label for="account_tags">Account Tags (comma-separated)</label>
+                    <input type="text" id="account_tags" name="account_tags" value="{{ customer.get('account_tags') | join(', ') if customer and customer.get('account_tags') else '' }}">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="support_enabled">Support Contract Enabled</label>
+                    <input type="checkbox" id="support_enabled" name="support_enabled" {% if customer and customer.get('support_contract', {}).get('enabled') %}checked{% endif %}>
+                </div>
+                <div>
+                    <label for="support_sla">Support SLA</label>
+                    <input type="text" id="support_sla" name="support_sla" value="{{ customer.get('support_contract', {}).get('sla','') if customer else '' }}">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div>
+                    <label for="support_expires">Support Expires</label>
+                    <input type="date" id="support_expires" name="support_expires" value="{{ customer.get('support_contract', {}).get('expires','') if customer else '' }}">
+                </div>
+                <div>
+                    <label for="status_reason">Status Reason</label>
+                    <input type="text" id="status_reason" name="status_reason" value="{{ customer.get('status_reason','') if customer else '' }}">
                 </div>
             </div>
 
