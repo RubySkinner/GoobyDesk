@@ -1,26 +1,15 @@
 [
     {
-        "tech_username": "demouser",
-        "tech_authcode": "NoPassword123",
-        "role": "itsm_technician",
-        "roles": ["itsm_technician"]
-    },
-    {
-        "tech_username": "hruser",
-        "tech_authcode": "HRpass123",
-        "role": "hr_technician",
-        "roles": ["hr_technician"]
-    },
-    {
-        "tech_username": "manageruser",
-        "tech_authcode": "ManagerPass!",
-        "role": "manager",
-        "roles": ["manager"]
-    },
-    {
-        "tech_username": "adminuser",
-        "tech_authcode": "Admin123!",
+        "uuid": "10cbe068-11da-4c77-ac13-b37aff9a9f55",
+        "tech_username": "admin0",
+        "password_hash": "$2b$12$4Ep0u/AzqwpwHJUfsOMmue/0tlKokEA0zFv3XMPId8NfXoWSU5PkO",
+        "roles": [
+            "admin"
+        ],
         "role": "admin",
-        "roles": ["admin"]
+        "account_locked": false,
+        "must_change_password": false,
+        "created": "2026-07-26T12:41:47Z",
+        "updated": "2026-07-26T12:41:47Z"
     }
 ]
