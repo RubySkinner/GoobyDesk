@@ -710,11 +710,18 @@ a:hover {
     margin: 0;
 }
 
+.profile-field-list > dd {
+    justify-self: start;
+}
+
 .profile-nested-list {
     display: grid;
     grid-template-columns: minmax(120px, 180px) 1fr;
     gap: 0.4rem 0.75rem;
     margin: 0;
+    width: 100%;
+    justify-self: start;
+    text-align: left;
 }
 
 .profile-value-list {
