@@ -7,8 +7,9 @@
 
 ### Small Fixes
 
-- ITSM Ticket Notes display long json
-- No option to add a customer note on a customer profile page
-- No option to add an employee note on an employee profile page.
 - ServiceID module has no function.
 - Change Managaement workflow does not exisit.
+- CRM Profile Phone text box should have a placeholder.
+- Customer Type should be a drop-down. Individual, Company, Other
+- Customer Billing Currency should be a drop-down. USD, CAN, Other
+- Customer Account Tier should be a drop-down. Basic, Standard, Premium, None, Other

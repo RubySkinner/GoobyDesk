@@ -62,7 +62,7 @@
             <div class="form-row">
                 <div>
                     <label for="phone">Phone</label>
-                    <input type="tel" id="phone" name="phone" value="{{ customer.get('phone','') if customer else '' }}">
+                    <input type="tel" id="phone" name="phone" value="{{ customer.get('phone','') if customer else '' }}" placeholder="+1 555 555 5555">
                 </div>
             </div>
 
@@ -152,7 +152,11 @@
                 </div>
                 <div>
                     <label for="billing_currency">Billing Currency</label>
-                    <input type="text" id="billing_currency" name="billing_currency" value="{{ customer.get('billing_currency','USD') if customer else 'USD' }}">
+                    <select id="billing_currency" name="billing_currency">
+                        <option value="USD" {% if not customer or customer.get('billing_currency') == 'USD' %}selected{% endif %}>USD</option>
+                        <option value="CAN" {% if customer and customer.get('billing_currency') == 'CAN' %}selected{% endif %}>CAN</option>
+                        <option value="other" {% if customer and customer.get('billing_currency') not in ['USD','CAN'] %}selected{% endif %}>Other</option>
+                    </select>
                 </div>
             </div>
 
@@ -163,14 +167,24 @@
                 </div>
                 <div>
                     <label for="account_tier">Account Tier</label>
-                    <input type="text" id="account_tier" name="account_tier" value="{{ customer.get('account_tier','basic') if customer else 'basic' }}">
+                    <select id="account_tier" name="account_tier">
+                        <option value="basic" {% if not customer or customer.get('account_tier') == 'basic' %}selected{% endif %}>Basic</option>
+                        <option value="standard" {% if customer and customer.get('account_tier') == 'standard' %}selected{% endif %}>Standard</option>
+                        <option value="premium" {% if customer and customer.get('account_tier') == 'premium' %}selected{% endif %}>Premium</option>
+                        <option value="none" {% if customer and customer.get('account_tier') == 'none' %}selected{% endif %}>None</option>
+                        <option value="other" {% if customer and customer.get('account_tier') not in ['basic','standard','premium','none'] %}selected{% endif %}>Other</option>
+                    </select>
                 </div>
             </div>
 
             <div class="form-row">
                 <div>
                     <label for="customer_type">Customer Type</label>
-                    <input type="text" id="customer_type" name="customer_type" value="{{ customer.get('customer_type','individual') if customer else 'individual' }}">
+                    <select id="customer_type" name="customer_type">
+                        <option value="individual" {% if not customer or customer.get('customer_type') == 'individual' %}selected{% endif %}>Individual</option>
+                        <option value="company" {% if customer and customer.get('customer_type') == 'company' %}selected{% endif %}>Company</option>
+                        <option value="other" {% if customer and customer.get('customer_type') not in ['individual','company'] %}selected{% endif %}>Other</option>
+                    </select>
                 </div>
                 <div>
                     <label for="risk_level">Risk Level</label>

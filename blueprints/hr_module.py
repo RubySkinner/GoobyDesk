@@ -253,8 +253,8 @@ def _pseudonymize_actor(name: str) -> str:
     if not name:
         return "actor_unknown"
     salt = os.getenv("LOG_SALT", "")
-    h = hashlib.sha256((str(name) + salt).encode()).hexdigest()[:8]
-    return f"actor_{h}"
+    short_hash = hashlib.sha256((str(name) + salt).encode()).hexdigest()[:8]
+    return f"actor_{short_hash}"
 # Dashboard Route
 @hr_module_bp.route("/", methods=["GET"])
 @role_required(ROLE_HR_TECH)
@@ -302,15 +302,11 @@ def edit_employee(uuid: str):
     if request.method == "GET":
         return render_template("hr/submit_new.html", employee=employee, loggedInTech=session.get("technician"))
 
-    form = {k: v for k, v in request.form.items()}
+    form = {key: value for key, value in request.form.items()}
     ok, _missing = require_fields(form, ["first_name", "last_name", "email"])
     if not ok or not is_valid_email(form.get("email")):
-        return render_template(
-            "hr/submit_new.html",
-            employee=employee,
-            error="First Name, Last Name, and a valid Email are required.",
-            loggedInTech=session.get("technician"),
-        ), 400
+        return render_template("hr/submit_new.html",employee=employee, error="First Name, Last Name, and a valid Email are required.",
+            loggedInTech=session.get("technician"),), 400
 
     _update_employee_record(employee, form)
     store.save_all(employees)
@@ -323,7 +319,7 @@ def reset_employee_password(uuid: str):
     """Admin action: reset an employee's password and return the new password once."""
     store = _get_employee_store()
     employees = store.load_all()
-    employee = next((e for e in employees if e.get("uuid") == uuid), None)
+    employee = next((emp for emp in employees if emp.get("uuid") == uuid), None)
     if employee is None:
         return render_template("errors/404.html"), 404
 
@@ -342,13 +338,11 @@ def reset_employee_password(uuid: str):
     actor = _pseudonymize_actor(session.get("technician"))
     logging.warning(
         "HR MODULE - Password reset performed; actor=%s target_employee_id=%s",
-        actor, employee.get("employee_id")
-    )
+        actor, employee.get("employee_id"))
 
     # Show password once to admin via template variable and flash
     flash("Password reset successful - show it once below.", "success")
     return render_template("hr/profile.html", employee=employee, reset_password=new_password, loggedInTech=session.get("technician"))
-
 
 @hr_module_bp.route("/employee/<uuid>/append_note", methods=["POST"])
 @role_required(ROLE_HR_TECH)
@@ -371,10 +365,10 @@ def add_employee_note(uuid: str):
         "note": note_content,
     }
 
-    for e in employees:
-        if e.get("uuid") == uuid:
-            e.setdefault("hr_worknotes", [])
-            e["hr_worknotes"].append(note_record)
+    for emp in employees:
+        if emp.get("uuid") == uuid:
+            emp.setdefault("hr_worknotes", [])
+            emp["hr_worknotes"].append(note_record)
             found = True
             break
 
@@ -395,7 +389,7 @@ def new_employee():
     if request.method == "GET":
         return render_template("hr/submit_new.html")
 
-    form = {k: v for k, v in request.form.items()}
+    form = {key: value for key, value in request.form.items()}
     ok, _missing = require_fields(form, ["first_name", "last_name", "email"])
     if not ok or not is_valid_email(form.get("email")):
         return render_template("hr/submit_new.html",
@@ -412,9 +406,6 @@ def new_employee():
     store.save_all(employees)
     flash(f"Employee {employee_id} created.", "success")
     return redirect(url_for("hr_module.employee_profile", uuid=new_record["uuid"]))
-
-# Edit Employee Details Route
-# Implemented via edit_employee(uuid) using HrStore load/save.
 
 # Export Employee Data Route
 # TODO: implement export_employees() (CSV/JSON), technician_required.
