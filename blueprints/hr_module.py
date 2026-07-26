@@ -4,6 +4,7 @@ Provides the HR dashboard and its supporting employee-data helpers.
 """
 import logging
 import secrets
+import re
 import uuid
 import hashlib
 import os
@@ -17,6 +18,14 @@ from local_handlers.utils import hash_password
 from local_handlers.validation import is_valid_email, require_fields
 from storage.employee_store import EmployeeStore
 from storage.hr_store import HrStore
+
+AUTH_USERNAME_RE = re.compile(r"^[A-Za-z0-9_-]{3,32}$")
+HR_ROLE_MAP = {
+    "itsm_technician": {"roles": ["itsm_technician"], "tech_type": "Technician"},
+    "hr_technician": {"roles": ["hr_technician"], "tech_type": "HR"},
+    "manager": {"roles": ["manager"], "tech_type": "Manager"},
+    "admin": {"roles": ["admin"], "tech_type": "Admin"},
+}
 
 def _get_config():
     """Return loaded app config or fallback loader."""
@@ -84,6 +93,77 @@ def _build_employment_details(form: dict, created_date: str) -> dict:
         "pto_used_hours": 0,
     }
 
+def _normalize_username(username: str) -> str:
+    """Trim a login username before validation."""
+    return username.strip()
+
+def _validate_auth_username(username: str) -> None:
+    """Reject login usernames that do not match the allowed format."""
+    if not AUTH_USERNAME_RE.fullmatch(username):
+        raise ValueError("Login username must be 3-32 characters using letters, digits, '_' or '-'.")
+
+def _map_hr_role_to_auth_payload(role: str) -> tuple[list[str], str]:
+    """Map one HR role to auth-store roles and tech_type."""
+    normalized_role = (role or "").strip().lower()
+    mapped = HR_ROLE_MAP.get(normalized_role)
+    if mapped is None:
+        raise ValueError("Invalid access role selected.")
+    return mapped["roles"], mapped["tech_type"]
+
+def _find_auth_employee_by_uuid(employees: list[dict], employee_uuid: str) -> dict | None:
+    """Return the auth record that already points at this employee UUID."""
+    for employee in employees:
+        if employee.get("uuid") == employee_uuid:
+            return employee
+    return None
+
+def _find_auth_employee_by_username(employees: list[dict], username: str) -> dict | None:
+    """Return the auth record that already uses this username."""
+    lowered_username = username.lower()
+    for employee in employees:
+        if str(employee.get("tech_username", "")).lower() == lowered_username:
+            return employee
+    return None
+
+def _derive_auth_username(employee_id: str, override_username: str | None, auth_employees: list[dict]) -> str:
+    """Pick a unique login username for a new employee."""
+    candidate_username = _normalize_username(override_username or employee_id)
+    _validate_auth_username(candidate_username)
+    if _find_auth_employee_by_username(auth_employees, candidate_username) is not None:
+        raise ValueError("Login username already exists.")
+    return candidate_username
+
+def _build_employee_auth_record(employee_record: dict, auth_username: str, temporary_password: str) -> dict:
+    """Build the auth-store record for a newly created employee."""
+    auth_roles, tech_type = _map_hr_role_to_auth_payload(employee_record.get("access", {}).get("role", ""))
+    now = _build_timestamp()
+    return {
+        "uuid": employee_record["uuid"],
+        "tech_username": auth_username,
+        "password_hash": hash_password(temporary_password),
+        "roles": auth_roles,
+        "tech_type": tech_type,
+        "account_locked": False,
+        "must_change_password": False,
+        "created": now,
+        "updated": now,
+    }
+
+def _build_employee_access(form: dict, auth_username: str | None, create_login_access: bool) -> dict:
+    """Build the access block stored in the HR record."""
+    return {
+        "role": form.get("role") or "itsm_technician",
+        "assignment_queue": form.get("assignment_queue") or "support",
+        "account_locked": False,
+        "mfa_enabled": False,
+        "last_login": None,
+        "password_last_changed": None,
+        "failed_login_attempts": 0,
+        "login_enabled": create_login_access,
+        "auth_username": auth_username,
+        "provisioning_status": "pending" if create_login_access else "disabled",
+    }
+
 def _build_employee_record(form: dict, employees: list[dict]) -> tuple[dict, str]:
     now = _build_timestamp()
     current_year = datetime.now().year
@@ -110,15 +190,7 @@ def _build_employee_record(form: dict, employees: list[dict]) -> tuple[dict, str
         "timezone": form.get("timezone") or "UTC",
         "employment": _build_employment_details(form, now.split("T")[0]),
         "hr_worknotes": [],
-        "access": {
-            "role": form.get("role") or "itsm_technician",
-            "assignment_queue": form.get("assignment_queue") or "support",
-            "account_locked": False,
-            "mfa_enabled": False,
-            "last_login": None,
-            "password_last_changed": None,
-            "failed_login_attempts": 0,
-        },
+        "access": _build_employee_access(form, None, False),
         "applications": {},
         "contact_preferences": {
             "preferred_contact": "email",
@@ -200,6 +272,26 @@ def _update_employee_record(employee: dict, form: dict) -> None:
     equity_notes = _clean_form_value(form, "equity")
     employment["equity"] = {"notes": equity_notes} if equity_notes else {}
     employee["updated"] = now
+
+def _provision_employee_login_access(
+    employee_record: dict,
+    auth_employees: list[dict],
+    override_username: str | None,
+) -> tuple[dict, str]:
+    """Create the auth-store record and one-time password for an employee."""
+    if _find_auth_employee_by_uuid(auth_employees, employee_record["uuid"]) is not None:
+        raise ValueError("Auth record already exists for this employee.")
+    auth_username = _derive_auth_username(employee_record["employee_id"], override_username, auth_employees)
+    temporary_password = secrets.token_urlsafe(9)
+    auth_record = _build_employee_auth_record(employee_record, auth_username, temporary_password)
+
+    access_block = employee_record.setdefault("access", {})
+    access_block["auth_username"] = auth_username
+    access_block["login_enabled"] = True
+    access_block["provisioning_status"] = "pending"
+    access_block["account_locked"] = False
+
+    return auth_record, temporary_password
 
 hr_module_bp = Blueprint("hr_module", __name__, url_prefix="/hr")
 
@@ -405,17 +497,55 @@ def new_employee():
         return render_template("hr/submit_new.html",
             error="First Name, Last Name, and a valid Email are required.",), 400
 
-    employees = load_hr_employees()
+    create_login_access = request.form.get("create_login_access") == "on"
+    auth_username_override = _clean_form_value(form, "auth_username")
+
+    hr_store = _get_hr_store()
+    auth_store = _get_employee_store()
+
+    employees = hr_store.load_all()
+    auth_employees = auth_store.load_all()
     new_record, employee_id = _build_employee_record(form, employees)
+    temporary_password = None
+    auth_record = None
+
+    if create_login_access:
+        try:
+            auth_record, temporary_password = _provision_employee_login_access(
+                new_record,
+                auth_employees,
+                auth_username_override,
+            )
+        except ValueError as exc:
+            return render_template("hr/submit_new.html", error=str(exc)), 400
+    else:
+        new_record["access"]["login_enabled"] = False
+        new_record["access"]["provisioning_status"] = "disabled"
 
     # Persist
-    store = _get_hr_store()
     employees.append(new_record)
     _append_initial_compensation_history(new_record, form, new_record["created"])
+    hr_store.save_all(employees)
 
-    store.save_all(employees)
+    if auth_record is not None:
+        try:
+            auth_employees.append(auth_record)
+            auth_store.save_all(auth_employees)
+            new_record["access"]["provisioning_status"] = "complete"
+            hr_store.save_all(employees)
+        except Exception:
+            logging.exception("HR MODULE - Login provisioning failed; rolling back HR record.")
+            employees = [employee for employee in employees if employee.get("uuid") != new_record["uuid"]]
+            hr_store.save_all(employees)
+            return render_template("hr/submit_new.html", error="Employee created, but login provisioning failed."), 500
+
     flash(f"Employee {employee_id} created.", "success")
-    return redirect(url_for("hr_module.employee_profile", uuid=new_record["uuid"]))
+    return render_template(
+        "hr/profile.html",
+        employee=new_record,
+        reset_password=temporary_password,
+        loggedInTech=session.get("technician"),
+    )
 
 # Export Employee Data Route
 # TODO: implement export_employees() (CSV/JSON), technician_required.

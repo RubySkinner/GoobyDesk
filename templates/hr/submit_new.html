@@ -91,8 +91,25 @@
                         <option value="admin" {% if employee and employee.get('access', {}).get('role') == 'admin' %}selected{% endif %}>Administrator</option>
                     </select>
                 </div>
-                <div></div>
+                <div>
+                    <label for="auth_username">Login Username</label>
+                    <input type="text" id="auth_username" name="auth_username" value="{{ employee.get('access', {}).get('auth_username', '') if employee else '' }}" placeholder="Defaults to Employee ID">
+                </div>
             </div>
+
+            {% if not employee %}
+            <div class="form-row">
+                <div>
+                    <label>
+                        <input type="checkbox" id="create_login_access" name="create_login_access" checked>
+                        Create login access
+                    </label>
+                </div>
+                <div>
+                    <p class="text-muted text-muted--flush">Creates the auth record, password hash, and role mapping.</p>
+                </div>
+            </div>
+            {% endif %}
 
             <div class="form-row">
                 <div>

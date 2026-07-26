@@ -372,9 +372,13 @@ def login():
         password = request.form.get("tech_password_box", "")
         employees = load_employees()
         # Find user record first
-        user = next((e for e in employees if e.get("tech_username") == username), None)
+        user = next((e for e in employees if str(e.get("tech_username", "")).lower() == username.lower()), None)
         if user is None:
             logging.warning("Failed login attempt (user not found) actor=%s", _pseudonymize_actor(username))
+            return render_template("public/login.html", error="Invalid credentials.")
+
+        if user.get("account_locked") or user.get("login_enabled") is False:
+            logging.warning("Failed login attempt (account disabled) actor=%s", _pseudonymize_actor(username))
             return render_template("public/login.html", error="Invalid credentials.")
 
         # LEGACY PASSWORD AUTO-MIGRATION

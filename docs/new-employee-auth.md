@@ -68,9 +68,9 @@ Pick one rule and enforce uniqueness against `EmployeeStore`.
 
 Recommended order:
 
-1. Accept explicit username from HR form if present.
-2. Else derive from `employee_id`.
-3. Else derive from email local-part.
+1. Accept explicit username from HR form. Add this to the form.
+
+
 
 Best fit here: use `employee_id` for login username.
 

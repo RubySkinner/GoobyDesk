@@ -1,12 +1,20 @@
 {% macro format_label(value) -%}
-    {{ value | replace('_', ' ') | replace('-', ' ') | title }}
+    {%- set s = value | replace('_', ' ') | replace('-', ' ') -%}
+    {%- set parts = s.split() -%}
+    {%- for w in parts -%}
+        {%- if w.lower() in ['mfa', 'vip', 'ip', 'api', 'crm', 'hr', 'id'] -%}
+            {{ w.upper() }}{%- if not loop.last %} {{- "" -}}{% endif %}
+        {%- else -%}
+            {{ w.title() }}{%- if not loop.last %} {{- "" -}}{% endif %}
+        {%- endif -%}
+    {%- endfor -%}
 {%- endmacro %}
 
 {% macro render_value(value) -%}
     {% if value is mapping %}
         <div class="ticket-details">
-            {% for key, nested_value in value.items() %}
-                {% if key != 'crm_worknotes' and nested_value is not none %}
+                {% for key, nested_value in value.items() %}
+                {% if key not in ['crm_worknotes', 'job_title'] and nested_value is not none %}
                     <p><strong>{{ format_label(key) }}:</strong> {{ render_value(nested_value) }}</p>
                 {% endif %}
             {% endfor %}

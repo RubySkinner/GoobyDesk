@@ -119,6 +119,15 @@
                 </div>
             </div>
 
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">Login Access</h3></div>
+                <div class="card-body ticket-details">
+                    <p><strong>Login Enabled:</strong> {{ employee.get('access', {}).get('login_enabled', false) }}</p>
+                    <p><strong>Auth Username:</strong> {{ employee.get('access', {}).get('auth_username') or 'None' }}</p>
+                    <p><strong>Provisioning Status:</strong> {{ employee.get('access', {}).get('provisioning_status') or 'None' }}</p>
+                </div>
+            </div>
+
             {% if reset_password %}
                 <div class="card">
                     <div class="card-header"><h3 class="card-title">One-time Password</h3></div>
