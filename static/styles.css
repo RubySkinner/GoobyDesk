@@ -46,6 +46,7 @@
     margin-bottom: 2rem;
     flex-wrap: wrap;
     gap: 1rem;
+    text-align: left;
 }
 
 .page-header-actions {
@@ -231,7 +232,6 @@
 
 /* .container below has text-align:center for the centered marketing-page
    look elsewhere on the site. These dashboard pieces read better left-aligned. */
-.page-header,
 .stat-card,
 .card {
     text-align: left;
@@ -434,16 +434,17 @@ textarea {
    ========================================================== */
 
 .submit-btn,
-.addNote-btn {
+.addNote-btn,
+.status-btn,
+.close-tkt-btn {
     width: 100%;
 
     margin-top: 15px;
     padding: 10px;
 
-    background: var(--primary);
     color: white;
 
-    border: 1px solid var(--primary);
+    border: 1px solid transparent;
     border-radius: 6px;
 
     font-size: 16px;
@@ -452,6 +453,12 @@ textarea {
     cursor: pointer;
 
     transition: .2s;
+}
+
+.submit-btn,
+.addNote-btn {
+    background: var(--primary);
+    border-color: var(--primary);
 }
 
 .submit-btn:hover,
@@ -460,24 +467,14 @@ textarea {
     border-color: var(--primary-hover);
 }
 
-.status-btn {
+.status-btn,
+.close-tkt-btn {
     width: 48%;
+}
 
-    margin-top: 15px;
-    padding: 10px;
-
+.status-btn {
     background: var(--success);
-    color: white;
-
-    border: 1px solid var(--success);
-    border-radius: 6px;
-
-    font-size: 16px;
-    font-weight: 500;
-
-    cursor: pointer;
-
-    transition: .2s;
+    border-color: var(--success);
 }
 
 .status-btn:hover {
@@ -485,23 +482,8 @@ textarea {
 }
 
 .close-tkt-btn {
-    width: 48%;
-
-    margin-top: 15px;
-    padding: 10px;
-
     background: var(--danger);
-    color: white;
-
-    border: 1px solid var(--danger);
-    border-radius: 6px;
-
-    font-size: 16px;
-    font-weight: 500;
-
-    cursor: pointer;
-
-    transition: .2s;
+    border-color: var(--danger);
 }
 
 .close-tkt-btn:hover {
@@ -518,10 +500,17 @@ textarea {
     margin-top: 15px;
     padding: 10px;
 
-    background: var(--alert);
-    color: white;
+    background: var(--panel-alt);
+    color: var(--text);
 
     border-radius: 6px;
+    border: 1px solid var(--border);
+}
+
+.alert--danger {
+    background: var(--danger);
+    border-color: var(--danger);
+    color: white;
 }
 
 /* ==========================================================
