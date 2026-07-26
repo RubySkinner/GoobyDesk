@@ -19,23 +19,28 @@ from storage.employee_store import EmployeeStore
 from storage.hr_store import HrStore
 
 def _get_config():
+    """Return loaded app config or fallback loader."""
     cfg = current_app.config.get("LOADED_CONFIG")
     if cfg is None:
         cfg = load_core_config()
     return cfg
 
 def _get_hr_store():
+    """Return an HrStore instance from loaded config."""
     cfg = _get_config()
     return HrStore(cfg["core"]["hr_file"])
 
 def _get_employee_store():
+    """Return an EmployeeStore instance from loaded config."""
     cfg = _get_config()
     return EmployeeStore(cfg["core"]["employee_auth_file"])
 
 def _build_timestamp() -> str:
+    """Return current UTC timestamp in ISO-like format."""
     return datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
 
 def _next_employee_sequence(employees: list[dict], year: int) -> int:
+    """Compute next employee sequence number for given year."""
     existing_ids = [
         employee.get("employee_id", "")
         for employee in employees
@@ -53,6 +58,7 @@ def _next_employee_sequence(employees: list[dict], year: int) -> int:
     return max(sequence_numbers) + 1
 
 def _build_employment_details(form: dict, created_date: str) -> dict:
+    """Construct the employment details sub-dictionary for an employee."""
     return {
         "hire_date": created_date,
         "termination_date": None,
@@ -127,6 +133,7 @@ def _build_employee_record(form: dict, employees: list[dict]) -> tuple[dict, str
     return new_record, employee_id
 
 def _append_initial_compensation_history(employee_record: dict, form: dict, created_at: str) -> None:
+    """Append initial compensation notes (bonus/raise) to employee record."""
     created_date = created_at.split("T")[0]
     initial_bonus = form.get("initial_bonus")
     if initial_bonus:
@@ -140,12 +147,14 @@ def _append_initial_compensation_history(employee_record: dict, form: dict, crea
             {"date": created_date, "note": initial_raise})
 
 def _find_employee_by_uuid(employees: list[dict], employee_uuid: str) -> dict | None:
+    """Find and return an employee record by its UUID, or None."""
     for employee in employees:
         if employee.get("uuid") == employee_uuid:
             return employee
     return None
 
 def _clean_form_value(form: dict, field_name: str) -> str | None:
+    """Trim a string form value and return None if empty/missing."""
     value = form.get(field_name)
     if value is None:
         return None
@@ -153,6 +162,7 @@ def _clean_form_value(form: dict, field_name: str) -> str | None:
     return cleaned or None
 
 def _update_employee_record(employee: dict, form: dict) -> None:
+    """Apply cleaned form values to an employee record in-place."""
     now = _build_timestamp()
     address = employee.setdefault("address", {})
     employment = employee.setdefault("employment", {})

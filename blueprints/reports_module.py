@@ -8,6 +8,7 @@ from flask import current_app
 from storage.ticket_store import TicketStore
 
 def _get_config():
+    """Return loaded app config or fallback loader."""
     cfg = current_app.config.get("LOADED_CONFIG")
     if cfg is None:
         from local_handlers.local_config_loader import load_core_config
@@ -15,6 +16,7 @@ def _get_config():
     return cfg
 
 def _get_reports_store():
+    """Return a TicketStore for reports using loaded config."""
     cfg = _get_config()
     return TicketStore(cfg["core"]["tickets_file"])
 
@@ -23,6 +25,7 @@ reports_module_bp = Blueprint('reports_module', __name__, url_prefix='/reports')
 @reports_module_bp.route("/dashboard", methods=["GET"])
 @role_required("*")
 def reports_home():
+    """Render reports dashboard with ticket aggregates."""
     from app import load_tickets
     
     tickets = load_tickets()
@@ -77,6 +80,7 @@ def reports_home():
 @reports_module_bp.route("/export/csv", endpoint='export_tickets_csv')
 @role_required("*")
 def export_tickets_csv():
+    """Export basic ticket list as CSV for download."""
     from app import load_tickets
     
     tickets = load_tickets()

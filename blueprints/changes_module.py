@@ -14,6 +14,7 @@ from storage.changes_store import ChangesStore
 changes_module_bp = Blueprint("changes_module", __name__, url_prefix="/changes")
 
 def _get_config():
+    """Return loaded app config or fallback loader."""
     cfg = current_app.config.get("LOADED_CONFIG")
     if cfg is None:
         from local_handlers.local_config_loader import load_core_config
@@ -21,6 +22,7 @@ def _get_config():
     return cfg
 
 def _get_changes_store():
+    """Return a ChangesStore instance from loaded config."""
     cfg = _get_config()
     return ChangesStore(cfg["core"]["changes_file"])
 
@@ -42,10 +44,11 @@ def _pseudonymize_actor(name: str) -> str:
     if not name:
         return "actor_unknown"
     salt = os.getenv("LOG_SALT", "")
-    h = hashlib.sha256((str(name) + salt).encode()).hexdigest()[:8]
-    return f"actor_{h}"
+    short_hash = hashlib.sha256((str(name) + salt).encode()).hexdigest()[:8]
+    return f"actor_{short_hash}"
 
 def _parse_datetime_local(value: str) -> str | None:
+    """Parse ISO-like local datetime strings to normalized format or None."""
     value = (value or "").strip()
     if not value:
         return None
@@ -56,6 +59,7 @@ def _parse_datetime_local(value: str) -> str | None:
         return None
 
 def _clean_optional_timestamp(form_data, field_name: str) -> str:
+    """Normalize an optional timestamp field from form data."""
     raw_value = form_data.get(field_name, "").strip()
     parsed_value = _parse_datetime_local(raw_value)
     return parsed_value or raw_value
