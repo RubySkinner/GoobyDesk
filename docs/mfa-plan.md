@@ -72,7 +72,7 @@ This means MFA can fit the current model cleanly.
 
 ### Important gap already visible
 
-`login.html` renders a Cloudflare Turnstile widget, but the `/login` POST handler does not currently call `_verify_turnstile()`.
+`templates/public/login.html` renders a Cloudflare Turnstile widget, but the `/login` POST handler in `app.py` does not currently call `_verify_turnstile()`.
 
 That is separate from MFA, but it should be fixed while implementing the login flow changes because the UI already implies CAPTCHA protection.
 
@@ -239,7 +239,7 @@ Recommended first behavior:
 - keep MFA enabled on password reset
 - provide a separate explicit "Reset MFA" action
 
-That avoids silently weakening the account.
+That avoids silently weakening the account and prevents password reset from becoming an MFA bypass path.
 
 ## Security details worth keeping
 
