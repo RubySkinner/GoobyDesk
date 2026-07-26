@@ -47,10 +47,10 @@ Recommended first implementation: app-based TOTP plus one-time recovery codes.
 
 Relevant files:
 
-- `/home/runner/work/GoobyDesk/GoobyDesk/app.py`
-- `/home/runner/work/GoobyDesk/GoobyDesk/templates/public/login.html`
-- `/home/runner/work/GoobyDesk/GoobyDesk/local_handlers/utils.py`
-- `/home/runner/work/GoobyDesk/GoobyDesk/storage/employee_store.py`
+- `app.py`
+- `templates/public/login.html`
+- `local_handlers/utils.py`
+- `storage/employee_store.py`
 
 ### Existing security-related fields
 
@@ -115,7 +115,7 @@ Keep `access.mfa_enabled` in the HR record as a mirrored display field if desire
 
 Recommended new file:
 
-- `/home/runner/work/GoobyDesk/GoobyDesk/local_handlers/mfa.py`
+- `local_handlers/mfa.py`
 
 Put the TOTP-specific logic there so `app.py` stays readable.
 
@@ -204,8 +204,8 @@ Keep the partial session short-lived and clear it on:
 
 Likely touch points:
 
-- `/home/runner/work/GoobyDesk/GoobyDesk/app.py`
-- `/home/runner/work/GoobyDesk/GoobyDesk/blueprints/hr_module.py`
+- `app.py`
+- `blueprints/hr_module.py`
 
 Suggested additions:
 
@@ -217,10 +217,10 @@ Suggested additions:
 
 Likely touch points:
 
-- `/home/runner/work/GoobyDesk/GoobyDesk/templates/public/login.html`
+- `templates/public/login.html`
 - new template for MFA challenge
 - optional new template for MFA setup
-- `/home/runner/work/GoobyDesk/GoobyDesk/templates/hr/profile.html` for admin visibility/reset actions
+- `templates/hr/profile.html` for admin visibility/reset actions
 
 ## Admin and support workflow
 
