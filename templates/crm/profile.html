@@ -76,9 +76,20 @@
                 <p class="text-muted">{{ customer.get('customer_id', customer.uuid) }}</p>
             </div>
             <div class="page-header-actions">
+                <a href="{{ url_for('crm_module.edit_customer', uuid=customer.get('uuid')) }}" class="submit-btn">Edit Customer</a>
                 <a href="{{ url_for('crm_module.crm_dashboard') }}">&larr; Back to Dashboard</a>
             </div>
         </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                {% for category, msg in messages %}
+                    <div class="flash {{ category }}">{{ msg }}</div>
+                {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
 
         <div class="stats-grid">
             <div class="stat-card">
