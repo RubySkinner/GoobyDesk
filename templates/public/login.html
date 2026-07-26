@@ -30,7 +30,7 @@
     <title>GoobyDesk - Technician Login</title>
 </head>
 <body>
-    <div class="container">
+    <main class="container">
         <div class="logo">
             <img src="{{ url_for('static', filename='/img/logo_white.webp') }}" alt="GoobyDesk Logo">
         </div>
@@ -43,12 +43,12 @@
             <input type="password" id="password" name="tech_password_box" placeholder="Secret" required>
             <br><br>
 
-            <div class="login-actions">
+            <div class="form-actions">
                 <div class="cf-turnstile" data-sitekey="{{ sitekey }}" data-theme="dark"></div>
                 <button type="submit" class="submit-btn login-btn">Login</button>
             </div>
         </form>
         <p class="footer-text">©2025 GoobyDesk, FOSS created by <a href="https://github.com/goobyfrs">GoobyFRS</a></p>
-    </div>
+    </main>
 </body>
 </html>

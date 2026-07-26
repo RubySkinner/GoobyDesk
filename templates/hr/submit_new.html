@@ -17,7 +17,7 @@
     <!-- Performance Enhancements -->
     <title>{% if employee %}Edit Employee{% else %}Create New Employee{% endif %} - GoobyDesk</title>
 <body>
-    <div class="container container--narrow">
+    <main class="container container--narrow">
         <div class="logo">
             <img src="{{ url_for('static', filename='/img/logo_white.webp') }}" alt="GoobyDesk Logo">
         </div>
@@ -27,7 +27,7 @@
         <p class="text-muted">Fields marked with * are required.</p>
 
         {% if error %}
-        <div class="alert alert--danger">{{ error }}</div>
+        <div class="alert alert--danger" role="alert">{{ error }}</div>
         {% endif %}
 
         <form method="POST" action="{% if employee %}{{ url_for('hr_module.edit_employee', uuid=employee.get('uuid')) }}{% else %}{{ url_for('hr_module.new_employee') }}{% endif %}">
@@ -252,6 +252,6 @@
             <a href="{% if employee %}{{ url_for('hr_module.employee_profile', uuid=employee.get('uuid')) }}{% else %}{{ url_for('hr_module.hr_dashboard') }}{% endif %}" class="form-link">Cancel</a>
 
         </form>
-    </div>
+    </main>
 </body>
 </html>

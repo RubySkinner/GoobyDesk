@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <div class="container container--wide">
+    <main class="container container--wide">
 
         <div class="page-header">
             <div>
@@ -63,12 +63,12 @@
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>CID</th>
-                            <th>Preferred Name</th>
-                            <th>First Name</th>
-                            <th>Last Name</th>
-                            <th>Account Value</th>
-                            <th>VIP Status</th>
+                            <th scope="col">CID</th>
+                            <th scope="col">Preferred Name</th>
+                            <th scope="col">First Name</th>
+                            <th scope="col">Last Name</th>
+                            <th scope="col">Account Value</th>
+                            <th scope="col">VIP Status</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -105,6 +105,6 @@
             <br>
             <a href="{{ url_for('itsm.dashboard') }}">Queues</a> | <a href="{{ url_for('changes_module.changes_home') }}">Changes</a> | <a href="{{ url_for('crm_module.crm_dashboard') }}">CRM</a> | <a href="{{ url_for('hr_module.hr_dashboard') }}">HR</a> | <a href="{{ url_for('serviceid_module.serviceid_dashboard') }}">ServiceID</a> | <a href="{{ url_for('reports_module.reports_home') }}">Reports</a>
         </p>
-    </div>
+    </main>
 </body>
 </html>
