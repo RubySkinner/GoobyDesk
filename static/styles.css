@@ -103,13 +103,25 @@
     margin-top: 12px;
 }
 
-.checkbox-row input[type="checkbox"] {
+..checkbox-row input[type="checkbox"] {
     width: auto;
     margin-top: 0;
 }
 
 .checkbox-row label {
     margin-top: 0;
+}
+
+.checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: auto;
+    margin: 0;
 }
 
 .form-help {

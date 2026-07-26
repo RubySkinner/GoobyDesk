@@ -209,8 +209,10 @@
 
             <div class="form-row">
                 <div>
-                    <label for="support_enabled">Support Contract Enabled</label>
-                    <input type="checkbox" id="support_enabled" name="support_enabled" {% if customer and customer.get('support_contract', {}).get('enabled') %}checked{% endif %}>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="support_enabled" name="support_enabled" {% if customer and customer.get('support_contract', {}).get('enabled') %}checked{% endif %}>
+                        Support Contract Enabled
+                    </label>
                 </div>
                 <div>
                     <label for="support_sla">Support SLA</label>

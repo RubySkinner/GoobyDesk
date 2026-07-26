@@ -99,36 +99,49 @@
         {% endwith %}
 
         {% if employee %}
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-card-title">Email</div>
-                    <div class="stat-card-value stat-card-value--compact">{{ employee.get('email') or 'None' }}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-card-title">Role</div>
-                    <div class="stat-card-value stat-card-value--compact">{{ employee.get('access', {}).get('role', 'None') | replace('_', ' ') | title }}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-card-title">Department</div>
-                    <div class="stat-card-value stat-card-value--compact">{{ employee.get('employment', {}).get('department') or 'None' }}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-card-title">Timezone</div>
-                    <div class="stat-card-value">{{ employee.get('timezone') or 'None' }}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-card-title">Employee Since</div>
-                    <div class="stat-card-value stat-card-value--compact">{{ (employee.get('created')[:10] if employee.get('created') else '—') }}</div>
-                    <div class="stat-card-sub">{{ employee.get('created_by') or '—' }}</div>
-                </div>
-            </div>
-
             <div class="card">
-                <div class="card-header"><h3 class="card-title">Login Access</h3></div>
+                <div class="card-header"><h3 class="card-title">Employee Details</h3></div>
                 <div class="card-body ticket-details">
-                    <p><strong>Login Enabled:</strong> {{ employee.get('access', {}).get('login_enabled', false) }}</p>
-                    <p><strong>Auth Username:</strong> {{ employee.get('access', {}).get('auth_username') or 'None' }}</p>
-                    <p><strong>Provisioning Status:</strong> {{ employee.get('access', {}).get('provisioning_status') or 'None' }}</p>
+                    <div class="grid grid-2">
+                        <div><p><strong>First Name:</strong> {{ employee.get('first_name') or '—' }}</p></div>
+                        <div><p><strong>Employee Status:</strong> {{ employee.get('employment', {}).get('status') or '—' | capitalize }}</p></div>
+
+                        <div><p><strong>Last Name:</strong> {{ employee.get('last_name') or '—' }}</p></div>
+                        <div><p><strong>Job Title:</strong> {{ employee.get('employment', {}).get('title') or '—' }}</p></div>
+
+                        <div><p><strong>Preferred Name:</strong> {{ employee.get('preferred_name') or '—' }}</p></div>
+                        <div><p><strong>Department:</strong> {{ employee.get('employment', {}).get('department') or '—' }}</p></div>
+
+                        <div><p><strong>Email:</strong> {{ employee.get('email') or '—' }}</p></div>
+                        <div><p><strong>Business Unit:</strong> {{ employee.get('employment', {}).get('business_unit') or '—' }}</p></div>
+
+                        <div><p><strong>Login Username:</strong> {{ employee.get('access', {}).get('auth_username') or '—' }}</p></div>
+                        <div><p><strong>Access Role:</strong> {{ employee.get('access', {}).get('role', '—') | replace('_', ' ') | title }}</p></div>
+
+                        <div><p><strong>Phone:</strong> {{ employee.get('phone') or '—' }}</p></div>
+                        <div><p><strong>Employment Type:</strong> {{ employee.get('employment', {}).get('employment_type') or '—' | replace('_', ' ') | title }}</p></div>
+
+                        <div><p><strong>Street:</strong> {{ employee.get('address', {}).get('street') or '—' }}</p></div>
+                        <div><p><strong>Compensation Type:</strong> {{ employee.get('employment', {}).get('compensation_type') or '—' | title }}</p></div>
+
+                        <div><p><strong>City:</strong> {{ employee.get('address', {}).get('city') or '—' }}</p></div>
+                        <div><p><strong>Hourly Rate:</strong> {{ employee.get('employment', {}).get('hourly_rate') or '—' }}</p></div>
+
+                        <div><p><strong>State:</strong> {{ employee.get('address', {}).get('state') or '—' }}</p></div>
+                        <div><p><strong>Salary:</strong> {{ employee.get('employment', {}).get('salary') or '—' }}</p></div>
+
+                        <div><p><strong>Postal Code:</strong> {{ employee.get('address', {}).get('postal_code') or '—' }}</p></div>
+                        <div><p><strong>Pay Frequency:</strong> {{ employee.get('employment', {}).get('pay_frequency') or '—' | replace('_', ' ') | title }}</p></div>
+
+                        <div><p><strong>Country:</strong> {{ employee.get('address', {}).get('country') or '—' }}</p></div>
+                        <div><p><strong>Work Authorization:</strong> {{ employee.get('work_authorization') or '—' | replace('_', ' ') | title }}</p></div>
+
+                        <div><p><strong>Timezone:</strong> {{ employee.get('timezone') or '—' }}</p></div>
+                        <div><p><strong>Equity / Grants (notes):</strong> {{ employee.get('employment', {}).get('equity', {}).get('notes') or '—' }}</p></div>
+
+                        <div><p><strong>Date of Birth:</strong> {{ employee.get('date_of_birth') or '—' }}</p></div>
+                        <div><p><strong>Direct Deposit:</strong> {{ employee.get('employment', {}).get('direct_deposit_info') or '—' }}</p></div>
+                    </div>
                 </div>
             </div>
 
