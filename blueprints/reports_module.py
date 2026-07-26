@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from flask import Blueprint, render_template, session, Response
+from local_handlers.utils import resolve_preferred_name
 from local_handlers.auth_decorators import role_required
 import io, csv, logging
 from datetime import datetime, timedelta
@@ -75,7 +76,7 @@ def reports_home():
         last_30_days=time_buckets["last_30_days"],
         last_14_days=time_buckets["last_14_days"],
         last_7_days=time_buckets["last_7_days"],
-        loggedInTech=session.get("technician"))
+        loggedInTech=resolve_preferred_name(session.get("technician")))
 
 @reports_module_bp.route("/export/csv", endpoint='export_tickets_csv')
 @role_required("*")

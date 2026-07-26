@@ -8,6 +8,7 @@ from datetime import datetime
 from functools import wraps
 
 from flask import Blueprint, render_template, request, redirect, url_for, session, Response, current_app, flash
+from local_handlers.utils import resolve_preferred_name
 from local_handlers.auth_decorators import role_required, ROLE_ITSM_TECH
 from storage.crm_store import CrmStore
 from local_handlers.crm_helpers import build_customer_record
@@ -97,7 +98,7 @@ def _update_customer_record(customer: dict, form: dict) -> None:
     # Audit
     audit = customer.setdefault("audit", {})
     audit["last_modified"] = now
-    audit["last_modified_by"] = session.get("technician")
+    audit["last_modified_by"] = resolve_preferred_name(session.get("technician"))
     customer["updated"] = now
 
     # Optional advanced fields
@@ -165,7 +166,7 @@ def crm_dashboard():
         "total_lifetime_value": total_lifetime_value
     }
     #return render_template("under_construction.html")
-    return render_template("crm/crm_dashboard.html", customers=active_customers_list, loggedInTech=session.get("technician"), stats=crm_base_stats)
+    return render_template("crm/crm_dashboard.html", customers=active_customers_list, loggedInTech=resolve_preferred_name(session.get("technician")), stats=crm_base_stats)
 
 # Create New Customer Route
 @crm_module_bp.route("/submit-new", methods=["GET", "POST"])
@@ -195,11 +196,11 @@ def new_customer():
         "customer_id": generate_customer_id(customers),
         **base,
         "created": submission_timestamp,
-        "created_by": session.get("technician"),
+        "created_by": resolve_preferred_name(session.get("technician")),
         "audit": {
             "creation_source": "auth_web",
             "last_modified": submission_timestamp,
-            "last_modified_by": session.get("technician"),
+            "last_modified_by": resolve_preferred_name(session.get("technician")),
         },
     }
 
@@ -210,7 +211,7 @@ def new_customer():
     if initial_note:
         new_customer_record["crm_worknotes"].append({
             "date": submission_timestamp,
-            "created_by": session.get("technician"),
+            "created_by": resolve_preferred_name(session.get("technician")),
             "note": initial_note,
         })
 
@@ -230,7 +231,7 @@ def customer_profile(uuid):
     customer = next((cust for cust in customers if cust["uuid"] == uuid), None)
     if not customer:
         return render_template("errors/404.html"), 404
-    return render_template("crm/profile.html", customer=customer, loggedInTech=session.get("technician"))
+    return render_template("crm/profile.html", customer=customer, loggedInTech=resolve_preferred_name(session.get("technician")))
 
 @crm_module_bp.route("/customer/<uuid>/append_note", methods=["POST"])
 @role_required(ROLE_ITSM_TECH)
@@ -243,7 +244,7 @@ def add_customer_note(uuid):
     customers = load_customers_file()
     found = False
     note_record = {
-        "created_by": session.get("technician") or "unknown",
+        "created_by": resolve_preferred_name(session.get("technician")) or "unknown",
         "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "note": note_content,
     }
@@ -271,7 +272,7 @@ def edit_customer(uuid):
         return render_template("errors/404.html"), 404
 
     if request.method == "GET":
-        return render_template("crm/submit_new.html", customer=customer, loggedInTech=session.get("technician"))
+        return render_template("crm/submit_new.html", customer=customer, loggedInTech=resolve_preferred_name(session.get("technician")))
 
     form = {key: value for key, value in request.form.items()}
     ok, _missing = require_fields(form, ["first_name", "last_name", "email"])
@@ -280,7 +281,7 @@ def edit_customer(uuid):
             "crm/submit_new.html",
             customer=customer,
             error="First Name, Last Name, and a valid Email are required.",
-            loggedInTech=session.get("technician"),
+            loggedInTech=resolve_preferred_name(session.get("technician")),
         ), 400
 
     # Apply updates
@@ -289,12 +290,12 @@ def edit_customer(uuid):
     # If an inline worknote was provided, append it
     note_text = (form.get("crm_worknotes") or "").strip()
     if note_text:
-        note = {"date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "created_by": session.get("technician"), "note": note_text}
+        note = {"date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "created_by": resolve_preferred_name(session.get("technician")), "note": note_text}
         customer.setdefault("crm_worknotes", []).append(note)
 
     save_customers_file(customers)
     flash(f"Customer {customer.get('customer_id', uuid)} updated.", "success")
-    actor = _pseudonymize_actor(session.get('technician'))
+    actor = _pseudonymize_actor(resolve_preferred_name(session.get('technician')))
     logging.info("CRM MODULE - Customer %s edited actor=%s", customer.get('customer_id'), actor)
     return redirect(url_for("crm_module.customer_profile", uuid=customer["uuid"]))
 

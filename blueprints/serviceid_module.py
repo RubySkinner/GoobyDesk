@@ -3,6 +3,7 @@ import logging
 from functools import wraps
 
 from flask import Blueprint, redirect, render_template, request, session, url_for
+from local_handlers.utils import resolve_preferred_name
 from local_handlers.auth_decorators import role_required, ROLE_ITSM_TECH
 
 from flask import current_app
@@ -34,7 +35,7 @@ def load_service_appids():
 def serviceid_dashboard():
     """Render service APPID dashboard view."""
     services = load_service_appids()
-    return render_template("services-appid/dashboard.html", services=services, loggedInTech=session.get("technician"),)
+    return render_template("services-appid/dashboard.html", services=services, loggedInTech=resolve_preferred_name(session.get("technician")),)
 
 @serviceid_module_bp.route("/submit-new", methods=["GET"])
 @role_required(ROLE_ITSM_TECH)

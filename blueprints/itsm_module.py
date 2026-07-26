@@ -5,6 +5,7 @@ import os
 
 from datetime import datetime
 from flask import Blueprint, render_template, request, jsonify, session
+from local_handlers.utils import resolve_preferred_name
 from local_handlers.auth_decorators import role_required, ROLE_ITSM_TECH
 
 import local_handlers.local_webhook_handler as local_webhook_handler
@@ -50,7 +51,7 @@ def dashboard():
     """Render ITSM dashboard with open tickets."""
     tickets = load_tickets()
     open_tickets = [t for t in tickets if (t.get("ticket_status", "") or "").lower() != "closed"]
-    return render_template("itsm/dashboard.html", tickets=open_tickets, loggedInTech=session.get("technician"))
+    return render_template("itsm/dashboard.html", tickets=open_tickets, loggedInTech=resolve_preferred_name(session.get("technician")))
 
 @itsm_module_bp.route("/ticket/<ticket_number>")
 @role_required(ROLE_ITSM_TECH)
@@ -59,7 +60,7 @@ def ticket_detail(ticket_number):
     tickets = load_tickets()
     ticket = next((t for t in tickets if t["ticket_number"] == ticket_number), None)
     if ticket:
-        return render_template("itsm/console.html", ticket=ticket, loggedInTech=session.get("technician"))
+        return render_template("itsm/console.html", ticket=ticket, loggedInTech=resolve_preferred_name(session.get("technician")))
     return render_template("errors/404.html"), 404
 
 @itsm_module_bp.route("/ticket/<ticket_number>/update_status/<ticket_status>", methods=["POST"])
@@ -85,7 +86,7 @@ def update_ticket_status(ticket_number, ticket_status):
     if not canonical_status:
         return render_template("errors/400.html"), 400
 
-    logged_in_tech = session.get("technician")
+    logged_in_tech = resolve_preferred_name(session.get("technician"))
     store = _get_ticket_store()
 
     def _updater(record: dict):
@@ -138,7 +139,7 @@ def add_ticket_note(ticket_number):
     store = _get_ticket_store()
 
     note_record = {
-        "author": session.get("technician") or "unknown",
+        "author": resolve_preferred_name(session.get("technician")) or "unknown",
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "note": note_content,}
 

@@ -14,7 +14,7 @@ from flask import Blueprint, current_app, flash, redirect, render_template, requ
 
 from local_handlers.auth_decorators import ROLE_ADMIN, ROLE_HR_TECH, role_required
 from local_handlers.local_config_loader import load_core_config
-from local_handlers.utils import hash_password
+from local_handlers.utils import hash_password, resolve_preferred_name
 from local_handlers.validation import is_valid_email, require_fields
 from storage.employee_store import EmployeeStore
 from storage.hr_store import HrStore
@@ -200,11 +200,11 @@ def _build_employee_record(form: dict, employees: list[dict]) -> tuple[dict, str
         "certifications": [],
         "skills": [],
         "created": now,
-        "created_by": session.get("technician"),
+        "created_by": resolve_preferred_name(session.get("technician")),
         "audit": {
             "creation_source": "auth_web",
             "last_modified": now,
-            "last_modified_by": session.get("technician"),
+            "last_modified_by": resolve_preferred_name(session.get("technician")),
         },
         "updated": now,
     }
@@ -280,7 +280,7 @@ def _update_employee_record(employee: dict, form: dict) -> None:
     employee["updated"] = now
     audit = employee.setdefault("audit", {})
     audit["last_modified"] = now
-    audit["last_modified_by"] = session.get("technician")
+    audit["last_modified_by"] = resolve_preferred_name(session.get("technician"))
 
 def _provision_employee_login_access(
     employee_record: dict,
@@ -376,7 +376,7 @@ def hr_dashboard():
     """
     employees = load_hr_employees()
     stats = build_hr_stats(employees)
-    return render_template("hr/hr_dashboard.html", employees=employees, stats=stats, loggedInTech=session.get("technician"))
+    return render_template("hr/hr_dashboard.html", employees=employees, stats=stats, loggedInTech=resolve_preferred_name(session.get("technician")))
 
 # View Employee Details Route
 @hr_module_bp.route("/employee/<uuid>", methods=["GET"])
@@ -398,7 +398,7 @@ def employee_profile(uuid: str):
     employee = _find_employee_by_uuid(employees, uuid)
     if employee is None:
         return render_template("errors/404.html"), 404
-    return render_template("hr/profile.html", employee=employee, loggedInTech=session.get("technician"))
+    return render_template("hr/profile.html", employee=employee, loggedInTech=resolve_preferred_name(session.get("technician")))
 
 @hr_module_bp.route("/employee/<uuid>/edit", methods=["GET", "POST"])
 @role_required(ROLE_HR_TECH)
@@ -411,13 +411,13 @@ def edit_employee(uuid: str):
         return render_template("errors/404.html"), 404
 
     if request.method == "GET":
-        return render_template("hr/submit_new.html", employee=employee, loggedInTech=session.get("technician"))
+        return render_template("hr/submit_new.html", employee=employee, loggedInTech=resolve_preferred_name(session.get("technician")))
 
     form = {key: value for key, value in request.form.items()}
     ok, _missing = require_fields(form, ["first_name", "last_name", "email"])
     if not ok or not is_valid_email(form.get("email")):
-        return render_template("hr/submit_new.html",employee=employee, error="First Name, Last Name, and a valid Email are required.",
-            loggedInTech=session.get("technician"),), 400
+            return render_template("hr/submit_new.html",employee=employee, error="First Name, Last Name, and a valid Email are required.",
+            loggedInTech=resolve_preferred_name(session.get("technician")),), 400
 
     _update_employee_record(employee, form)
     store.save_all(employees)
@@ -446,14 +446,14 @@ def reset_employee_password(uuid: str):
     employee["password_reset_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     store.save_all(employees)
-    actor = _pseudonymize_actor(session.get("technician"))
+    actor = _pseudonymize_actor(resolve_preferred_name(session.get("technician")))
     logging.warning(
         "HR MODULE - Password reset performed; actor=%s target_employee_id=%s",
         actor, employee.get("employee_id"))
 
     # Show password once to admin via template variable and flash
     flash("Password reset successful - show it once below.", "success")
-    return render_template("hr/profile.html", employee=employee, reset_password=new_password, loggedInTech=session.get("technician"))
+    return render_template("hr/profile.html", employee=employee, reset_password=new_password, loggedInTech=resolve_preferred_name(session.get("technician")))
 
 @hr_module_bp.route("/employee/<uuid>/append_note", methods=["POST"])
 @role_required(ROLE_HR_TECH)
@@ -471,7 +471,7 @@ def add_employee_note(uuid: str):
     employees = store.load_all()
     found = False
     note_record = {
-        "created_by": session.get("technician") or "unknown",
+        "created_by": resolve_preferred_name(session.get("technician")) or "unknown",
         "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "note": note_content,
     }
@@ -526,7 +526,7 @@ def new_employee():
                 auth_username_override,
             )
         except ValueError as exc:
-            return render_template("hr/submit_new.html", error=str(exc)), 400
+            return render_template("hr/submit_new.html", error=str(exc), loggedInTech=resolve_preferred_name(session.get("technician"))), 400
     else:
         new_record["access"]["login_enabled"] = False
         new_record["access"]["provisioning_status"] = "disabled"
@@ -546,14 +546,14 @@ def new_employee():
             logging.exception("HR MODULE - Login provisioning failed; rolling back HR record.")
             employees = [employee for employee in employees if employee.get("uuid") != new_record["uuid"]]
             hr_store.save_all(employees)
-            return render_template("hr/submit_new.html", error="Employee created, but login provisioning failed."), 500
+            return render_template("hr/submit_new.html", error="Employee created, but login provisioning failed.", loggedInTech=resolve_preferred_name(session.get("technician"))), 500
 
     flash(f"Employee {employee_id} created.", "success")
     return render_template(
         "hr/profile.html",
         employee=new_record,
         reset_password=temporary_password,
-        loggedInTech=session.get("technician"),
+        loggedInTech=resolve_preferred_name(session.get("technician")),
     )
 
 # Export Employee Data Route

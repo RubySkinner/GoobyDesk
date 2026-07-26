@@ -4,7 +4,7 @@ import threading, time, logging, logging.config, requests, os, uuid, hashlib
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 
-from local_handlers.utils import hash_password, verify_password
+from local_handlers.utils import hash_password, verify_password, resolve_preferred_name
 import local_handlers.local_config_loader as local_config_loader
 import local_handlers.local_email_handler as local_email_handler
 import local_handlers.local_webhook_handler as local_webhook_handler
@@ -316,7 +316,7 @@ def home():
             new_ticket = ticket_builder.build_ticket_record(
                 request.form,
                 ticket_number,
-                source="web", technician=session.get("technician"))
+                source="web", technician=resolve_preferred_name(session.get("technician")))
             ticket_store.append(new_ticket)
             logging.info("Ticket %s created.", ticket_number)
         except KeyError as e:

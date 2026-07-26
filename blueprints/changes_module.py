@@ -7,6 +7,7 @@ import os
 from datetime import datetime
 
 from flask import Blueprint, Response, redirect, render_template, request, session, url_for, current_app
+from local_handlers.utils import resolve_preferred_name
 from local_handlers.auth_decorators import role_required, ROLE_ITSM_TECH
 from storage.changes_store import ChangesStore
 
@@ -67,7 +68,7 @@ def _clean_optional_timestamp(form_data, field_name: str) -> str:
 def _build_change_record(form_data) -> dict:
     """Build a normalized change record from submitted form data."""
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    requestor = session.get("technician")
+    requestor = resolve_preferred_name(session.get("technician"))
 
     # Use store to generate a sequential change number
     store = _get_changes_store()
@@ -101,7 +102,7 @@ def _build_change_record(form_data) -> dict:
 def changes_home():
     """Render the change dashboard."""
     changes = load_changes()
-    return render_template("changes/changes_dashboard.html", changes=changes, loggedInTech=session.get("technician"))
+    return render_template("changes/changes_dashboard.html", changes=changes, loggedInTech=resolve_preferred_name(session.get("technician")))
 
 # Submit New Change Route
 @changes_module_bp.route("/submit-new", methods=["GET", "POST"])
@@ -109,7 +110,7 @@ def changes_home():
 def submit_new() -> str:
     """Create a new change request."""
     if request.method == "GET":
-        return render_template("changes/submit_new.html", loggedInTech=session.get("technician"))
+        return render_template("changes/submit_new.html", loggedInTech=resolve_preferred_name(session.get("technician")))
 
     required_fields = {
         "change_short_description": "Short description is required.",
@@ -139,14 +140,14 @@ def submit_new() -> str:
     if errors:
         return render_template(
             "changes/submit_new.html",error=" ".join(errors),
-            loggedInTech=session.get("technician"),
+            loggedInTech=resolve_preferred_name(session.get("technician")),
             form_values=request.form,
         ), 400
 
     new_change = _build_change_record(request.form)
     store = _get_changes_store()
     store.append(new_change)
-    actor = _pseudonymize_actor(session.get("technician"))
+    actor = _pseudonymize_actor(resolve_preferred_name(session.get("technician")))
     logging.info(
         "CHANGES MODULE - Created change %s actor=%s",
         new_change["change_number"],
