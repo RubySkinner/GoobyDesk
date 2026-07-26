@@ -68,10 +68,11 @@ def _next_employee_sequence(employees: list[dict], year: int) -> int:
 
 def _build_employment_details(form: dict, created_date: str) -> dict:
     """Construct the employment details sub-dictionary for an employee."""
+    status = form.get("status") or "active"
     return {
         "hire_date": created_date,
         "termination_date": None,
-        "status": "active",
+        "status": status,
         "rehire_eligible": True,
         "title": form.get("title") or "",
         "business_unit": form.get("business_unit") or "",
@@ -268,6 +269,7 @@ def _update_employee_record(employee: dict, form: dict) -> None:
     employment["title"] = _clean_form_value(form, "title") or ""
     employment["business_unit"] = _clean_form_value(form, "business_unit") or ""
     employment["department"] = _clean_form_value(form, "department") or ""
+    employment["status"] = _clean_form_value(form, "status") or "active"
     employment["employment_type"] = _clean_form_value(form, "employment_type") or "full_time"
     employment["compensation_type"] = _clean_form_value(form, "compensation_type") or "salary"
     employment["salary"] = _clean_form_value(form, "salary")

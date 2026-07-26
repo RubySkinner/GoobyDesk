@@ -182,7 +182,17 @@
                         <option value="intern" {% if employee and employment.get('employment_type') == 'intern' %}selected{% endif %}>Intern</option>
                     </select>
                 </div>
-                <div></div>
+                <div>
+                    <label for="status">Employee Status</label>
+                    <select id="status" name="status">
+                        <option value="active" {% if not employee or employment.get('status') == 'active' %}selected{% endif %}>Active</option>
+                        <option value="flma" {% if employee and employment.get('status') == 'flma' %}selected{% endif %}>FMLA</option>
+                        <option value="leave" {% if employee and employment.get('status') == 'leave' %}selected{% endif %}>Leave</option>
+                        <option value="terminated" {% if employee and employment.get('status') == 'terminated' %}selected{% endif %}>Terminated</option>
+                        <option value="inactive" {% if employee and employment.get('status') == 'inactive' %}selected{% endif %}>Inactive</option>
+                        <option value="disabled" {% if employee and employment.get('status') == 'disabled' %}selected{% endif %}>Disabled</option>
+                    </select>
+                </div>
             </div>
 
             <div class="form-row">
