@@ -74,7 +74,7 @@ This means MFA can fit the current model cleanly.
 
 `templates/public/login.html` renders a Cloudflare Turnstile widget, but the `/login` POST handler in `app.py` does not currently call the existing `_verify_turnstile()` helper from that same file.
 
-That is separate from MFA, but it should be fixed while implementing the login flow changes because the UI already implies CAPTCHA protection. Treat it as a high-priority auth hardening task, not a nice-to-have follow-up.
+That is separate from MFA, but it should be fixed while implementing the login flow changes because the UI already implies CAPTCHA protection. Treat it as a high-priority auth hardening task, not a nice-to-have follow-up, and open a tracking issue if it is not fixed in the same workstream.
 
 ## Recommended design
 
@@ -86,7 +86,7 @@ That is separate from MFA, but it should be fixed while implementing the login f
 
 - Add TOTP using a standard 6-digit code.
 - Use 30-second time steps.
-- Allow small clock drift tolerance, such as one time window before and after the current window.
+- Allow a drift tolerance of one time window before and after the current window, which is effectively ±30 seconds.
 
 ### Recovery method
 
@@ -198,7 +198,7 @@ Keep the partial session short-lived and clear it on:
 - timeout
 - too many MFA failures
 
-Recommended timeout: 5 minutes maximum.
+Recommended timeout: 3 minutes maximum.
 
 ## Suggested routes and templates
 
@@ -264,7 +264,7 @@ Recommended cryptography approach:
 
 - use AES-256-GCM for authenticated encryption
 - load a 32-byte application key from environment configuration
-- if the deployment supplies a passphrase instead of a raw key, derive the actual encryption key with scrypt or PBKDF2
+- if the deployment supplies a passphrase instead of a raw key, derive the actual encryption key with scrypt using parameters such as `N=32768`, `r=8`, and `p=1`
 - do not invent custom crypto primitives or ad hoc reversible obfuscation
 
 Because this secret is sensitive:
