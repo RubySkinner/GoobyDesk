@@ -74,7 +74,7 @@ This means MFA can fit the current model cleanly.
 
 `templates/public/login.html` renders a Cloudflare Turnstile widget, but the `/login` POST handler in `app.py` does not currently call the existing `_verify_turnstile()` helper from that same file.
 
-That is separate from MFA, but it should be fixed while implementing the login flow changes because the UI already implies CAPTCHA protection.
+That is separate from MFA, but it should be fixed while implementing the login flow changes because the UI already implies CAPTCHA protection. Treat it as a high-priority auth hardening task, not a nice-to-have follow-up.
 
 ## Recommended design
 
@@ -103,7 +103,7 @@ Prefer the auth JSON record as the source of truth.
 Suggested new fields in the auth record:
 
 - `mfa_enabled`: boolean
-- `mfa_secret_encrypted`: encrypted TOTP secret stored at rest in encrypted form; see the security section below
+- `mfa_encrypted_secret`: TOTP secret stored at rest in encrypted form; see the security section below
 - `mfa_enrolled_at`: timestamp
 - `mfa_recovery_codes`: list of objects containing a bcrypt hash plus `used_at`
 - `mfa_last_used_at`: timestamp or null
@@ -198,6 +198,8 @@ Keep the partial session short-lived and clear it on:
 - timeout
 - too many MFA failures
 
+Recommended timeout: 5 minutes maximum.
+
 ## Suggested routes and templates
 
 ### Routes
@@ -257,6 +259,13 @@ Recommended recovery policy:
 ### TOTP secret handling
 
 Recommended minimum production behavior: store the TOTP secret in the auth JSON file only after encrypting it with an application key sourced from environment configuration.
+
+Recommended cryptography approach:
+
+- use AES-256-GCM for authenticated encryption
+- load a 32-byte application key from environment configuration
+- if the deployment supplies a passphrase instead of a raw key, derive the actual encryption key with scrypt or PBKDF2
+- do not invent custom crypto primitives or ad hoc reversible obfuscation
 
 Because this secret is sensitive:
 
