@@ -103,9 +103,9 @@ Prefer the auth JSON record as the source of truth.
 Suggested new fields in the auth record:
 
 - `mfa_enabled`: boolean
-- `mfa_secret`: Base32 TOTP secret
+- `mfa_secret_encrypted`: encrypted TOTP secret
 - `mfa_enrolled_at`: timestamp
-- `mfa_recovery_codes`: list of bcrypt hashes
+- `mfa_recovery_codes`: list of objects containing a bcrypt hash plus `used_at`
 - `mfa_last_used_at`: timestamp or null
 - `mfa_failed_attempts`: integer
 
@@ -241,25 +241,37 @@ Recommended first behavior:
 
 That avoids silently weakening the account and prevents password reset from becoming an MFA bypass path.
 
+### Account recovery edge case
+
+If a user loses the password, MFA device, and recovery codes, recovery should require an explicit admin-driven MFA reset workflow instead of silently bypassing MFA.
+
+Recommended recovery policy:
+
+- require an admin to perform password reset and MFA reset as separate actions
+- log both events with actor and target identifiers
+- if the deployment has multiple admins, require a second admin approval outside the app or through a documented ops procedure
+- if the deployment has only one admin, require a short delay or manual out-of-band identity check before re-enabling access
+
 ## Security details worth keeping
 
 ### TOTP secret handling
 
-For the lowest-barrier version, the TOTP secret can be stored in the auth JSON file.
+Recommended minimum production behavior: store the TOTP secret in the auth JSON file only after encrypting it with an application key sourced from environment configuration.
 
 Because this secret is sensitive:
 
 - treat the auth JSON file as security-sensitive
+- use an environment-backed encryption key so file disclosure alone does not disclose the TOTP seed
 - ensure deployment guidance uses restrictive filesystem permissions
 - never log the secret or recovery codes
 
-If later the project is willing to add more complexity, secret-at-rest encryption can be layered on later.
+If deployment-side encryption exists first, that can reduce exposure, but app-level secret encryption is still the better target because it keeps a leaked JSON file from becoming an MFA bypass artifact.
 
 ### Recovery codes
 
 - Hash them with existing bcrypt helpers.
 - Each code should be single use.
-- Remove or replace a code immediately after successful use.
+- Mark a code as used or remove it immediately after successful use.
 
 ### Brute-force controls
 
