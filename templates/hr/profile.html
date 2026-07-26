@@ -10,6 +10,39 @@
     {%- endfor -%}
 {%- endmacro %}
 
+{% macro format_address(address) -%}
+    {% set parts = [] %}
+    {% if address.get('street') %}
+        {% set parts = parts + [address.get('street')] %}
+    {% endif %}
+    {% if address.get('city') %}
+        {% set parts = parts + [address.get('city')] %}
+    {% endif %}
+    {% if address.get('state') %}
+        {% set parts = parts + [address.get('state')] %}
+    {% endif %}
+    {% if address.get('postal_code') %}
+        {% set parts = parts + [address.get('postal_code')] %}
+    {% endif %}
+    {% if address.get('country') %}
+        {% set parts = parts + [address.get('country')] %}
+    {% endif %}
+    {{ parts | join(', ') }}
+{%- endmacro %}
+
+{% macro format_contact_preferences(prefs) -%}
+    {% set parts = [] %}
+    {% if prefs.get('preferred_contact') %}
+        {% set parts = parts + ['PreferredContact: ' ~ prefs.get('preferred_contact')] %}
+    {% endif %}
+    {% if prefs.get('maintenance_notifications') is sameas(true) %}
+        {% set parts = parts + ['MaintenanceNotifications: Yes'] %}
+    {% elif prefs.get('maintenance_notifications') is sameas(false) %}
+        {% set parts = parts + ['MaintenanceNotifications: No'] %}
+    {% endif %}
+    {{ parts | join(', ') }}
+{%- endmacro %}
+
 {% macro render_value(value) -%}
     {% if value is mapping %}
         {% if value %}
@@ -161,8 +194,8 @@
                     {'label': 'Email', 'value': employee.get('email')},
                     {'label': 'Phone', 'value': employee.get('phone')},
                     {'label': 'Timezone', 'value': employee.get('timezone')},
-                    {'label': 'Address', 'value': address},
-                    {'label': 'ContactPreferences', 'value': contact_preferences},
+                    {'label': 'Address', 'value': format_address(address)},
+                    {'label': 'Contact Preferences', 'value': format_contact_preferences(contact_preferences)},
                 ]) }}
 
                 {{ render_section('Employment', [
