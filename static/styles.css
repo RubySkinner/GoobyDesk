@@ -734,6 +734,10 @@ a:hover {
     margin: 0.25rem 0;
 }
 
+.ticket-details p strong {
+    color: var(--text-muted);
+}
+
 .section-divider {
     margin: 1rem 0;
     border-top: 1px solid var(--border);
