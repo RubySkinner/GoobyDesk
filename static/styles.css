@@ -555,14 +555,16 @@ textarea {
     background: var(--success-hover);
 }
 
-.close-tkt-btn {
-    background: var(--danger);
-    border-color: var(--danger);
-}
+    .warning-btn {
+        background: #d29922;
+        border-color: #d29922;
+        color: white;
+    }
 
-.close-tkt-btn:hover {
-    background: var(--danger-hover);
-}
+    .warning-btn:hover {
+        background: #e6b324;
+        border-color: #e6b324;
+    }
 
 /* ==========================================================
    Alerts and Flash Messages
