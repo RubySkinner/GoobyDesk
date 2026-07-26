@@ -1,8 +1,21 @@
 {% macro format_label(value) -%}
-    {%- set s = value | replace('_', ' ') | replace('-', ' ') -%}
-    {%- set parts = s.split() -%}
-    {%- for w in parts -%}
-        {%- if w.lower() in ['mfa', 'hr', 'ip', 'api', 'crm', 'id'] -%}
+    {%- set raw = value | replace('_', ' ') | replace('-', ' ') -%}
+    {%- set upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' -%}
+    {%- set lower = 'abcdefghijklmnopqrstuvwxyz' -%}
+    {%- set normalized = '' -%}
+    {%- set previous = '' -%}
+    {%- for ch in raw -%}
+        {%- if previous and ch in upper and previous in lower -%}
+            {%- set normalized = normalized + ' ' + ch -%}
+        {%- else -%}
+            {%- set normalized = normalized + ch -%}
+        {%- endif -%}
+        {%- set previous = ch -%}
+    {%- endfor -%}
+    {%- set words = normalized | trim | split(' ') -%}
+    {%- for w in words -%}
+        {%- set lw = w.lower() -%}
+        {%- if lw in ['mfa', 'hr', 'ip', 'api', 'crm', 'id', 'pto'] -%}
             {{ w.upper() }}{%- if not loop.last %} {{- "" -}}{% endif %}
         {%- else -%}
             {{ w.title() }}{%- if not loop.last %} {{- "" -}}{% endif %}
