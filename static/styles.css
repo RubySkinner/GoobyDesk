@@ -117,11 +117,20 @@
     align-items: center;
     gap: 0.5rem;
     cursor: pointer;
+    white-space: nowrap;
 }
 
 .checkbox-label input[type="checkbox"] {
     width: auto;
     margin: 0;
+}
+
+.header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: nowrap;
 }
 
 .form-help {

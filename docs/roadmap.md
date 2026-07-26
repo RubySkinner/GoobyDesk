@@ -9,3 +9,9 @@
 
 - ServiceID module has no function.
 - Change Managaement workflow does not exisit.
+- Reorder Customer Profile edit boxes
+- Reorder Customer Profile boxes
+- Implement Support, Escalation, and Billing Queues
+- Implement Assign to Me function
+- Implement required Resolution Notes
+- Implement Password Reset function

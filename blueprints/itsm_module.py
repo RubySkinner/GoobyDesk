@@ -154,3 +154,11 @@ def add_ticket_note(ticket_number):
 
     logging.info("Note appended to %s by %s.", ticket_number, _pseudonymize_actor(note_record["author"]))
     return jsonify({"message": "Note added successfully.", "note": note_record}), 200
+
+"""
+@itsm_module_bp.route("/queue/support", methods=["POST"])
+
+@itsm_module_bp.route("/queue/escalation", methods=["POST"])
+
+@itsm_module_bp.route("/queue/billing", methods=["POST"])
+"""
