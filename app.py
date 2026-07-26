@@ -21,7 +21,7 @@ from storage.employee_store import EmployeeStore
 from storage.changes_store import ChangesStore
 from storage.ticket_store import TicketStore
 
-BUILDID=str("0.9.9-RC2")
+BUILDID=str("1.0.0")
 
 def _pseudonymize_actor(name: str) -> str:
     """Return a stable, opaque actor id for logging (no raw usernames).
