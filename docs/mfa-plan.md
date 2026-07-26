@@ -86,7 +86,7 @@ That is separate from MFA, but it should be fixed while implementing the login f
 
 - Add TOTP using a standard 6-digit code.
 - Use 30-second time steps.
-- Allow a drift tolerance of one time window before and after the current window. With 30-second steps, that means accepting the adjacent windows on both sides of the current one.
+- Allow a drift tolerance of ±1 window only. With 30-second steps, that means accepting 3 windows total: previous, current, and next.
 
 ### Recovery method
 
@@ -198,7 +198,7 @@ Keep the partial session short-lived and clear it on:
 - timeout
 - too many MFA failures
 
-Recommended timeout: 2 minutes maximum.
+Recommended timeout: 90 seconds maximum.
 
 ## Suggested routes and templates
 
@@ -263,8 +263,9 @@ Recommended minimum production behavior: store the TOTP secret in the auth JSON 
 Recommended cryptography approach:
 
 - use AES-256-GCM for authenticated encryption
+- generate a fresh random nonce for every encryption operation, never reuse it with the same key, and store it alongside the ciphertext
 - load a 32-byte application key from environment configuration
-- if the deployment supplies a passphrase instead of a raw key, derive the actual encryption key with scrypt using at least `N=65536`, `r=8`, and `p=1`, and raise the work factor further if deployment capacity allows
+- if the deployment supplies a passphrase instead of a raw key, derive the actual encryption key with scrypt using at least `N=131072`, `r=8`, and `p=1`, and raise the work factor further if deployment capacity allows
 - do not invent custom crypto primitives or ad hoc reversible obfuscation
 
 Because this secret is sensitive:
