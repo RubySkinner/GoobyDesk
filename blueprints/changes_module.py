@@ -92,6 +92,7 @@ def _build_change_record(form_data) -> dict:
         "change_created_timestamp": now,
         "change_updated_timestamp": now,
         "change_status": "pending",
+        "change_risk": form_data.get("change_risk", "Medium").strip().capitalize(),
     }
 
     return record
