@@ -6,10 +6,9 @@
     {% if value is mapping %}
         <div class="ticket-details">
             {% for key, nested_value in value.items() %}
-                {% if key == 'crm_worknotes' %}
-                    {% continue %}
+                {% if key != 'crm_worknotes' %}
+                    <p><strong>{{ format_label(key) }}:</strong> {{ render_value(nested_value) }}</p>
                 {% endif %}
-                <p><strong>{{ format_label(key) }}:</strong> {{ render_value(nested_value) }}</p>
             {% endfor %}
         </div>
     {% elif value is sequence and value is not string %}
