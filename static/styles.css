@@ -683,6 +683,54 @@ a:hover {
     gap: 1rem;
 }
 
+.profile-sections {
+    margin-top: 1rem;
+}
+
+.profile-card--full {
+    grid-column: 1 / -1;
+}
+
+.profile-field-list {
+    display: grid;
+    grid-template-columns: minmax(140px, 220px) 1fr;
+    gap: 0.75rem 1rem;
+    margin: 0;
+}
+
+.profile-field-list dt,
+.profile-nested-list dt {
+    margin: 0;
+    font-weight: 700;
+    color: var(--text-muted);
+}
+
+.profile-field-list dd,
+.profile-nested-list dd {
+    margin: 0;
+}
+
+.profile-nested-list {
+    display: grid;
+    grid-template-columns: minmax(120px, 180px) 1fr;
+    gap: 0.4rem 0.75rem;
+    margin: 0;
+}
+
+.profile-value-list {
+    margin: 0;
+    padding-left: 1.25rem;
+}
+
+.profile-value-list li {
+    margin: 0.25rem 0;
+}
+
+.section-divider {
+    margin: 1rem 0;
+    border-top: 1px solid var(--border);
+}
+
 .profile-extras .card {
     padding: 0; /* keep card header/body spacing intact */
 }
