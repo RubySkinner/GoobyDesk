@@ -117,6 +117,11 @@
                     <div class="stat-card-title">Timezone</div>
                     <div class="stat-card-value">{{ employee.get('timezone') or 'None' }}</div>
                 </div>
+                <div class="stat-card">
+                    <div class="stat-card-title">Employee Since</div>
+                    <div class="stat-card-value stat-card-value--compact">{{ (employee.get('created')[:10] if employee.get('created') else '—') }}</div>
+                    <div class="stat-card-sub">{{ employee.get('created_by') or '—' }}</div>
+                </div>
             </div>
 
             <div class="card">

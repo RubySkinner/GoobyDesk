@@ -200,6 +200,12 @@ def _build_employee_record(form: dict, employees: list[dict]) -> tuple[dict, str
         "certifications": [],
         "skills": [],
         "created": now,
+        "created_by": session.get("technician"),
+        "audit": {
+            "creation_source": "auth_web",
+            "last_modified": now,
+            "last_modified_by": session.get("technician"),
+        },
         "updated": now,
     }
     return new_record, employee_id
@@ -272,6 +278,9 @@ def _update_employee_record(employee: dict, form: dict) -> None:
     equity_notes = _clean_form_value(form, "equity")
     employment["equity"] = {"notes": equity_notes} if equity_notes else {}
     employee["updated"] = now
+    audit = employee.setdefault("audit", {})
+    audit["last_modified"] = now
+    audit["last_modified_by"] = session.get("technician")
 
 def _provision_employee_login_access(
     employee_record: dict,

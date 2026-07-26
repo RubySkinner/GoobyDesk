@@ -53,10 +53,6 @@
                     <label for="company">Company</label>
                     <input type="text" id="company" name="company" value="{{ customer.get('company','') if customer else '' }}">
                 </div>
-                <div>
-                    <label for="job_title">Job Title</label>
-                    <input type="text" id="job_title" name="job_title" value="{{ customer.get('job_title','') if customer else '' }}">
-                </div>
             </div>
 
             <div class="form-row">
@@ -94,7 +90,7 @@
                             <option value="HST" {% if customer and customer.get('timezone') == 'HST' %}selected{% endif %}>Hawaiian</option>
                         </optgroup>
                         <optgroup label="Other Timezones">
-                            <option value="UTC" {% if not customer or customer.get('timezone') == 'UTC' %}selected{% endif %}>Standard/Zulu</option>
+                            <option value="UTC" {% if not customer or customer.get('timezone') == 'UTC' %}selected{% endif %}>UTC/GMT/Zulu</option>
                             <option value="CET" {% if customer and customer.get('timezone') == 'CET' %}selected{% endif %}>Central European Time</option>
                             <option value="EET" {% if customer and customer.get('timezone') == 'EET' %}selected{% endif %}>Eastern European Time</option>
                             <option value="IST" {% if customer and customer.get('timezone') == 'IST' %}selected{% endif %}>India Standard Time</option>
