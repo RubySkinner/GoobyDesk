@@ -207,7 +207,7 @@ def save_employees(employees):
 
 def _assign_roles_to_session(employee: dict) -> None:
     """Populate `session['roles']` from an employee record.
-    Prefers explicit `roles`; falls back to inferring from `tech_type`.
+    Prefers explicit `roles`; falls back to `user_role` or `role`.
     Args:
         employee (dict): Employee record.
     """
@@ -216,19 +216,24 @@ def _assign_roles_to_session(employee: dict) -> None:
         session["roles"] = roles
         return
 
-    # infer simple mappings from legacy `tech_type`
-    tech_type = (employee.get("tech_type") or "").strip().lower()
-    inferred: list[str] = []
-    if tech_type == "technician":
-        inferred.append("itsm_technician")
-    if tech_type == "hr":
-        inferred.append("hr_technician")
-    if tech_type == "manager":
-        inferred.append("manager")
-    if tech_type == "admin":
-        inferred.append("admin")
+    role = (employee.get("user_role") or employee.get("role") or "").strip().lower()
+    if role:
+        session["roles"] = [role]
+        return
 
-    session["roles"] = inferred
+    # Legacy `tech_type` support kept only as a commented reference.
+    # tech_type = (employee.get("tech_type") or "").strip().lower()
+    # inferred: list[str] = []
+    # if tech_type == "technician":
+    #     inferred.append("itsm_technician")
+    # if tech_type == "hr":
+    #     inferred.append("hr_technician")
+    # if tech_type == "manager":
+    #     inferred.append("manager")
+    # if tech_type == "admin":
+    #     inferred.append("admin")
+
+    session["roles"] = []
 
 # Generate a new ticket number.
 def generate_ticket_number():

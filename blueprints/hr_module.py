@@ -21,10 +21,10 @@ from storage.hr_store import HrStore
 
 AUTH_USERNAME_RE = re.compile(r"^[A-Za-z0-9_-]{3,32}$")
 HR_ROLE_MAP = {
-    "itsm_technician": {"roles": ["itsm_technician"], "tech_type": "Technician"},
-    "hr_technician": {"roles": ["hr_technician"], "tech_type": "HR"},
-    "manager": {"roles": ["manager"], "tech_type": "Manager"},
-    "admin": {"roles": ["admin"], "tech_type": "Admin"},
+    "itsm_technician": {"roles": ["itsm_technician"], "role": "itsm_technician"},
+    "hr_technician": {"roles": ["hr_technician"], "role": "hr_technician"},
+    "manager": {"roles": ["manager"], "role": "manager"},
+    "admin": {"roles": ["admin"], "role": "admin"},
 }
 
 def _get_config():
@@ -103,12 +103,12 @@ def _validate_auth_username(username: str) -> None:
         raise ValueError("Login username must be 3-32 characters using letters, digits, '_' or '-'.")
 
 def _map_hr_role_to_auth_payload(role: str) -> tuple[list[str], str]:
-    """Map one HR role to auth-store roles and tech_type."""
+    """Map one HR role to auth-store roles and role."""
     normalized_role = (role or "").strip().lower()
     mapped = HR_ROLE_MAP.get(normalized_role)
     if mapped is None:
         raise ValueError("Invalid access role selected.")
-    return mapped["roles"], mapped["tech_type"]
+    return mapped["roles"], mapped["role"]
 
 def _find_auth_employee_by_uuid(employees: list[dict], employee_uuid: str) -> dict | None:
     """Return the auth record that already points at this employee UUID."""
@@ -135,14 +135,14 @@ def _derive_auth_username(employee_id: str, override_username: str | None, auth_
 
 def _build_employee_auth_record(employee_record: dict, auth_username: str, temporary_password: str) -> dict:
     """Build the auth-store record for a newly created employee."""
-    auth_roles, tech_type = _map_hr_role_to_auth_payload(employee_record.get("access", {}).get("role", ""))
+    auth_roles, auth_role = _map_hr_role_to_auth_payload(employee_record.get("access", {}).get("role", ""))
     now = _build_timestamp()
     return {
         "uuid": employee_record["uuid"],
         "tech_username": auth_username,
         "password_hash": hash_password(temporary_password),
         "roles": auth_roles,
-        "tech_type": tech_type,
+        "role": auth_role,
         "account_locked": False,
         "must_change_password": False,
         "created": now,

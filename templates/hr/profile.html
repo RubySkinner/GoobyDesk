@@ -4,12 +4,11 @@
 
 {% macro render_value(value) -%}
     {% if value is mapping %}
-        <dl class="ticket-details">
+        <div class="ticket-details">
             {% for key, nested_value in value.items() %}
-                <dt><strong>{{ format_label(key) }}:</strong></dt>
-                <dd>{{ render_value(nested_value) }}</dd>
+                <p><strong>{{ format_label(key) }}:</strong> {{ render_value(nested_value) }}</p>
             {% endfor %}
-        </dl>
+        </div>
     {% elif value is sequence and value is not string %}
         {% if value %}
             <ul class="notes-list">

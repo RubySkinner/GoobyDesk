@@ -2,11 +2,14 @@
     {
         "tech_username": "demouser",
         "tech_authcode": "NoPassword123",
-        "tech_type": "Technician"
+        "role": "itsm_technician",
+        "roles": ["itsm_technician"]
     },
     {
         "tech_username": "otheruser",
         "tech_authcode": "demoPassword2020",
-        "tech_type": "DISABLED"
+        "role": "disabled",
+        "roles": [],
+        "login_enabled": false
     }
 ]
