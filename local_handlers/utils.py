@@ -28,7 +28,14 @@ def resolve_preferred_name(technician_username: str) -> str:
         emp_store = EmployeeStore(cfg["core"]["employee_auth_file"])
         auth_employees = emp_store.load_all()
         lowered = technician_username.lower()
-        auth = next((a for a in auth_employees if str(a.get("tech_username", "")).lower() == lowered), None)
+        auth = next(
+            (
+                auth_employee
+                for auth_employee in auth_employees
+                if str(auth_employee.get("tech_username", "")).lower() == lowered
+            ),
+            None,
+        )
         if not auth:
             return technician_username
         user_uuid = auth.get("uuid")
@@ -36,10 +43,17 @@ def resolve_preferred_name(technician_username: str) -> str:
             return technician_username
         hr_store = HrStore(cfg["core"]["hr_file"])
         hr_employees = hr_store.load_all()
-        hr_emp = next((e for e in hr_employees if e.get("uuid") == user_uuid), None)
-        if not hr_emp:
+        hr_employee = next(
+            (
+                hr_record
+                for hr_record in hr_employees
+                if hr_record.get("uuid") == user_uuid
+            ),
+            None,
+        )
+        if not hr_employee:
             return technician_username
-        return hr_emp.get("preferred_name") or hr_emp.get("first_name") or technician_username
+        return hr_employee.get("preferred_name") or hr_employee.get("first_name") or technician_username
     except Exception:
         return technician_username
 

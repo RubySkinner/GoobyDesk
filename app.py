@@ -30,8 +30,8 @@ def _pseudonymize_actor(name: str) -> str:
     if not name:
         return "actor_unknown"
     salt = os.getenv("LOG_SALT", "")
-    h = hashlib.sha256((str(name) + salt).encode()).hexdigest()[:8]
-    return f"actor_{h}"
+    hash_digest = hashlib.sha256((str(name) + salt).encode()).hexdigest()[:8]
+    return f"actor_{hash_digest}"
 
 """
 Rest in Peace Alex, July 2nd 2005 - December 14th 2024
@@ -182,8 +182,7 @@ def load_tickets():
 # Writes to the ticket file database. Eventually needs file locking for Linux.
 def save_tickets(tickets):
     """Persist tickets to storage.
-    Args:
-        tickets (list[dict]): Tickets to save.
+    Args: tickets (list[dict]): Tickets to save.
     """
     ticket_store.save_all(tickets)
     logging.debug("The Ticket JSON Database file was modified.")
@@ -191,16 +190,14 @@ def save_tickets(tickets):
 # Read/Loads the employee file into memory.
 def load_employees():
     """Load employee records from storage.
-    Returns:
-        list[dict]: Employee records.
+    Returns: list[dict]: Employee records.
     """
     return employee_store.load_all()
     
 # Helper script for secure password hasing auto-migration.
 def save_employees(employees):
     """Persist employee records to storage.
-    Args:
-        employees (list[dict]): Employee records to save.
+    Args: employees (list[dict]): Employee records to save.
     """
     employee_store.save_all(employees)
     logging.debug("The Employee JSON Database file was modified.")
@@ -208,8 +205,7 @@ def save_employees(employees):
 def _assign_roles_to_session(employee: dict) -> None:
     """Populate `session['roles']` from an employee record.
     Prefers explicit `roles`; falls back to `user_role` or `role`.
-    Args:
-        employee (dict): Employee record.
+    Args: employee (dict): Employee record.
     """
     roles = employee.get("roles")
     if isinstance(roles, list):
@@ -221,41 +217,26 @@ def _assign_roles_to_session(employee: dict) -> None:
         session["roles"] = [role]
         return
 
-    # Legacy `tech_type` support kept only as a commented reference.
-    # tech_type = (employee.get("tech_type") or "").strip().lower()
-    # inferred: list[str] = []
-    # if tech_type == "technician":
-    #     inferred.append("itsm_technician")
-    # if tech_type == "hr":
-    #     inferred.append("hr_technician")
-    # if tech_type == "manager":
-    #     inferred.append("manager")
-    # if tech_type == "admin":
-    #     inferred.append("admin")
-
     session["roles"] = []
 
 # Generate a new ticket number.
 def generate_ticket_number():
     """Generate next ticket number for current year.
-    Returns:
-        str: New ticket identifier.
+    Returns: str: New ticket identifier.
     """
     return ticket_store.next_ticket_number(datetime.now().year)
 
 # Generate a new change request number.
 def generate_change_request_number():
     """Generate next change request number for current year.
-    Returns:
-        str: New change request identifier.
+    Returns: str: New change request identifier.
     """
     return change_store.next_change_number(datetime.now().year)
 
 
 def _verify_turnstile():
     """Validate Cloudflare Turnstile token when enabled.
-    Returns:
-        bool: True when CAPTCHA is disabled or verification succeeds.
+    Returns: bool: True when CAPTCHA is disabled or verification succeeds.
     """
     if not CAPTCHA_ENABLED:
         return True
@@ -377,7 +358,7 @@ def login():
         password = request.form.get("tech_password_box", "")
         employees = load_employees()
         # Find user record first
-        user = next((e for e in employees if str(e.get("tech_username", "")).lower() == username.lower()), None)
+        user = next((employee for employee in employees if str(employee.get("tech_username", "")).lower() == username.lower()), None)
         if user is None:
             logging.warning("Failed login attempt (user not found) actor=%s", _pseudonymize_actor(username))
             return render_template("public/login.html", error="Invalid credentials.")

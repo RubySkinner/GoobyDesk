@@ -11,34 +11,34 @@ def parse_color(color):
     if color.startswith('#'):
         hex_val = color[1:]
         if len(hex_val) == 3:
-            hex_val = ''.join(2 * c for c in hex_val)
+            hex_val = ''.join(2 * hex_char for hex_char in hex_val)
         if len(hex_val) == 6:
-            r = int(hex_val[0:2], 16)
-            g = int(hex_val[2:4], 16)
-            b = int(hex_val[4:6], 16)
-            return (r, g, b, 1)
+            red = int(hex_val[0:2], 16)
+            green = int(hex_val[2:4], 16)
+            blue = int(hex_val[4:6], 16)
+            return (red, green, blue, 1)
         if len(hex_val) == 8:
-            r = int(hex_val[0:2], 16)
-            g = int(hex_val[2:4], 16)
-            b = int(hex_val[4:6], 16)
-            a = int(hex_val[6:8], 16) / 255
-            return (r, g, b, a)
+            red = int(hex_val[0:2], 16)
+            green = int(hex_val[2:4], 16)
+            blue = int(hex_val[4:6], 16)
+            alpha = int(hex_val[6:8], 16) / 255
+            return (red, green, blue, alpha)
     if color.startswith('rgb(') or color.startswith('rgba('):
         parts = color[color.index('(')+1:color.index(')')].split(',')
-        vals = [p.strip() for p in parts]
-        r = int(vals[0])
-        g = int(vals[1])
-        b = int(vals[2])
-        a = float(vals[3]) if len(vals) == 4 else 1
-        return (r, g, b, a)
+        vals = [part.strip() for part in parts]
+        red = int(vals[0])
+        green = int(vals[1])
+        blue = int(vals[2])
+        alpha = float(vals[3]) if len(vals) == 4 else 1
+        return (red, green, blue, alpha)
     return None
 
 
-def luminance(r, g, b):
-    def chan(v):
-        v = v / 255
-        return v / 12.92 if v <= 0.03928 else ((v + 0.055) / 1.055) ** 2.4
-    return 0.2126 * chan(r) + 0.7152 * chan(g) + 0.0722 * chan(b)
+def luminance(red, green, blue):
+    def chan(value):
+        value = value / 255
+        return value / 12.92 if value <= 0.03928 else ((value + 0.055) / 1.055) ** 2.4
+    return 0.2126 * chan(red) + 0.7152 * chan(green) + 0.0722 * chan(blue)
 
 
 def blend_over(fg, bg):
@@ -106,7 +106,7 @@ def scan_templates(root):
         parser = TemplateParser(path.name)
         parser.feed(text)
         ids = parser.ids
-        dup = {k: [pos for v, pos in ids if v == k] for k in {v for v, _ in ids}}
+        dup = {identifier: [pos for value, pos in ids if value == identifier] for identifier in {value for value, _ in ids}}
         for ident, positions in dup.items():
             if ident and len(positions) > 1:
                 problems.append((path, f'duplicate id "{ident}" found {len(positions)} times'))
@@ -142,10 +142,10 @@ def scan_css(root):
                     name, value = decl.split(':', 1)
                     vars[name.strip()] = value.strip()
     issues = []
-    for k, v in vars.items():
-        if v.startswith('var('):
-            ref = v[4:-1].strip()
-            vars[k] = vars.get(ref, v)
+    for selector_key, selector_value in vars.items():
+        if selector_value.startswith('var('):
+            ref = selector_value[4:-1].strip()
+            vars[selector_key] = vars.get(ref, selector_value)
     # check badges and alerts for contrast
     selector_pairs = [('.badge-info', '#0d1117'), ('.badge-warning', '#0d1117'), ('.badge-success', '#0d1117'), ('.badge-secondary', '#0d1117'), ('.badge-danger', '#0d1117'), ('.badge-primary', '#0d1117'), ('.alert--danger', '#0d1117'), ('.flash.success', '#0d1117'), ('.flash.warning', '#0d1117'), ('.flash.info', '#0d1117')]
     css = {sel: {m.group(1).strip(): m.group(2).strip() for m in re.finditer(r'([\w-]+)\s*:\s*([^;]+);', body)} for sel, body in []}

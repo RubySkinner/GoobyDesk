@@ -306,8 +306,4 @@ def edit_customer(uuid):
     logging.info("CRM MODULE - Customer %s edited actor=%s", customer.get('customer_id'), actor)
     return redirect(url_for("crm_module.customer_profile", uuid=customer["uuid"]))
 
-"""
-# Edit Customer Details Route
-@crm_module_bp.route("/profile/<uuid>/edit", methods=["POST"])
-"""
 # Export Customer Data Route
