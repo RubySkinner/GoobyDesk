@@ -154,19 +154,26 @@ def _update_customer_record(customer: dict, form: dict) -> None:
 @role_required(ROLE_ITSM_TECH)
 def crm_dashboard():
     """Render CRM dashboard showing active customers and stats."""
+    show_all = request.args.get("show_all") == "1"
     customers = load_customers_file()
     total_customers = len(customers)
     active_customers_list = [customer for customer in customers if customer.get("status") == "active"]
+    displayed_customers = customers if show_all else active_customers_list
     vip_customers = sum(1 for customer in customers if customer.get("vip") is True)
     total_lifetime_value = sum(customer.get("lifetime_value", 0) for customer in customers)
     crm_base_stats = {
         "total_customers": total_customers,
         "active_customers": len(active_customers_list),
         "vip_customers": vip_customers,
-        "total_lifetime_value": total_lifetime_value
+        "total_lifetime_value": total_lifetime_value,
     }
-    #return render_template("under_construction.html")
-    return render_template("crm/crm_dashboard.html", customers=active_customers_list, loggedInTech=resolve_preferred_name(session.get("technician")), stats=crm_base_stats)
+    return render_template(
+        "crm/crm_dashboard.html",
+        customers=displayed_customers,
+        loggedInTech=resolve_preferred_name(session.get("technician")),
+        stats=crm_base_stats,
+        show_all=show_all,
+    )
 
 # Create New Customer Route
 @crm_module_bp.route("/submit-new", methods=["GET", "POST"])
